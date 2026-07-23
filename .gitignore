@@ -1,0 +1,18 @@
+# Python
+**/venv/
+**/.venv/
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+
+# Environment
+**/.env
+
+# Node.js
+**/node_modules/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
