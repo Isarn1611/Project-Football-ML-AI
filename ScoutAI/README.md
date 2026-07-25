@@ -111,3 +111,34 @@ Note: The notebook contains an interactive cell where you can input a target pla
 
 Author: Rifhan Hajiteh & Isarn Ilacharn
 Student ID: 661431009 & 661431021
+
+## Reusable ML Engine
+
+`scout_engine.py` contains the same preprocessing, tuning, dynamic feature
+weighting, and five recommendation algorithms as the notebook, without the
+Jupyter widget and chart presentation layer.
+
+Run it from the project root:
+
+```bash
+python ScoutAI/scout_engine.py "Kevin De Bruyne"
+```
+
+Or call it from Python:
+
+```python
+from ScoutAI.scout_engine import recommend_players
+
+result = recommend_players("Kevin De Bruyne")
+print(result["results"])
+```
+
+The first call loads the dataset and runs the notebook's original
+hyperparameter-tuning steps. Later calls in the same process reuse that engine
+instance.
+
+Run the notebook parity tests:
+
+```bash
+python -m unittest ScoutAI.tests.test_scout_engine -v
+```
