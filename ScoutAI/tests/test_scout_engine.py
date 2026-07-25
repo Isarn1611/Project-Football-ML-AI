@@ -135,6 +135,12 @@ class ScoutEngineParityTests(unittest.TestCase):
         with self.assertRaises(PlayerNotFoundError):
             self.engine.recommend("__PLAYER_THAT_DOES_NOT_EXIST__")
 
+    def test_player_name_lookup_works_without_accents(self):
+        result = self.engine.recommend("Kylian Mbappe")
+
+        self.assertEqual(result["target"]["Name"], "Kylian Mbappé")
+        self.assertEqual(len(result["results"]), 5)
+
     def test_partial_name_can_request_disambiguation(self):
         with self.assertRaises(AmbiguousPlayerError) as context:
             self.engine.recommend("Mohamed")

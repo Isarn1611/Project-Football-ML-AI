@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import unicodedata
 import warnings
 from functools import lru_cache
 from pathlib import Path
@@ -230,12 +231,27 @@ def _native_number(value: Any) -> int | float:
     return value.item() if isinstance(value, np.generic) else value
 
 
+def _normalize_player_name(value: Any) -> str:
+    """Normalize accents and casing for player-name lookup only."""
+
+    decomposed = unicodedata.normalize("NFKD", str(value))
+    without_accents = "".join(
+        character
+        for character in decomposed
+        if not unicodedata.combining(character)
+    )
+    return without_accents.casefold().strip()
+
+
 class ScoutEngine:
     """Load ScoutAI data once and expose the notebook recommendation logic."""
 
     def __init__(self, dataset_path: str | Path = DEFAULT_DATASET_PATH) -> None:
         self.dataset_path = Path(dataset_path).resolve()
         self.df = self._load_and_prepare_dataset()
+        self._normalized_player_names = self.df["Name"].map(
+            _normalize_player_name
+        )
 
         self.available_ml_features = [
             column for column in ML_FEATURES if column in self.df.columns
@@ -361,11 +377,13 @@ class ScoutEngine:
     def _find_target_index(self, search_name: str) -> int:
         """Apply the notebook's partial/exact name disambiguation behavior."""
 
-        target_matches = self.df[
-            self.df["Name"].str.contains(
-                str(search_name), case=False, na=False
-            )
-        ]
+        normalized_search_name = _normalize_player_name(search_name)
+        matching_names = self._normalized_player_names.str.contains(
+            normalized_search_name,
+            regex=False,
+            na=False,
+        )
+        target_matches = self.df[matching_names]
 
         if len(target_matches) == 0:
             raise PlayerNotFoundError(
@@ -374,10 +392,12 @@ class ScoutEngine:
             )
 
         if len(target_matches) > 1:
-            exact_match = target_matches[
-                target_matches["Name"].str.lower()
-                == str(search_name).lower()
+            exact_match_indices = target_matches.index[
+                self._normalized_player_names.loc[target_matches.index]
+                == normalized_search_name
             ]
+            exact_match = target_matches.loc[exact_match_indices]
+
             if len(exact_match) == 1:
                 return int(exact_match.index[0])
 
