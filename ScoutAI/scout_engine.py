@@ -204,6 +204,64 @@ MODEL_NAMES = [
     "DBSCAN (Outlier Detector)",
 ]
 
+DISPLAY_ATTRIBUTE_GROUPS = {
+    "Technical": [
+        "Corners",
+        "Crossing",
+        "Dribbling",
+        "Finishing",
+        "First Touch",
+        "Free Kick Taking",
+        "Heading",
+        "Long Shots",
+        "Long Throws",
+        "Marking",
+        "Passing",
+        "Penalty Taking",
+        "Tackling",
+        "Technique",
+    ],
+    "Mental": [
+        "Aggression",
+        "Anticipation",
+        "Bravery",
+        "Composure",
+        "Concentration",
+        "Decisions",
+        "Determination",
+        "Flair",
+        "Leadership",
+        "Off The Ball",
+        "Positioning",
+        "Teamwork",
+        "Vision",
+        "Work Rate",
+    ],
+    "Physical": [
+        "Acceleration",
+        "Agility",
+        "Balance",
+        "Jumping Reach",
+        "Natural Fitness",
+        "Pace",
+        "Stamina",
+        "Strength",
+    ],
+    "Goalkeeping": [
+        "Aerial Reach",
+        "Command Of Area",
+        "Communication",
+        "Eccentricity",
+        "Handling",
+        "Kicking",
+        "One On Ones",
+        "Reflexes",
+        "Rushing Out",
+        "Punching",
+        "Throwing",
+    ],
+}
+
 
 class ScoutEngineError(Exception):
     """Base exception for errors callers can convert into an API response."""
@@ -426,6 +484,46 @@ class ScoutEngine:
             )
         )
 
+    @staticmethod
+    def _attribute_groups(player: pd.Series) -> dict[str, dict[str, Any]]:
+        """Return display-only player attributes grouped for the web UI."""
+
+        return {
+            group_name: {
+                attribute_name: _native_number(player[attribute_name])
+                for attribute_name in attribute_names
+                if attribute_name in player.index
+            }
+            for group_name, attribute_names in DISPLAY_ATTRIBUTE_GROUPS.items()
+        }
+
+    @classmethod
+    def _candidate_payload(
+        cls,
+        player: pd.Series,
+        score: float,
+    ) -> dict[str, Any]:
+        """Enrich an already-ranked candidate without changing ML results."""
+
+        return {
+            "Name": player["Name"],
+            "Score": float(score),
+            "Age": _native_number(player["Age"]),
+            "CA": _native_number(player["ca"]),
+            "PA": _native_number(player["pa"]),
+            "UID": player["UID"],
+            "Club": player["Club"],
+            "Position": player["Position"],
+            "Nationality": player["Nationality"],
+            "MarketValue": _native_number(player["Values"]),
+            "Salary": _native_number(player["Salary"]),
+            "Height": _native_number(player["Height"]),
+            "Weight": _native_number(player["Weight"]),
+            "LeftFoot": _native_number(player["Left Foot"]),
+            "RightFoot": _native_number(player["Right Foot"]),
+            "Attributes": cls._attribute_groups(player),
+        }
+
     def recommend(self, search_name: str) -> dict[str, Any]:
         """Return the notebook's Top 5 results from all five ML engines."""
 
@@ -471,18 +569,12 @@ class ScoutEngine:
         knn.fit(x_candidates_weighted)
         distances_knn, indices_knn = knn.kneighbors(target_weighted)
         top_5_results[MODEL_NAMES[0]] = [
-            {
-                "Name": candidate_df.iloc[indices_knn[0][i]]["Name"],
-                "Score": self._distance_to_percentage(
+            self._candidate_payload(
+                candidate_df.iloc[indices_knn[0][i]],
+                self._distance_to_percentage(
                     distances_knn[0][i]
                 ),
-                "Age": _native_number(
-                    candidate_df.iloc[indices_knn[0][i]]["Age"]
-                ),
-                "CA": _native_number(
-                    candidate_df.iloc[indices_knn[0][i]]["ca"]
-                ),
-            }
+            )
             for i in range(5)
         ]
 
@@ -492,14 +584,12 @@ class ScoutEngine:
         )[0]
         cosine_indices = np.argsort(similarity_matrix)[::-1][:5]
         top_5_results[MODEL_NAMES[1]] = [
-            {
-                "Name": candidate_df.iloc[i]["Name"],
-                "Score": float(
+            self._candidate_payload(
+                candidate_df.iloc[i],
+                float(
                     np.clip(similarity_matrix[i] * 100, 0, 100)
                 ),
-                "Age": _native_number(candidate_df.iloc[i]["Age"]),
-                "CA": _native_number(candidate_df.iloc[i]["ca"]),
-            }
+            )
             for i in cosine_indices
         ]
 
@@ -510,18 +600,12 @@ class ScoutEngine:
             target_weighted, sort_results=True
         )
         top_5_results[MODEL_NAMES[2]] = [
-            {
-                "Name": candidate_df.iloc[indices_radius[0][i]]["Name"],
-                "Score": self._distance_to_percentage(
+            self._candidate_payload(
+                candidate_df.iloc[indices_radius[0][i]],
+                self._distance_to_percentage(
                     distances_radius[0][i]
                 ),
-                "Age": _native_number(
-                    candidate_df.iloc[indices_radius[0][i]]["Age"]
-                ),
-                "CA": _native_number(
-                    candidate_df.iloc[indices_radius[0][i]]["ca"]
-                ),
-            }
+            )
             for i in range(min(5, len(indices_radius[0])))
         ]
 
@@ -546,18 +630,12 @@ class ScoutEngine:
             )
             sorted_sub_indices = np.argsort(distances_kmeans)[:5]
             kmeans_list = [
-                {
-                    "Name": candidate_df.iloc[same_cluster[i]]["Name"],
-                    "Score": self._distance_to_percentage(
+                self._candidate_payload(
+                    candidate_df.iloc[same_cluster[i]],
+                    self._distance_to_percentage(
                         distances_kmeans[i]
                     ),
-                    "Age": _native_number(
-                        candidate_df.iloc[same_cluster[i]]["Age"]
-                    ),
-                    "CA": _native_number(
-                        candidate_df.iloc[same_cluster[i]]["ca"]
-                    ),
-                }
+                )
                 for i in sorted_sub_indices
             ]
         top_5_results[MODEL_NAMES[3]] = kmeans_list
@@ -589,24 +667,12 @@ class ScoutEngine:
             )
             sorted_sub_indices = np.argsort(distances_dbscan)[:5]
             top_5_results[MODEL_NAMES[4]] = [
-                {
-                    "Name": candidate_df.iloc[
-                        same_dbscan_cluster[i]
-                    ]["Name"],
-                    "Score": self._distance_to_percentage(
+                self._candidate_payload(
+                    candidate_df.iloc[same_dbscan_cluster[i]],
+                    self._distance_to_percentage(
                         distances_dbscan[i]
                     ),
-                    "Age": _native_number(
-                        candidate_df.iloc[
-                            same_dbscan_cluster[i]
-                        ]["Age"]
-                    ),
-                    "CA": _native_number(
-                        candidate_df.iloc[
-                            same_dbscan_cluster[i]
-                        ]["ca"]
-                    ),
-                }
+                )
                 for i in sorted_sub_indices
             ]
 
@@ -615,9 +681,20 @@ class ScoutEngine:
                 "Name": target_player["Name"],
                 "Display_Name": target_player["Display_Name"],
                 "Position": target_player["Gen_Pos"],
+                "FullPosition": target_player["Position"],
                 "Age": _native_number(target_player["Age"]),
                 "MarketValue": _native_number(target_player["Values"]),
                 "UID": target_player["UID"],
+                "Club": target_player["Club"],
+                "Nationality": target_player["Nationality"],
+                "CurrentAbility": _native_number(target_player["ca"]),
+                "PotentialAbility": _native_number(target_player["pa"]),
+                "Salary": _native_number(target_player["Salary"]),
+                "Height": _native_number(target_player["Height"]),
+                "Weight": _native_number(target_player["Weight"]),
+                "LeftFoot": _native_number(target_player["Left Foot"]),
+                "RightFoot": _native_number(target_player["Right Foot"]),
+                "Attributes": self._attribute_groups(target_player),
             },
             "results": top_5_results,
             "model": {

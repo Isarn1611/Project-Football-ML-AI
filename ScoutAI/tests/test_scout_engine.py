@@ -140,6 +140,23 @@ class ScoutEngineParityTests(unittest.TestCase):
 
         self.assertEqual(result["target"]["Name"], "Kylian Mbappé")
         self.assertEqual(len(result["results"]), 5)
+        self.assertEqual(result["target"]["CurrentAbility"], 188)
+        self.assertEqual(result["target"]["PotentialAbility"], 197)
+        self.assertEqual(
+            result["target"]["Attributes"]["Technical"]["Dribbling"],
+            18,
+        )
+        self.assertEqual(
+            result["target"]["Attributes"]["Physical"]["Pace"],
+            20,
+        )
+
+        first_candidate = result["results"]["K-NN (The Clone)"][0]
+        self.assertIn("Club", first_candidate)
+        self.assertIn("PotentialAbility", result["target"])
+        self.assertIn("Technical", first_candidate["Attributes"])
+        self.assertIn("Mental", first_candidate["Attributes"])
+        self.assertIn("Physical", first_candidate["Attributes"])
 
     def test_partial_name_can_request_disambiguation(self):
         with self.assertRaises(AmbiguousPlayerError) as context:

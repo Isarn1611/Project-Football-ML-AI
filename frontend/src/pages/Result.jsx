@@ -12,6 +12,13 @@ const currencyFormatter = new Intl.NumberFormat("en-GB", {
   maximumFractionDigits: 0,
 });
 
+const compactCurrencyFormatter = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
 const modelStyles = [
   {
     badge: "Clone finder",
@@ -45,6 +52,33 @@ const modelStyles = [
   },
 ];
 
+const attributeGroupStyles = {
+  Technical: {
+    label: "Technical",
+    accent: "text-emerald-300",
+    bar: "bg-emerald-300",
+    border: "border-emerald-300/15",
+  },
+  Mental: {
+    label: "Mental",
+    accent: "text-cyan-300",
+    bar: "bg-cyan-300",
+    border: "border-cyan-300/15",
+  },
+  Physical: {
+    label: "Physical",
+    accent: "text-amber-300",
+    bar: "bg-amber-300",
+    border: "border-amber-300/15",
+  },
+  Goalkeeping: {
+    label: "Goalkeeping",
+    accent: "text-violet-300",
+    bar: "bg-violet-300",
+    border: "border-violet-300/15",
+  },
+};
+
 function formatValue(value) {
   return value === null || value === undefined || value === ""
     ? "—"
@@ -57,10 +91,39 @@ function formatCurrency(value) {
     : currencyFormatter.format(value);
 }
 
+function formatCompactCurrency(value) {
+  const numericValue = Number(value);
+
+  return value === null ||
+    value === undefined ||
+    value === "" ||
+    !Number.isFinite(numericValue)
+    ? "—"
+    : compactCurrencyFormatter.format(numericValue);
+}
+
 function normalizeScore(score) {
   const numericScore = Number(score);
   if (!Number.isFinite(numericScore)) return 0;
   return Math.max(0, Math.min(100, numericScore));
+}
+
+function normalizeAttribute(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return 0;
+  return Math.max(0, Math.min(20, numericValue));
+}
+
+function getVisibleAttributeGroups(attributes, position) {
+  const isGoalkeeper = String(position || "")
+    .toUpperCase()
+    .startsWith("GK");
+
+  return Object.entries(attributes || {}).filter(
+    ([groupName, values]) =>
+      Object.keys(values || {}).length > 0 &&
+      (groupName !== "Goalkeeping" || isGoalkeeper)
+  );
 }
 
 function readApiError(error) {
@@ -153,6 +216,169 @@ function ErrorState({ error, onRetry, onSelectPlayer }) {
   );
 }
 
+function AttributeGroupCard({ groupName, attributes }) {
+  const style =
+    attributeGroupStyles[groupName] || attributeGroupStyles.Technical;
+
+  return (
+    <article
+      className={`rounded-2xl border ${style.border} bg-white/[0.04] p-5`}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <h3
+          className={`text-xs font-bold uppercase tracking-[0.22em] ${style.accent}`}
+        >
+          {style.label}
+        </h3>
+        <span className="text-xs text-slate-600">1–20</span>
+      </div>
+      <dl className="space-y-3">
+        {Object.entries(attributes).map(([attributeName, value]) => {
+          const normalizedValue = normalizeAttribute(value);
+
+          return (
+            <div key={attributeName}>
+              <div className="mb-1.5 flex items-center justify-between gap-3">
+                <dt className="truncate text-xs text-slate-400">
+                  {attributeName}
+                </dt>
+                <dd
+                  className={`text-sm font-black tabular-nums ${style.accent}`}
+                >
+                  {formatValue(value)}
+                </dd>
+              </div>
+              <div className="h-1 overflow-hidden rounded-full bg-white/8">
+                <div
+                  aria-label={`${attributeName} ${value} out of 20`}
+                  aria-valuemax="20"
+                  aria-valuemin="0"
+                  aria-valuenow={normalizedValue}
+                  className={`h-full rounded-full ${style.bar}`}
+                  role="progressbar"
+                  style={{ width: `${(normalizedValue / 20) * 100}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </dl>
+    </article>
+  );
+}
+
+function TargetAttributes({ target }) {
+  const groups = getVisibleAttributeGroups(
+    target.Attributes,
+    target.FullPosition || target.Position
+  );
+
+  if (groups.length === 0) return null;
+
+  return (
+    <section className="mt-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+            Player profile
+          </p>
+          <h2 className="mt-1 text-xl font-bold text-white">
+            Attribute overview
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+          <span className="rounded-full border border-white/10 px-3 py-1.5">
+            {formatValue(target.Nationality)}
+          </span>
+          <span className="rounded-full border border-white/10 px-3 py-1.5">
+            {formatValue(target.Height)} cm
+          </span>
+          <span className="rounded-full border border-white/10 px-3 py-1.5">
+            {formatValue(target.Weight)} kg
+          </span>
+          <span className="rounded-full border border-white/10 px-3 py-1.5">
+            Left foot {formatValue(target.LeftFoot)}
+          </span>
+          <span className="rounded-full border border-white/10 px-3 py-1.5">
+            Right foot {formatValue(target.RightFoot)}
+          </span>
+        </div>
+      </div>
+
+      <div
+        className={`mt-5 grid items-start gap-4 ${
+          groups.length === 4
+            ? "md:grid-cols-2 xl:grid-cols-4"
+            : "md:grid-cols-2 xl:grid-cols-3"
+        }`}
+      >
+        {groups.map(([groupName, attributes]) => (
+          <AttributeGroupCard
+            attributes={attributes}
+            groupName={groupName}
+            key={groupName}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CandidateAttributeDetails({ player }) {
+  const groups = getVisibleAttributeGroups(
+    player.Attributes,
+    player.Position
+  );
+
+  if (groups.length === 0) return null;
+
+  return (
+    <details className="group col-span-3 mt-1 rounded-xl border border-white/[0.07] bg-black/15">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs text-slate-400 transition hover:text-emerald-200 [&::-webkit-details-marker]:hidden">
+        <span>View player attributes</span>
+        <span className="text-right text-slate-600">
+          {formatValue(player.Club)} · {formatValue(player.Position)} · PA{" "}
+          {formatValue(player.PA)}
+        </span>
+      </summary>
+      <div className="grid gap-4 border-t border-white/[0.07] p-3 sm:grid-cols-3">
+        {groups.map(([groupName, attributes]) => {
+          const style =
+            attributeGroupStyles[groupName] ||
+            attributeGroupStyles.Technical;
+
+          return (
+            <div key={groupName}>
+              <p
+                className={`mb-2 text-[0.65rem] font-bold uppercase tracking-[0.18em] ${style.accent}`}
+              >
+                {style.label}
+              </p>
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                {Object.entries(attributes).map(
+                  ([attributeName, value]) => (
+                    <div
+                      className="flex min-w-0 justify-between gap-2 text-[0.68rem]"
+                      key={attributeName}
+                    >
+                      <dt className="truncate text-slate-500">
+                        {attributeName}
+                      </dt>
+                      <dd className="font-bold tabular-nums text-slate-300">
+                        {formatValue(value)}
+                      </dd>
+                    </div>
+                  )
+                )}
+              </dl>
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
 function ModelCard({ modelName, players, style }) {
   return (
     <article
@@ -215,12 +441,18 @@ function ModelCard({ modelName, players, style }) {
                     />
                   </div>
                 </div>
-                <div className="hidden min-w-16 text-right text-xs text-slate-500 sm:block">
-                  <span className="block">Age {formatValue(player.Age)}</span>
-                  <span className="mt-1 block">
-                    CA {formatValue(player.CA)}
+                <div className="min-w-20 text-right text-[0.68rem] text-slate-500 sm:min-w-24 sm:text-xs">
+                  <span className="block">
+                    Age {formatValue(player.Age)} · CA{" "}
+                    {formatValue(player.CA)}
+                  </span>
+                  <span className="mt-1 block font-semibold text-emerald-200">
+                    Value {formatCompactCurrency(player.MarketValue)}
                   </span>
                 </div>
+                {!isOutlier && (
+                  <CandidateAttributeDetails player={player} />
+                )}
               </li>
             );
           })}
@@ -360,11 +592,14 @@ function Result() {
                 </p>
               </div>
 
-              <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10">
+              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-5">
                 <div className="min-w-24 bg-[#0d1914] px-4 py-3">
                   <dt className="text-xs text-slate-500">Position</dt>
                   <dd className="mt-1 font-bold text-white">
-                    {formatValue(currentState.result.target.Position)}
+                    {formatValue(
+                      currentState.result.target.FullPosition ||
+                        currentState.result.target.Position
+                    )}
                   </dd>
                 </div>
                 <div className="min-w-20 bg-[#0d1914] px-4 py-3">
@@ -373,7 +608,23 @@ function Result() {
                     {formatValue(currentState.result.target.Age)}
                   </dd>
                 </div>
-                <div className="min-w-32 bg-[#0d1914] px-4 py-3">
+                <div className="min-w-20 bg-[#0d1914] px-4 py-3">
+                  <dt className="text-xs text-slate-500">CA</dt>
+                  <dd className="mt-1 font-bold text-emerald-200">
+                    {formatValue(
+                      currentState.result.target.CurrentAbility
+                    )}
+                  </dd>
+                </div>
+                <div className="min-w-20 bg-[#0d1914] px-4 py-3">
+                  <dt className="text-xs text-slate-500">PA</dt>
+                  <dd className="mt-1 font-bold text-cyan-200">
+                    {formatValue(
+                      currentState.result.target.PotentialAbility
+                    )}
+                  </dd>
+                </div>
+                <div className="col-span-2 min-w-32 bg-[#0d1914] px-4 py-3 sm:col-span-1">
                   <dt className="text-xs text-slate-500">Market value</dt>
                   <dd className="mt-1 font-bold text-white">
                     {formatCurrency(
@@ -384,7 +635,9 @@ function Result() {
               </dl>
             </header>
 
-            <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
+            <TargetAttributes target={currentState.result.target} />
+
+            <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-8">
               <div>
                 <h2 className="text-xl font-bold text-white">
                   Model recommendations

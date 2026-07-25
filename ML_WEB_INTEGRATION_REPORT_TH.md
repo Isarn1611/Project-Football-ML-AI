@@ -174,6 +174,21 @@ Best K-Means K = 10
 
 ชั้นค้นหาชื่อรองรับ Unicode normalization โดยไม่เปลี่ยนข้อมูลที่ส่งเข้า ML เช่น ผู้ใช้สามารถพิมพ์ `Kylian Mbappe` เพื่อค้นหาแถวข้อมูล `Kylian Mbappé` ได้
 
+### 4.7 ข้อมูลพลังสำหรับแสดงผล
+
+หลังจาก ML จัดอันดับเสร็จ ระบบจะเพิ่มข้อมูลประกอบจากแถว dataset เดิมให้ target และ candidates โดยไม่เปลี่ยน Score หรืออันดับ ได้แก่:
+
+- CA และ PA
+- Club, Position และ Nationality
+- Market Value และ Salary
+- Height, Weight, Left Foot และ Right Foot
+- Technical attributes
+- Mental attributes
+- Physical attributes
+- Goalkeeping attributes
+
+ข้อมูลส่วนนี้เป็น display enrichment หลังการคำนวณ ML และไม่ได้ถูกนำไปคำนวณซ้ำ
+
 ## 5. การสร้าง FastAPI ML Service
 
 ### 5.1 ไฟล์ที่สร้าง
@@ -234,7 +249,7 @@ Content-Type: application/json
 
 - ข้อมูล target player
 - ผลลัพธ์แยกตาม 5 algorithms
-- Name, Score, Age และ CA ของ candidate
+- Name, Score, Age, CA และ Market Value ของ candidate
 - ข้อมูล model configuration
 
 ### 5.4 HTTP errors
@@ -349,6 +364,10 @@ frontend/src/pages/Result.jsx
 - แสดงผลจากทั้ง 5 models
 - แสดงอันดับ, Similarity Score, Age และ CA
 - แสดง score bar
+- แสดง CA, PA และตำแหน่งเต็มของ target player
+- แสดงค่าพลังแบบ 1–20 แยก Technical, Mental และ Physical
+- แสดง Goalkeeping attributes สำหรับผู้รักษาประตู
+- เปิดดูค่าพลังของ candidate แต่ละคนแบบพับเก็บได้
 - รองรับผลลัพธ์ว่างจากบาง model
 - รองรับ API error และปุ่ม retry
 - หากชื่อกำกวม แสดงรายชื่อนักเตะให้ผู้ใช้เลือก
@@ -584,16 +603,15 @@ Database search   → Supabase fm_players
 
 ลำดับที่แนะนำ:
 
-1. เพิ่ม enrichment layer โดยดึง attributes ของ target และ candidates โดยไม่เปลี่ยนอันดับ ML
-2. รวม candidate ที่ซ้ำกันจากทั้ง 5 models
-3. คำนวณ attribute differences เพื่อเป็นหลักฐานให้ AI
-4. กำหนด JSON schema สำหรับ AI output
-5. เพิ่ม AI analysis service ใน Express
-6. บันทึกผล ML และ AI ลง Supabase
-7. เมื่อใช้งานจริง ให้เปลี่ยน AI analysis เป็น background job
-8. ใช้ Supabase Queue หรือ worker แยกสำหรับ retry และควบคุมค่าใช้จ่าย
-9. ใช้ n8n เฉพาะ notification, report และ external automation
-10. เพิ่ม dataset/model version ก่อนอัปเดตข้อมูลรอบใหม่
+1. รวม candidate ที่ซ้ำกันจากทั้ง 5 models
+2. คำนวณ attribute differences เพื่อเป็นหลักฐานให้ AI
+3. กำหนด JSON schema สำหรับ AI output
+4. เพิ่ม AI analysis service ใน Express
+5. บันทึกผล ML และ AI ลง Supabase
+6. เมื่อใช้งานจริง ให้เปลี่ยน AI analysis เป็น background job
+7. ใช้ Supabase Queue หรือ worker แยกสำหรับ retry และควบคุมค่าใช้จ่าย
+8. ใช้ n8n เฉพาะ notification, report และ external automation
+9. เพิ่ม dataset/model version ก่อนอัปเดตข้อมูลรอบใหม่
 
 ## 13. สรุป
 
@@ -606,6 +624,7 @@ Database search   → Supabase fm_players
 - FastAPI เปิดให้เรียก ML ผ่าน HTTP
 - Express ทำหน้าที่เป็น API Gateway
 - React สามารถส่งชื่อนักเตะและแสดงผลทั้ง 5 models
+- หน้าเว็บแสดงค่าพลังของ target และ candidates จาก dataset จริง
 - ระบบรองรับ loading, validation, retry และชื่อกำกวม
 - มี automated tests ครอบคลุม ML, FastAPI และ Express
 - ระบบผ่านการทดสอบ end-to-end
