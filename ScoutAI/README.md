@@ -1,6 +1,6 @@
 # ⚽ ScoutAI: Football Player Recommendation & Playstyle Matching System
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-Machine_Learning-orange)
 ![Pandas](https://img.shields.io/badge/Pandas-Data_Manipulation-green)
 ![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-F37626)
@@ -61,7 +61,7 @@ The system outputs a **Visual Analytics Dashboard** displaying the Top 5 shortli
 ## 8. How to Run the Project
 
 ### Prerequisites
-* Python 3.8 or higher
+* Python 3.10 or higher
 * Jupyter Notebook
 
 ### Installation
@@ -111,3 +111,72 @@ Note: The notebook contains an interactive cell where you can input a target pla
 
 Author: Rifhan Hajiteh & Isarn Ilacharn
 Student ID: 661431009 & 661431021
+
+## Reusable ML Engine
+
+`scout_engine.py` contains the same preprocessing, tuning, dynamic feature
+weighting, and five recommendation algorithms as the notebook, without the
+Jupyter widget and chart presentation layer.
+
+Run it from the project root:
+
+```bash
+python ScoutAI/scout_engine.py "Kevin De Bruyne"
+```
+
+Or call it from Python:
+
+```python
+from ScoutAI.scout_engine import recommend_players
+
+result = recommend_players("Kevin De Bruyne")
+print(result["results"])
+```
+
+The first call loads the dataset and runs the notebook's original
+hyperparameter-tuning steps. Later calls in the same process reuse that engine
+instance.
+
+Run the notebook parity tests:
+
+```bash
+python -m unittest ScoutAI.tests.test_scout_engine -v
+```
+
+## ML API
+
+Install the requirements and start the FastAPI service from the project root:
+
+```bash
+pip install -r ScoutAI/requirements.txt
+python -m uvicorn ScoutAI.api:app --host 127.0.0.1 --port 8000
+```
+
+The engine is loaded once during API startup. Check readiness:
+
+```text
+GET http://127.0.0.1:8000/health
+```
+
+Request recommendations:
+
+```http
+POST http://127.0.0.1:8000/v1/recommend
+Content-Type: application/json
+
+{
+  "playerName": "Kevin De Bruyne"
+}
+```
+
+Interactive API documentation is available at:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Run the API tests:
+
+```bash
+python -m unittest ScoutAI.tests.test_api -v
+```
