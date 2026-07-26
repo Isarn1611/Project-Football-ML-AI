@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import {
@@ -7,7 +7,15 @@ import {
   getAiAnalysis,
   getRecommendations,
 } from "../services/api";
+import { useAuth } from "../auth/useAuth";
 import AuthMenu from "../components/AuthMenu";
+import {
+  getPlayerKey,
+  loadShortlist,
+  recordSearch,
+  removeShortlistPlayer,
+  upsertShortlistPlayer,
+} from "../services/scoutingData";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -149,6 +157,54 @@ function readAiApiError(error) {
       payload?.message ||
       "Could not generate the AI analysis. Check the Gemini configuration and try again.",
   };
+}
+
+function readShortlistError(error) {
+  const message = error?.message || "Could not update shortlist.";
+  if (
+    message.includes("player_search_history") ||
+    message.includes("row-level security policy")
+  ) {
+    return "Search history policy needs to be updated in Supabase. Run the latest search history RLS SQL migration.";
+  }
+
+  if (
+    message.includes("player_shortlist") ||
+    message.includes("Could not find the table")
+  ) {
+    return "Run the Supabase shortlist/history SQL migration before using shortlist.";
+  }
+
+  return message;
+}
+
+function countModelResults(results) {
+  return Object.values(results || {}).reduce(
+    (total, players) => total + (Array.isArray(players) ? players.length : 0),
+    0
+  );
+}
+
+function ShortlistButton({ disabled, isSaved, onClick, size = "default" }) {
+  const sizeClass =
+    size === "small"
+      ? "rounded-lg px-3 py-2 text-xs"
+      : "rounded-xl px-5 py-3 text-sm";
+
+  return (
+    <button
+      className={`${sizeClass} border font-black transition disabled:cursor-not-allowed disabled:opacity-60 ${
+        isSaved
+          ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-200 hover:bg-emerald-300/15"
+          : "border-white/10 bg-white/[0.04] text-slate-200 hover:border-emerald-300/40 hover:text-emerald-200"
+      }`}
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
+      {isSaved ? "Saved" : "Save"}
+    </button>
+  );
 }
 
 function LoadingState({ playerName }) {
@@ -346,7 +402,7 @@ function CandidateAttributeDetails({ player }) {
   if (groups.length === 0) return null;
 
   return (
-    <details className="group col-span-3 mt-1 rounded-xl border border-white/[0.07] bg-black/15">
+    <details className="group col-span-4 mt-1 rounded-xl border border-white/[0.07] bg-black/15">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs text-slate-400 transition hover:text-emerald-200 [&::-webkit-details-marker]:hidden">
         <span>View player attributes</span>
         <span className="text-right text-slate-600">
@@ -427,7 +483,12 @@ function BestChoice({ label, name }) {
   );
 }
 
-function AiAnalysisResult({ result }) {
+function AiAnalysisResult({
+  result,
+  shortlistActionKey,
+  shortlistKeys,
+  onToggleShortlist,
+}) {
   const { analysis } = result;
   const totalTokens = result.usage?.totalTokens;
 
@@ -486,23 +547,41 @@ function AiAnalysisResult({ result }) {
           AI shortlist
         </p>
         <div className="mt-3 grid gap-4 lg:grid-cols-2">
-          {analysis.recommendations.map((recommendation, index) => (
+          {analysis.recommendations.map((recommendation, index) => {
+            const recommendationPlayer = {
+              Name: recommendation.playerName,
+              sourceRecommendation: recommendation,
+            };
+            const playerKey = getPlayerKey(recommendationPlayer);
+            const isSaved = shortlistKeys.has(playerKey);
+
+            return (
             <article
               className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-5"
               key={`${recommendation.playerName}-${index}`}
             >
-              <div className="flex items-start gap-3">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-cyan-300/10 text-xs font-black text-cyan-300">
-                  {index + 1}
-                </span>
-                <div>
-                  <h4 className="font-bold text-white">
-                    {recommendation.playerName}
-                  </h4>
-                  <p className="mt-1 text-sm leading-6 text-slate-400">
-                    {recommendation.fitSummary}
-                  </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-cyan-300/10 text-xs font-black text-cyan-300">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <h4 className="truncate font-bold text-white">
+                      {recommendation.playerName}
+                    </h4>
+                    <p className="mt-1 text-sm leading-6 text-slate-400">
+                      {recommendation.fitSummary}
+                    </p>
+                  </div>
                 </div>
+                <ShortlistButton
+                  disabled={shortlistActionKey === playerKey}
+                  isSaved={isSaved}
+                  onClick={() =>
+                    onToggleShortlist(recommendationPlayer, "AI shortlist")
+                  }
+                  size="small"
+                />
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -542,7 +621,8 @@ function AiAnalysisResult({ result }) {
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -566,7 +646,14 @@ function AiAnalysisResult({ result }) {
   );
 }
 
-function AiAnalysisPanel({ aiState, onGenerate, onRetry }) {
+function AiAnalysisPanel({
+  aiState,
+  shortlistActionKey,
+  shortlistKeys,
+  onGenerate,
+  onRetry,
+  onToggleShortlist,
+}) {
   return (
     <section className="mt-10 overflow-hidden rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-300/[0.08] via-white/[0.035] to-emerald-300/[0.04] p-6 sm:p-8">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -640,13 +727,25 @@ function AiAnalysisPanel({ aiState, onGenerate, onRetry }) {
       )}
 
       {aiState.status === "success" && aiState.result && (
-        <AiAnalysisResult result={aiState.result} />
+        <AiAnalysisResult
+          result={aiState.result}
+          shortlistActionKey={shortlistActionKey}
+          shortlistKeys={shortlistKeys}
+          onToggleShortlist={onToggleShortlist}
+        />
       )}
     </section>
   );
 }
 
-function ModelCard({ modelName, players, style }) {
+function ModelCard({
+  modelName,
+  players,
+  shortlistActionKey,
+  shortlistKeys,
+  style,
+  onToggleShortlist,
+}) {
   return (
     <article
       className={`overflow-hidden rounded-2xl border ${style.border} bg-white/[0.045]`}
@@ -674,10 +773,12 @@ function ModelCard({ modelName, players, style }) {
           {players.map((player, index) => {
             const score = normalizeScore(player.Score);
             const isOutlier = String(player.Name).includes("OUTLIER");
+            const playerKey = getPlayerKey(player);
+            const isSaved = shortlistKeys.has(playerKey);
 
             return (
               <li
-                className="grid grid-cols-[2rem_1fr_auto] items-center gap-3 px-5 py-4"
+                className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-3 px-5 py-4"
                 key={`${player.Name}-${index}`}
               >
                 <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/[0.06] text-xs font-bold text-slate-400">
@@ -717,6 +818,18 @@ function ModelCard({ modelName, players, style }) {
                     Value {formatCompactCurrency(player.MarketValue)}
                   </span>
                 </div>
+                {!isOutlier ? (
+                  <ShortlistButton
+                    disabled={shortlistActionKey === playerKey}
+                    isSaved={isSaved}
+                    onClick={() =>
+                      onToggleShortlist(player, `${modelName} candidate`)
+                    }
+                    size="small"
+                  />
+                ) : (
+                  <span />
+                )}
                 {!isOutlier && (
                   <CandidateAttributeDetails player={player} />
                 )}
@@ -731,6 +844,8 @@ function ModelCard({ modelName, players, style }) {
 
 function Result() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
+  const recordedHistoryKeys = useRef(new Set());
   const playerName = searchParams.get("player")?.trim() || "";
   const [reloadToken, setReloadToken] = useState(0);
   const requestKey = `${playerName}:${reloadToken}`;
@@ -746,6 +861,12 @@ function Result() {
     status: "idle",
     result: null,
     error: null,
+  });
+  const [shortlistState, setShortlistState] = useState({
+    actionKey: "",
+    error: "",
+    items: [],
+    loading: true,
   });
 
   useEffect(() => {
@@ -784,8 +905,55 @@ function Result() {
     };
   }, [playerName, requestKey]);
 
-  const currentState = !playerName
-    ? {
+  useEffect(() => {
+    let isActive = true;
+
+    if (!user?.id) {
+      setShortlistState({
+        actionKey: "",
+        error: "",
+        items: [],
+        loading: false,
+      });
+      return () => {
+        isActive = false;
+      };
+    }
+
+    setShortlistState((state) => ({
+      ...state,
+      error: "",
+      loading: true,
+    }));
+
+    loadShortlist(user.id)
+      .then((items) => {
+        if (!isActive) return;
+        setShortlistState({
+          actionKey: "",
+          error: "",
+          items,
+          loading: false,
+        });
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        setShortlistState({
+          actionKey: "",
+          error: readShortlistError(error),
+          items: [],
+          loading: false,
+        });
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [user?.id]);
+
+  const currentState = useMemo(() => {
+    if (!playerName) {
+      return {
         status: "error",
         result: null,
         error: {
@@ -793,14 +961,17 @@ function Result() {
           message: "No player was selected for analysis.",
           matches: [],
         },
-      }
-    : requestState.key === requestKey
+      };
+    }
+
+    return requestState.key === requestKey
       ? requestState
       : {
           status: "loading",
           result: null,
           error: null,
         };
+  }, [playerName, requestKey, requestState]);
 
   const models = useMemo(
     () => Object.entries(currentState.result?.results || {}),
@@ -815,6 +986,48 @@ function Result() {
           result: null,
           error: null,
         };
+  const shortlistKeys = useMemo(
+    () =>
+      new Set(
+        shortlistState.items
+          .map((item) => item.player_key)
+          .filter(Boolean)
+      ),
+    [shortlistState.items]
+  );
+  const targetPlayer = currentState.result?.target;
+  const targetPlayerKey = targetPlayer ? getPlayerKey(targetPlayer) : "";
+  const isTargetSaved = shortlistKeys.has(targetPlayerKey);
+
+  useEffect(() => {
+    if (
+      !user?.id ||
+      currentState.status !== "success" ||
+      !currentState.result
+    ) {
+      return;
+    }
+
+    const targetName = currentState.result.target?.Name || playerName;
+    const historyKey = `${user.id}:${targetName}:${currentState.key || requestKey}`;
+
+    if (recordedHistoryKeys.current.has(historyKey)) {
+      return;
+    }
+
+    recordedHistoryKeys.current.add(historyKey);
+    recordSearch(user.id, targetName, {
+      status: "success",
+      requestedQuery: playerName,
+      resultCount: countModelResults(currentState.result.results),
+      submittedFrom: "result_page",
+    }).catch((error) => {
+      setShortlistState((state) => ({
+        ...state,
+        error: readShortlistError(error),
+      }));
+    });
+  }, [currentState, playerName, requestKey, user?.id]);
 
   function retry() {
     clearRecommendationCache(playerName);
@@ -823,6 +1036,63 @@ function Result() {
 
   function selectPlayer(name) {
     setSearchParams({ player: name });
+  }
+
+  async function toggleShortlist(player, source) {
+    if (!user?.id) {
+      setShortlistState((state) => ({
+        ...state,
+        error: "Sign in is required to save players.",
+      }));
+      return;
+    }
+
+    const playerKey = getPlayerKey(player);
+    if (!playerKey) {
+      setShortlistState((state) => ({
+        ...state,
+        error: "Could not identify this player.",
+      }));
+      return;
+    }
+
+    const isSaved = shortlistKeys.has(playerKey);
+
+    setShortlistState((state) => ({
+      ...state,
+      actionKey: playerKey,
+      error: "",
+    }));
+
+    try {
+      if (isSaved) {
+        await removeShortlistPlayer(user.id, playerKey);
+        setShortlistState((state) => ({
+          ...state,
+          actionKey: "",
+          items: state.items.filter((item) => item.player_key !== playerKey),
+        }));
+        return;
+      }
+
+      const item = await upsertShortlistPlayer(user.id, player, source);
+      setShortlistState((state) => ({
+        ...state,
+        actionKey: "",
+        items: [
+          item,
+          ...state.items.filter(
+            (existingItem) => existingItem.player_key !== item.player_key
+          ),
+        ],
+      }));
+    } catch (error) {
+      setShortlistState((state) => ({
+        ...state,
+        actionKey: "",
+        error: readShortlistError(error),
+      }));
+    }
   }
 
   async function generateAiAnalysis() {
@@ -919,7 +1189,24 @@ function Result() {
                 </p>
               </div>
 
-              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-5">
+              <div className="grid gap-3">
+                <div className="flex justify-start lg:justify-end">
+                  <ShortlistButton
+                    disabled={
+                      shortlistState.loading ||
+                      shortlistState.actionKey === targetPlayerKey
+                    }
+                    isSaved={isTargetSaved}
+                    onClick={() =>
+                      toggleShortlist(
+                        currentState.result.target,
+                        "Target player"
+                      )
+                    }
+                  />
+                </div>
+
+                <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-5">
                 <div className="min-w-24 bg-[#0d1914] px-4 py-3">
                   <dt className="text-xs text-slate-500">Position</dt>
                   <dd className="mt-1 font-bold text-white">
@@ -959,15 +1246,25 @@ function Result() {
                     )}
                   </dd>
                 </div>
-              </dl>
+                </dl>
+              </div>
             </header>
+
+            {shortlistState.error && (
+              <div className="mt-5 rounded-2xl border border-amber-300/20 bg-amber-300/[0.08] px-4 py-3 text-sm text-amber-100">
+                {shortlistState.error}
+              </div>
+            )}
 
             <TargetAttributes target={currentState.result.target} />
 
             <AiAnalysisPanel
               aiState={currentAiState}
+              shortlistActionKey={shortlistState.actionKey}
+              shortlistKeys={shortlistKeys}
               onGenerate={generateAiAnalysis}
               onRetry={retryAiAnalysis}
+              onToggleShortlist={toggleShortlist}
             />
 
             <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-8">
@@ -1001,7 +1298,10 @@ function Result() {
                   key={modelName}
                   modelName={modelName}
                   players={players}
+                  shortlistActionKey={shortlistState.actionKey}
+                  shortlistKeys={shortlistKeys}
                   style={modelStyles[index % modelStyles.length]}
+                  onToggleShortlist={toggleShortlist}
                 />
               ))}
             </div>

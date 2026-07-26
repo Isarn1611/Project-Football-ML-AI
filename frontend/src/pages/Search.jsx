@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../auth/useAuth";
 import AuthMenu from "../components/AuthMenu";
+import {
+  clearSearchHistory,
+  loadSearchHistory,
+  loadShortlist,
+  removeSearchHistoryItem,
+  removeShortlistItem,
+} from "../services/scoutingData";
 
 const examplePlayers = [
   "Kevin De Bruyne",
@@ -9,10 +17,234 @@ const examplePlayers = [
   "Mohamed Salah",
 ];
 
+function formatDateTime(value) {
+  if (!value) return "Unknown time";
+
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function readDataError(error) {
+  const message = error?.message || "Could not load scouting workspace data.";
+  if (
+    message.includes("player_search_history") ||
+    message.includes("row-level security policy")
+  ) {
+    return "Search history policy needs to be updated in Supabase. Run the latest search history RLS SQL migration.";
+  }
+
+  if (
+    message.includes("player_shortlist") ||
+    message.includes("player_search_history") ||
+    message.includes("Could not find the table")
+  ) {
+    return "Run the Supabase shortlist/history SQL migration before using this workspace.";
+  }
+
+  return message;
+}
+
+function EmptyWorkspaceState({ children }) {
+  return (
+    <p className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm leading-6 text-slate-500">
+      {children}
+    </p>
+  );
+}
+
+function ShortlistPanel({ items, onAnalyze, onRemove }) {
+  return (
+    <section className="rounded-3xl border border-white/10 bg-white/[0.045] p-5 sm:p-6">
+      <div className="mb-5 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">
+            Shortlist
+          </p>
+          <h2 className="mt-1 text-xl font-bold text-white">
+            Saved players
+          </h2>
+        </div>
+        <span className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-400">
+          {items.length}
+        </span>
+      </div>
+
+      {items.length === 0 ? (
+        <EmptyWorkspaceState>
+          Save players from a scouting report to build your shortlist.
+        </EmptyWorkspaceState>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <article
+              className="rounded-2xl border border-white/[0.08] bg-black/15 p-4"
+              key={item.id}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h3 className="truncate font-bold text-white">
+                    {item.player_name}
+                  </h3>
+                  <p className="mt-1 truncate text-sm text-slate-400">
+                    {[item.club, item.position].filter(Boolean).join(" · ") ||
+                      "No club or position saved"}
+                  </p>
+                  <p className="mt-2 text-xs text-slate-600">
+                    {item.source} · saved {formatDateTime(item.updated_at)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    className="rounded-lg border border-emerald-300/20 px-3 py-2 text-xs font-bold text-emerald-200 transition hover:bg-emerald-300/10"
+                    onClick={() => onAnalyze(item.player_name)}
+                    type="button"
+                  >
+                    Analyze
+                  </button>
+                  <button
+                    className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-slate-400 transition hover:border-rose-300/30 hover:text-rose-200"
+                    onClick={() => onRemove(item.id)}
+                    type="button"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
+  return (
+    <section className="rounded-3xl border border-white/10 bg-white/[0.045] p-5 sm:p-6">
+      <div className="mb-5 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">
+            Search history
+          </p>
+          <h2 className="mt-1 text-xl font-bold text-white">
+            Recent searches
+          </h2>
+        </div>
+        {items.length > 0 && (
+          <button
+            className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-slate-400 transition hover:border-rose-300/30 hover:text-rose-200"
+            onClick={onClear}
+            type="button"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {items.length === 0 ? (
+        <EmptyWorkspaceState>
+          Searches will appear here after you run a scouting report.
+        </EmptyWorkspaceState>
+      ) : (
+        <ol className="space-y-3">
+          {items.map((item) => (
+            <li
+              className="rounded-2xl border border-white/[0.08] bg-black/15 p-4"
+              key={item.id}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="truncate font-bold text-white">
+                    {item.query}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {formatDateTime(item.created_at)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    className="rounded-lg border border-cyan-300/20 px-3 py-2 text-xs font-bold text-cyan-200 transition hover:bg-cyan-300/10"
+                    onClick={() => onAnalyze(item.query)}
+                    type="button"
+                  >
+                    Reopen
+                  </button>
+                  <button
+                    className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-slate-400 transition hover:border-rose-300/30 hover:text-rose-200"
+                    onClick={() => onRemove(item.id)}
+                    type="button"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
 function Search() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [playerName, setPlayerName] = useState("");
   const [error, setError] = useState("");
+  const [workspaceState, setWorkspaceState] = useState({
+    loading: true,
+    error: "",
+    shortlist: [],
+    history: [],
+  });
+
+  useEffect(() => {
+    let isActive = true;
+
+    if (!user?.id) {
+      setWorkspaceState({
+        loading: false,
+        error: "",
+        shortlist: [],
+        history: [],
+      });
+      return () => {
+        isActive = false;
+      };
+    }
+
+    setWorkspaceState((state) => ({
+      ...state,
+      loading: true,
+      error: "",
+    }));
+
+    Promise.all([loadShortlist(user.id), loadSearchHistory(user.id)])
+      .then(([shortlist, history]) => {
+        if (!isActive) return;
+        setWorkspaceState({
+          loading: false,
+          error: "",
+          shortlist,
+          history,
+        });
+      })
+      .catch((workspaceError) => {
+        if (!isActive) return;
+        setWorkspaceState({
+          loading: false,
+          error: readDataError(workspaceError),
+          shortlist: [],
+          history: [],
+        });
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [user?.id]);
 
   function startAnalysis(name) {
     const cleanedName = String(name || "").trim();
@@ -27,6 +259,57 @@ function Search() {
   function handleSubmit(event) {
     event.preventDefault();
     startAnalysis(playerName);
+  }
+
+  async function removeShortlist(id) {
+    if (!user?.id) return;
+
+    try {
+      await removeShortlistItem(user.id, id);
+      setWorkspaceState((state) => ({
+        ...state,
+        shortlist: state.shortlist.filter((item) => item.id !== id),
+      }));
+    } catch (removeError) {
+      setWorkspaceState((state) => ({
+        ...state,
+        error: readDataError(removeError),
+      }));
+    }
+  }
+
+  async function removeHistory(id) {
+    if (!user?.id) return;
+
+    try {
+      await removeSearchHistoryItem(user.id, id);
+      setWorkspaceState((state) => ({
+        ...state,
+        history: state.history.filter((item) => item.id !== id),
+      }));
+    } catch (removeError) {
+      setWorkspaceState((state) => ({
+        ...state,
+        error: readDataError(removeError),
+      }));
+    }
+  }
+
+  async function clearHistory() {
+    if (!user?.id) return;
+
+    try {
+      await clearSearchHistory(user.id);
+      setWorkspaceState((state) => ({
+        ...state,
+        history: [],
+      }));
+    } catch (clearError) {
+      setWorkspaceState((state) => ({
+        ...state,
+        error: readDataError(clearError),
+      }));
+    }
   }
 
   return (
@@ -134,6 +417,34 @@ function Search() {
             </div>
           </div>
         </div>
+
+        <section className="grid gap-5 pb-10 lg:grid-cols-2">
+          {workspaceState.error && (
+            <div className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.08] px-4 py-3 text-sm text-amber-100 lg:col-span-2">
+              {workspaceState.error}
+            </div>
+          )}
+
+          {workspaceState.loading ? (
+            <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-6 text-sm text-slate-400 lg:col-span-2">
+              Loading scouting workspace
+            </div>
+          ) : (
+            <>
+              <ShortlistPanel
+                items={workspaceState.shortlist}
+                onAnalyze={startAnalysis}
+                onRemove={removeShortlist}
+              />
+              <HistoryPanel
+                items={workspaceState.history}
+                onAnalyze={startAnalysis}
+                onClear={clearHistory}
+                onRemove={removeHistory}
+              />
+            </>
+          )}
+        </section>
 
         <footer className="flex flex-col gap-2 border-t border-white/10 pt-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <span>ScoutAI · Football Manager 2023 dataset</span>
