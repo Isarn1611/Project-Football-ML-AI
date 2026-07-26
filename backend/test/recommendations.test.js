@@ -339,6 +339,14 @@ test("POST /api/ai/analyze sends trusted ML context to Gemini", async () => {
     lastGeminiRequest.body.generationConfig.responseMimeType,
     "application/json"
   );
+  assert.match(
+    lastGeminiRequest.body.systemInstruction.parts[0].text,
+    /clear English/
+  );
+  assert.doesNotMatch(
+    lastGeminiRequest.body.systemInstruction.parts[0].text,
+    /Thai/
+  );
 
   const scoutContext = JSON.parse(
     lastGeminiRequest.body.contents[0].parts[0].text

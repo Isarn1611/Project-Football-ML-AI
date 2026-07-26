@@ -36,7 +36,7 @@ export function clearRecommendationCache(playerName) {
 
 export function getAiAnalysis(playerName) {
   const normalizedName = String(playerName || "").trim();
-  const cacheKey = normalizedName.toLocaleLowerCase();
+  const cacheKey = `en:${normalizedName.toLocaleLowerCase()}`;
 
   if (!aiAnalysisCache.has(cacheKey)) {
     const request = api
@@ -56,7 +56,7 @@ export function getAiAnalysis(playerName) {
 }
 
 export function clearAiAnalysisCache(playerName) {
-  const cacheKey = String(playerName || "").trim().toLocaleLowerCase();
+  const cacheKey = `en:${String(playerName || "").trim().toLocaleLowerCase()}`;
   aiAnalysisCache.delete(cacheKey);
 }
 
