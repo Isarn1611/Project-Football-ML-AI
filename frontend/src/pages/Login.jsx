@@ -1,15 +1,59 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import {
+  Alert,
+  Button,
+  Card,
+  Divider,
+  Form,
+  Input,
+  Segmented,
+  Space,
+  Statistic,
+  Typography,
+} from "antd";
+import {
+  GithubOutlined,
+  GoogleOutlined,
+  LoginOutlined,
+  LockOutlined,
+  MailOutlined,
+} from "@ant-design/icons";
 
 import { useAuth } from "../auth/useAuth";
+import scoutAiWordmark from "../assets/scoutai-wordmark.png";
 import { supabase } from "../lib/supabase";
 
+const { Text } = Typography;
+
 const socialProviders = [
-  { label: "Google", provider: "google" },
-  { label: "GitHub", provider: "github" },
+  { icon: <GoogleOutlined />, label: "Google", provider: "google" },
+  { icon: <GithubOutlined />, label: "GitHub", provider: "github" },
 ];
 
 const POST_LOGIN_PATH = "/";
+
+function readAuthError(error) {
+  const message = error?.message || "Could not complete sign in.";
+
+  if (/rate limit/i.test(message)) {
+    return "Too many requests. Wait a few minutes, then try again.";
+  }
+
+  if (/invalid login credentials/i.test(message)) {
+    return "Email or password is incorrect.";
+  }
+
+  if (/email not confirmed/i.test(message)) {
+    return "Confirm your email before signing in.";
+  }
+
+  if (/provider is not enabled/i.test(message)) {
+    return "This sign-in method is not enabled yet.";
+  }
+
+  return message;
+}
 
 function getAuthCallbackUrl(returnPath) {
   const url = new URL("/auth/callback", window.location.origin);
@@ -22,8 +66,6 @@ function Login() {
   const navigate = useNavigate();
   const returnPath = POST_LOGIN_PATH;
   const [mode, setMode] = useState("signIn");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [formState, setFormState] = useState({
     loading: false,
     error: "",
@@ -39,9 +81,7 @@ function Login() {
     return <Navigate to={returnPath} replace />;
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-
+  async function handleSubmit(values) {
     if (!supabase) {
       setFormState({
         loading: false,
@@ -56,15 +96,15 @@ function Login() {
     const authRequest =
       mode === "signUp"
         ? supabase.auth.signUp({
-            email,
-            password,
+            email: values.email,
+            password: values.password,
             options: {
               emailRedirectTo: getAuthCallbackUrl(returnPath),
             },
           })
         : supabase.auth.signInWithPassword({
-            email,
-            password,
+            email: values.email,
+            password: values.password,
           });
 
     const { data, error } = await authRequest;
@@ -72,7 +112,7 @@ function Login() {
     if (error) {
       setFormState({
         loading: false,
-        error: error.message,
+        error: readAuthError(error),
         message: "",
       });
       return;
@@ -113,178 +153,161 @@ function Login() {
     if (error) {
       setFormState({
         loading: false,
-        error: error.message,
+        error: readAuthError(error),
         message: "",
       });
     }
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#07110d] text-slate-100">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-32 top-24 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="absolute -right-40 bottom-0 h-[30rem] w-[30rem] rounded-full bg-cyan-500/8 blur-3xl" />
-        <div className="pitch-grid absolute inset-0 opacity-30" />
-      </div>
-
-      <section className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-8 sm:py-8">
-        <header className="flex items-center justify-between border-b border-white/10 pb-5">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl border border-emerald-300/30 bg-emerald-300/10 text-sm font-black text-emerald-300">
-              SA
-            </div>
-            <div>
-              <p className="font-bold tracking-tight text-white">ScoutAI</p>
-              <p className="text-xs text-slate-400">Player similarity engine</p>
-            </div>
+    <main className="login-shell">
+      <section className="login-container">
+        <div className="login-copy">
+          <div className="login-brand">
+            <img
+              className="login-brand-logo"
+              src={scoutAiWordmark}
+              alt="ScoutAI"
+            />
+            <Text type="secondary">Football Manager player intelligence</Text>
           </div>
-          <span className="rounded-full border border-emerald-300/20 bg-emerald-300/8 px-3 py-1 text-xs font-semibold text-emerald-200">
-            Secure access
-          </span>
-        </header>
 
-        <div className="grid flex-1 items-center gap-12 py-16 lg:grid-cols-[1fr_0.8fr] lg:py-20">
           <div>
-            <p className="mb-5 text-xs font-bold uppercase tracking-[0.28em] text-emerald-300">
-              ScoutAI workspace
-            </p>
-            <h1 className="max-w-3xl text-5xl font-black leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl lg:text-7xl">
-              Sign in before opening the scouting room.
-            </h1>
-            <p className="mt-7 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-              Your reports and API requests now require a valid Supabase
-              session.
+            <span className="section-kicker">Secure scouting workspace</span>
+            <h1 className="page-title">Sign in to open the player database.</h1>
+            <p className="page-subtitle">
+              Reports, saved players, and search history are tied to your
+              account.
             </p>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-2xl shadow-black/30 backdrop-blur sm:p-7">
-            <div className="mb-6">
-              <p className="text-sm font-semibold text-emerald-300">
-                {mode === "signIn" ? "Welcome back" : "Create access"}
-              </p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">
-                {mode === "signIn" ? "Sign in" : "Create account"}
-              </h2>
-            </div>
-
-            <div className="mb-5 grid grid-cols-2 rounded-xl border border-white/10 bg-black/20 p-1">
-              <button
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                  mode === "signIn"
-                    ? "bg-emerald-300 text-emerald-950"
-                    : "text-slate-400 hover:text-emerald-200"
-                }`}
-                onClick={() => changeMode("signIn")}
-                type="button"
-              >
-                Sign in
-              </button>
-              <button
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                  mode === "signUp"
-                    ? "bg-emerald-300 text-emerald-950"
-                    : "text-slate-400 hover:text-emerald-200"
-                }`}
-                onClick={() => changeMode("signUp")}
-                type="button"
-              >
-                Sign up
-              </button>
-            </div>
-
-            {!isConfigured && (
-              <p className="mb-4 rounded-xl border border-amber-300/20 bg-amber-300/[0.08] px-4 py-3 text-sm text-amber-100">
-                Supabase is not configured for this frontend.
-              </p>
-            )}
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              {socialProviders.map(({ label, provider }) => (
-                <button
-                  className="min-h-12 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm font-semibold text-slate-100 transition hover:border-emerald-300/40 hover:bg-emerald-300/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={formState.loading || !isConfigured}
-                  key={provider}
-                  onClick={() => signInWithProvider(provider)}
-                  type="button"
-                >
-                  Continue with {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="my-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                or
-              </span>
-              <div className="h-px flex-1 bg-white/10" />
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <label
-                className="mb-2 block text-sm font-medium text-slate-300"
-                htmlFor="email"
-              >
-                Email
-              </label>
-              <input
-                autoComplete="email"
-                autoFocus
-                className="min-h-14 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-base text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/70 focus:ring-4 focus:ring-emerald-300/10"
-                id="email"
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@club.com"
-                required
-                type="email"
-                value={email}
-              />
-
-              <label
-                className="mb-2 mt-4 block text-sm font-medium text-slate-300"
-                htmlFor="password"
-              >
-                Password
-              </label>
-              <input
-                autoComplete={
-                  mode === "signIn" ? "current-password" : "new-password"
-                }
-                className="min-h-14 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-base text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/70 focus:ring-4 focus:ring-emerald-300/10"
-                id="password"
-                minLength={6}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="At least 6 characters"
-                required
-                type="password"
-                value={password}
-              />
-
-              {formState.error && (
-                <p className="mt-3 text-sm text-rose-300" role="alert">
-                  {formState.error}
-                </p>
-              )}
-
-              {formState.message && (
-                <p className="mt-3 text-sm text-emerald-200" role="status">
-                  {formState.message}
-                </p>
-              )}
-
-              <button
-                className="mt-5 min-h-14 w-full rounded-xl bg-emerald-300 px-5 font-bold text-emerald-950 transition hover:bg-emerald-200 focus:outline-none focus:ring-4 focus:ring-emerald-300/25 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={formState.loading || !isConfigured}
-                type="submit"
-              >
-                {formState.loading
-                  ? "Working"
-                  : mode === "signIn"
-                    ? "Sign in"
-                    : "Create account"}
-              </button>
-            </form>
+          <div className="metric-grid">
+            <Card size="small">
+              <Statistic title="Players" value={8452} />
+            </Card>
+            <Card size="small">
+              <Statistic title="Attributes" value={89} />
+            </Card>
+            <Card size="small">
+              <Statistic title="Models" value={5} />
+            </Card>
           </div>
         </div>
+
+        <Card
+          bordered
+          className="auth-card"
+          title={mode === "signIn" ? "Sign in" : "Create account"}
+        >
+          <Segmented
+            block
+            onChange={changeMode}
+            options={[
+              { label: "Sign in", value: "signIn" },
+              { label: "Sign up", value: "signUp" },
+            ]}
+            value={mode}
+          />
+
+          {!isConfigured && (
+            <Alert
+              message="Supabase is not configured for this frontend."
+              showIcon
+              style={{ marginTop: 16 }}
+              type="warning"
+            />
+          )}
+
+          <Space direction="vertical" size={10} style={{ marginTop: 20, width: "100%" }}>
+            {socialProviders.map(({ icon, label, provider }) => (
+              <Button
+                block
+                className="auth-centered-button"
+                disabled={formState.loading || !isConfigured}
+                icon={icon}
+                key={provider}
+                onClick={() => signInWithProvider(provider)}
+                size="large"
+              >
+                Continue with {label}
+              </Button>
+            ))}
+          </Space>
+
+          <Divider plain>or</Divider>
+
+          <Form
+            disabled={formState.loading || !isConfigured}
+            layout="vertical"
+            onFinish={handleSubmit}
+            requiredMark={false}
+          >
+            <Form.Item
+              label="Email"
+              name="email"
+              rules={[
+                { required: true, message: "Enter your email." },
+                { type: "email", message: "Enter a valid email." },
+              ]}
+            >
+              <Input
+                autoComplete="email"
+                autoFocus
+                className="auth-input"
+                prefix={<MailOutlined />}
+                size="large"
+                placeholder="you@club.com"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="Password"
+              name="password"
+              rules={[
+                { required: true, message: "Enter your password." },
+                { min: 6, message: "Use at least 6 characters." },
+              ]}
+            >
+              <Input.Password
+                autoComplete={mode === "signIn" ? "current-password" : "new-password"}
+                className="auth-input"
+                prefix={<LockOutlined />}
+                size="large"
+                placeholder="At least 6 characters"
+              />
+            </Form.Item>
+
+            {formState.error && (
+              <Alert
+                message={formState.error}
+                showIcon
+                style={{ marginBottom: 16 }}
+                type="error"
+              />
+            )}
+
+            {formState.message && (
+              <Alert
+                message={formState.message}
+                showIcon
+                style={{ marginBottom: 16 }}
+                type="success"
+              />
+            )}
+
+            <Button
+              block
+              className="auth-centered-button"
+              htmlType="submit"
+              icon={<LoginOutlined />}
+              loading={formState.loading}
+              size="large"
+              type="primary"
+            >
+              {mode === "signIn" ? "Sign in" : "Create account"}
+            </Button>
+          </Form>
+        </Card>
       </section>
     </main>
   );

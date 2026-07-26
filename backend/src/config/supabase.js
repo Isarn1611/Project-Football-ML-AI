@@ -36,8 +36,12 @@ async function supabaseRequest(path, searchParams = {}) {
 
   const url = new URL(`/rest/v1/${path}`, SUPABASE_URL);
   Object.entries(searchParams).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, String(value));
+    const values = Array.isArray(value) ? value : [value];
+
+    for (const entry of values) {
+      if (entry !== undefined && entry !== null && entry !== "") {
+        url.searchParams.append(key, String(entry));
+      }
     }
   });
 

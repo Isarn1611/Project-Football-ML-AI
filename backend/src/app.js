@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { requireAuth } = require("./middleware/requireAuth");
-const { searchPlayersByName } = require("./services/playerService");
+const { searchPlayers } = require("./services/playerService");
 const {
     getMlHealth,
     getPlayerRecommendations,
@@ -24,8 +24,7 @@ app.get("/", (req, res) => {
 
 app.get("/api/players/search", requireAuth, async (req, res, next) => {
     try {
-        const { name, limit } = req.query;
-        const result = await searchPlayersByName(name, limit);
+        const result = await searchPlayers(req.query);
 
         res.json(result);
     } catch (error) {

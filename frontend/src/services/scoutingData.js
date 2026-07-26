@@ -2,7 +2,6 @@ import { supabase } from "../lib/supabase";
 
 const SHORTLIST_TABLE = "player_shortlist";
 const SEARCH_HISTORY_TABLE = "player_search_history";
-const SEARCH_HISTORY_DEDUPE_MS = 30_000;
 
 function requireSupabase() {
   if (!supabase) {
@@ -33,6 +32,21 @@ function cleanText(value) {
 function cleanNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+
+function dedupeSearchHistoryRows(rows = []) {
+  const seenQueries = new Set();
+
+  return rows.filter((row) => {
+    const queryKey = cleanText(row.query)?.toLocaleLowerCase();
+
+    if (!queryKey || seenQueries.has(queryKey)) {
+      return false;
+    }
+
+    seenQueries.add(queryKey);
+    return true;
+  });
 }
 
 function pick(player, keys) {
@@ -153,7 +167,7 @@ export async function loadSearchHistory(userId, limit = 25) {
     .limit(limit);
 
   if (error) throw error;
-  return data || [];
+  return dedupeSearchHistoryRows(data || []);
 }
 
 export async function recordSearch(userId, query, metadata = {}) {
@@ -165,34 +179,28 @@ export async function recordSearch(userId, query, metadata = {}) {
     return null;
   }
 
-  const dedupeWindowMs =
-    Number.isFinite(Number(metadata.dedupeWindowMs))
-      ? Number(metadata.dedupeWindowMs)
-      : SEARCH_HISTORY_DEDUPE_MS;
-  const dedupeSince = new Date(Date.now() - dedupeWindowMs).toISOString();
-  const { data: existingHistory, error: existingError } = await client
-    .from(SEARCH_HISTORY_TABLE)
-    .select("*")
-    .eq("user_id", authenticatedUserId)
-    .eq("query", cleanedQuery)
-    .gte("created_at", dedupeSince)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const now = new Date().toISOString();
+  const payload = {
+    user_id: authenticatedUserId,
+    query: cleanedQuery,
+    status: metadata.status || "searched",
+    result_count: metadata.resultCount ?? null,
+    error_message: metadata.errorMessage || null,
+    metadata,
+    created_at: now,
+  };
 
-  if (existingError) throw existingError;
-  if (existingHistory) return existingHistory;
+  const { error: deleteExistingError } = await client
+    .from(SEARCH_HISTORY_TABLE)
+    .delete()
+    .eq("user_id", authenticatedUserId)
+    .eq("query", cleanedQuery);
+
+  if (deleteExistingError) throw deleteExistingError;
 
   const { data, error } = await client
     .from(SEARCH_HISTORY_TABLE)
-    .insert({
-      user_id: authenticatedUserId,
-      query: cleanedQuery,
-      status: metadata.status || "searched",
-      result_count: metadata.resultCount ?? null,
-      error_message: metadata.errorMessage || null,
-      metadata,
-    })
+    .insert(payload)
     .select()
     .single();
 

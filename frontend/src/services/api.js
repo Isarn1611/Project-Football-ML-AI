@@ -46,6 +46,20 @@ export function getRecommendations(playerName) {
   return recommendationCache.get(cacheKey);
 }
 
+export function searchPlayers(filters = {}) {
+  const params = Object.fromEntries(
+    Object.entries(filters).filter(([, value]) => {
+      return value !== undefined && value !== null && value !== "";
+    })
+  );
+
+  return api
+    .get("/api/players/search", {
+      params,
+    })
+    .then((response) => response.data);
+}
+
 export function clearRecommendationCache(playerName) {
   const cacheKey = String(playerName || "").trim().toLocaleLowerCase();
   recommendationCache.delete(cacheKey);

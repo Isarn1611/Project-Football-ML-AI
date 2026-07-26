@@ -1,6 +1,9 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Card, Spin, Typography } from "antd";
 
 import { useAuth } from "../auth/useAuth";
+
+const { Text } = Typography;
 
 function ProtectedRoute() {
   const { isAuthenticated, loading } = useAuth();
@@ -8,13 +11,15 @@ function ProtectedRoute() {
 
   if (loading) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#07110d] px-5 text-center text-slate-100">
-        <div>
-          <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-2 border-transparent border-t-emerald-300" />
-          <p className="text-sm font-semibold text-slate-300">
-            Checking session
-          </p>
-        </div>
+      <main className="login-shell">
+        <section className="state-center">
+          <Card style={{ minWidth: 260, textAlign: "center" }}>
+            <Spin size="large" />
+            <div style={{ marginTop: 16 }}>
+              <Text strong>Opening workspace</Text>
+            </div>
+          </Card>
+        </section>
       </main>
     );
   }

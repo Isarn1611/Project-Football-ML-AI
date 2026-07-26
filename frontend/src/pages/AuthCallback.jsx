@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button, Card, Result, Spin, Typography } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 
 import { useAuth } from "../auth/useAuth";
 import { supabase } from "../lib/supabase";
+
+const { Paragraph, Text } = Typography;
 
 function getSafeNext(value) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
@@ -45,6 +49,26 @@ function getCallbackError(searchParams) {
   return decodeCallbackError(queryError || getHashError());
 }
 
+function readCallbackError(message) {
+  if (!message) {
+    return "";
+  }
+
+  if (/unable to exchange external code/i.test(message)) {
+    return "Google sign in could not be completed. Check the OAuth redirect settings, then try again.";
+  }
+
+  if (/rate limit/i.test(message)) {
+    return "Too many sign-in attempts. Wait a few minutes, then try again.";
+  }
+
+  if (/access_denied/i.test(message)) {
+    return "Sign in was cancelled before access was granted.";
+  }
+
+  return message;
+}
+
 function AuthCallback() {
   const { refresh } = useAuth();
   const navigate = useNavigate();
@@ -56,13 +80,13 @@ function AuthCallback() {
 
     async function finishSignIn() {
       if (!supabase) {
-        setError("Supabase is not configured for this frontend.");
+        setError("Sign in is not configured for this app.");
         return;
       }
 
       const callbackError = getCallbackError(searchParams);
       if (callbackError) {
-        setError(callbackError);
+        setError(readCallbackError(callbackError));
         return;
       }
 
@@ -74,7 +98,7 @@ function AuthCallback() {
           await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError) {
-          setError(exchangeError.message);
+          setError(readCallbackError(exchangeError.message));
           return;
         }
       }
@@ -85,7 +109,7 @@ function AuthCallback() {
       if (nextState.user) {
         navigate(next, { replace: true });
       } else {
-        setError("Sign in completed, but no Supabase session was found.");
+        setError("Sign in finished, but no session was found. Try signing in again.");
       }
     }
 
@@ -97,33 +121,35 @@ function AuthCallback() {
   }, [navigate, refresh, searchParams]);
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[#07110d] px-5 text-center text-slate-100">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.055] p-6 shadow-2xl shadow-black/30">
-        {error ? (
-          <>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-rose-300">
-              Sign in failed
-            </p>
-            <h1 className="mt-3 text-2xl font-bold text-white">
-              Could not finish sign in
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-slate-400">{error}</p>
-            <Link
-              className="mt-6 inline-flex rounded-xl bg-emerald-300 px-5 py-3 font-bold text-emerald-950 transition hover:bg-emerald-200"
-              to="/login"
-            >
-              Back to login
-            </Link>
-          </>
-        ) : (
-          <>
-            <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-2 border-transparent border-t-emerald-300" />
-            <p className="text-sm font-semibold text-slate-300">
-              Finishing sign in
-            </p>
-          </>
-        )}
-      </div>
+    <main className="login-shell">
+      <section className="state-center">
+        <Card style={{ maxWidth: 460, width: "min(100% - 32px, 460px)" }}>
+          {error ? (
+            <Result
+              extra={
+                <Button
+                  icon={<ArrowLeftOutlined />}
+                  onClick={() => navigate("/login", { replace: true })}
+                  type="primary"
+                >
+                  Back to login
+                </Button>
+              }
+              status="error"
+              subTitle={error}
+              title="Could not finish sign in"
+            />
+          ) : (
+            <div style={{ padding: 28, textAlign: "center" }}>
+              <Spin size="large" />
+              <Paragraph style={{ margin: "18px 0 4px" }}>
+                <Text strong>Finishing sign in</Text>
+              </Paragraph>
+              <Text type="secondary">You will be redirected automatically.</Text>
+            </div>
+          )}
+        </Card>
+      </section>
     </main>
   );
 }

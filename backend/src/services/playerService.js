@@ -8,8 +8,69 @@ const NAME_COLUMNS = [
   "player_name",
 ].filter(Boolean);
 
+const DEFAULT_LIMIT = 12;
+const MAX_LIMIT = 50;
+const MIN_POSITION_SCORE = 15;
+const POSITION_COLUMNS = [
+  "GK",
+  "DL",
+  "DC",
+  "DR",
+  "WBL",
+  "WBR",
+  "DM",
+  "ML",
+  "MC",
+  "MR",
+  "AML",
+  "AMC",
+  "AMR",
+  "ST",
+];
+const POSITION_GROUPS = {
+  goalkeeper: ["GK"],
+  defender: ["DL", "DC", "DR", "WBL", "WBR"],
+  fullback: ["DL", "DR", "WBL", "WBR"],
+  midfielder: ["DM", "ML", "MC", "MR"],
+  playmaker: ["MC", "AMC"],
+  winger: ["ML", "MR", "AML", "AMR"],
+  attacker: ["AML", "AMC", "AMR", "ST"],
+  striker: ["ST"],
+};
+const PRESET_FILTERS = {
+  wonderkids: {
+    maxAge: 21,
+    minPA: 140,
+    sort: "potential_desc",
+  },
+  bargains: {
+    maxValue: 10000000,
+    minCA: 120,
+    sort: "value_asc",
+  },
+  elite: {
+    minCA: 160,
+    sort: "ability_desc",
+  },
+};
+const SORT_OPTIONS = {
+  ability_desc: "ca.desc",
+  potential_desc: "pa.desc",
+  age_asc: "Age.asc",
+  value_asc: "Values.asc",
+  wage_asc: "Salary.asc",
+  name_asc: "Name.asc",
+};
+
 function cleanSearchTerm(name) {
   return String(name || "").trim();
+}
+
+function cleanTextFilter(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[%*]/g, "")
+    .slice(0, 80);
 }
 
 function pick(player, keys, fallback = null) {
@@ -25,6 +86,114 @@ function toNumber(value) {
   if (value === undefined || value === null || value === "") return null;
   const number = Number(String(value).replace(/[^0-9.-]/g, ""));
   return Number.isNaN(number) ? null : number;
+}
+
+function toOptionalNumber(value) {
+  const number = toNumber(value);
+  return number === null ? null : number;
+}
+
+function clampNumber(value, min, max, fallback) {
+  const number = toOptionalNumber(value);
+  if (number === null) return fallback;
+
+  return Math.min(Math.max(number, min), max);
+}
+
+function pickNumber(inputValue, presetValue = null) {
+  const number = toOptionalNumber(inputValue);
+  return number === null ? presetValue : number;
+}
+
+function appendRangeFilter(params, column, minValue, maxValue, options = {}) {
+  const filters = [];
+
+  if (options.nonNegative) {
+    filters.push("gte.0");
+  }
+
+  if (minValue !== null && minValue !== undefined) {
+    filters.push(`gte.${minValue}`);
+  }
+
+  if (maxValue !== null && maxValue !== undefined) {
+    filters.push(`lte.${maxValue}`);
+  }
+
+  if (filters.length === 1) {
+    params[column] = filters[0];
+  } else if (filters.length > 1) {
+    params[column] = filters;
+  }
+}
+
+function normalizePosition(value) {
+  const rawPosition = cleanTextFilter(value);
+  const upperPosition = rawPosition.toUpperCase();
+  const lowerPosition = rawPosition.toLowerCase();
+
+  if (!rawPosition) {
+    return {
+      value: "",
+      columns: [],
+      textFallback: "",
+    };
+  }
+
+  if (POSITION_GROUPS[lowerPosition]) {
+    return {
+      value: lowerPosition,
+      columns: POSITION_GROUPS[lowerPosition],
+      textFallback: "",
+    };
+  }
+
+  if (POSITION_COLUMNS.includes(upperPosition)) {
+    return {
+      value: upperPosition,
+      columns: [upperPosition],
+      textFallback: "",
+    };
+  }
+
+  return {
+    value: rawPosition,
+    columns: [],
+    textFallback: rawPosition,
+  };
+}
+
+function normalizeFilters(input = {}) {
+  const presetKey = cleanTextFilter(input.preset).toLowerCase();
+  const preset = PRESET_FILTERS[presetKey] ? presetKey : "";
+  const presetFilters = preset ? PRESET_FILTERS[preset] : {};
+  const name = cleanTextFilter(input.name || input.q || input.player);
+  const sortKey = cleanTextFilter(input.sort || presetFilters.sort).toLowerCase();
+  const position = normalizePosition(input.position);
+
+  if (name && name.length < 2) {
+    const error = new Error("Player search must contain at least 2 characters.");
+    error.status = 400;
+    throw error;
+  }
+
+  return {
+    name,
+    club: cleanTextFilter(input.club),
+    nationality: cleanTextFilter(input.nationality),
+    position,
+    preset,
+    minAge: pickNumber(input.minAge, presetFilters.minAge),
+    maxAge: pickNumber(input.maxAge, presetFilters.maxAge),
+    minCA: pickNumber(input.minCA, presetFilters.minCA),
+    maxCA: pickNumber(input.maxCA, presetFilters.maxCA),
+    minPA: pickNumber(input.minPA, presetFilters.minPA),
+    maxPA: pickNumber(input.maxPA, presetFilters.maxPA),
+    maxValue: pickNumber(input.maxValue, presetFilters.maxValue),
+    maxSalary: pickNumber(input.maxSalary, presetFilters.maxSalary),
+    sort: SORT_OPTIONS[sortKey] ? sortKey : "ability_desc",
+    limit: clampNumber(input.limit, 1, MAX_LIMIT, DEFAULT_LIMIT),
+  };
 }
 
 function formatPlayer(player) {
@@ -53,6 +222,65 @@ function formatPlayer(player) {
       strength: toNumber(pick(player, ["Strength", "strength"])),
     },
     raw: player,
+  };
+}
+
+function buildSearchParams(filters) {
+  const params = {
+    select: "*",
+    limit: filters.limit,
+    order: SORT_OPTIONS[filters.sort],
+  };
+  const nameColumn = NAME_COLUMNS[0] || "Name";
+
+  if (filters.name) {
+    params[nameColumn] = `ilike.*${filters.name}*`;
+  }
+
+  if (filters.club) {
+    params.Club = `ilike.*${filters.club}*`;
+  }
+
+  if (filters.nationality) {
+    params.Nationality = `ilike.*${filters.nationality}*`;
+  }
+
+  if (filters.position.columns.length === 1) {
+    params[filters.position.columns[0]] = `gte.${MIN_POSITION_SCORE}`;
+  } else if (filters.position.columns.length > 1) {
+    params.or = `(${filters.position.columns
+      .map((column) => `${column}.gte.${MIN_POSITION_SCORE}`)
+      .join(",")})`;
+  } else if (filters.position.textFallback) {
+    params.Position = `ilike.*${filters.position.textFallback}*`;
+  }
+
+  appendRangeFilter(params, "Age", filters.minAge, filters.maxAge);
+  appendRangeFilter(params, "ca", filters.minCA, filters.maxCA);
+  appendRangeFilter(params, "pa", filters.minPA, filters.maxPA);
+  appendRangeFilter(params, "Values", null, filters.maxValue, {
+    nonNegative: filters.maxValue !== null,
+  });
+  appendRangeFilter(params, "Salary", null, filters.maxSalary, {
+    nonNegative: filters.maxSalary !== null,
+  });
+
+  return params;
+}
+
+async function searchPlayers(input = {}) {
+  const filters = normalizeFilters(input);
+  const params = buildSearchParams(filters);
+  const rows = await supabaseRequest(PLAYER_TABLE, params);
+
+  return {
+    table: PLAYER_TABLE,
+    count: rows.length,
+    filters: {
+      ...filters,
+      position: filters.position.value,
+    },
+    players: rows.map(formatPlayer),
   };
 }
 
@@ -102,5 +330,6 @@ async function searchPlayersByName(name, limit = 10) {
 }
 
 module.exports = {
+  searchPlayers,
   searchPlayersByName,
 };
