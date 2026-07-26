@@ -6,6 +6,10 @@ const {
     getMlHealth,
     getPlayerRecommendations,
 } = require("./services/recommendationService");
+const {
+    analyzeScoutReport,
+    getAiHealth,
+} = require("./services/aiAnalysisService");
 
 const app = express();
 
@@ -41,6 +45,24 @@ app.get("/api/ml/health", async (_req, res, next) => {
 app.post("/api/recommendations", requireAuth, async (req, res, next) => {
     try {
         const result = await getPlayerRecommendations(req.body?.playerName);
+        res.json(result);
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get("/api/ai/health", (_req, res, next) => {
+    try {
+        res.json(getAiHealth());
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post("/api/ai/analyze", requireAuth, async (req, res, next) => {
+    try {
+        const mlResult = await getPlayerRecommendations(req.body?.playerName);
+        const result = await analyzeScoutReport(mlResult);
         res.json(result);
     } catch (error) {
         next(error);

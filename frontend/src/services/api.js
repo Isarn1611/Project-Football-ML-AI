@@ -23,6 +23,7 @@ api.interceptors.request.use(async (config) => {
 });
 
 const recommendationCache = new Map();
+const aiAnalysisCache = new Map();
 
 export function getRecommendations(playerName) {
   const normalizedName = String(playerName || "").trim();
@@ -48,6 +49,32 @@ export function getRecommendations(playerName) {
 export function clearRecommendationCache(playerName) {
   const cacheKey = String(playerName || "").trim().toLocaleLowerCase();
   recommendationCache.delete(cacheKey);
+}
+
+export function getAiAnalysis(playerName) {
+  const normalizedName = String(playerName || "").trim();
+  const cacheKey = `en:${normalizedName.toLocaleLowerCase()}`;
+
+  if (!aiAnalysisCache.has(cacheKey)) {
+    const request = api
+      .post("/api/ai/analyze", {
+        playerName: normalizedName,
+      })
+      .then((response) => response.data)
+      .catch((error) => {
+        aiAnalysisCache.delete(cacheKey);
+        throw error;
+      });
+
+    aiAnalysisCache.set(cacheKey, request);
+  }
+
+  return aiAnalysisCache.get(cacheKey);
+}
+
+export function clearAiAnalysisCache(playerName) {
+  const cacheKey = `en:${String(playerName || "").trim().toLocaleLowerCase()}`;
+  aiAnalysisCache.delete(cacheKey);
 }
 
 export default api;

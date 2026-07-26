@@ -29,22 +29,16 @@ async function readAuthState() {
       return signedOutState;
     }
 
-    const [claimsResult, userResult] = await Promise.all([
-      supabase.auth.getClaims(),
-      supabase.auth.getUser(),
-    ]);
+    const userResult = await supabase.auth.getUser();
 
-    if (
-      claimsResult.error ||
-      userResult.error ||
-      !claimsResult.data?.claims ||
-      !userResult.data?.user
-    ) {
+    if (userResult.error || !userResult.data?.user) {
       return signedOutState;
     }
 
+    const claimsResult = await supabase.auth.getClaims().catch(() => null);
+
     return {
-      claims: claimsResult.data.claims,
+      claims: claimsResult?.data?.claims || null,
       session,
       user: userResult.data.user,
       loading: false,
@@ -111,7 +105,7 @@ export function AuthProvider({ children }) {
   const value = useMemo(
     () => ({
       ...authState,
-      isAuthenticated: Boolean(authState.claims?.sub),
+      isAuthenticated: Boolean(authState.user?.id),
       isConfigured: isSupabaseConfigured,
       refresh,
       signOut,

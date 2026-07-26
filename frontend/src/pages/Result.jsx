@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import {
+  clearAiAnalysisCache,
   clearRecommendationCache,
+  getAiAnalysis,
   getRecommendations,
 } from "../services/api";
 import AuthMenu from "../components/AuthMenu";
@@ -136,6 +138,16 @@ function readApiError(error) {
       payload?.message ||
       "Could not complete the scouting analysis. Check that both APIs are running.",
     matches: payload?.details?.matches || [],
+  };
+}
+
+function readAiApiError(error) {
+  const payload = error.response?.data;
+  return {
+    code: payload?.code || "AI_REQUEST_FAILED",
+    message:
+      payload?.message ||
+      "Could not generate the AI analysis. Check the Gemini configuration and try again.",
   };
 }
 
@@ -380,6 +392,260 @@ function CandidateAttributeDetails({ player }) {
   );
 }
 
+function InsightList({ accent, items, title }) {
+  return (
+    <article className="rounded-2xl border border-white/[0.08] bg-black/15 p-5">
+      <h4
+        className={`text-xs font-bold uppercase tracking-[0.2em] ${accent}`}
+      >
+        {title}
+      </h4>
+      {items.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-500">No evidence available.</p>
+      ) : (
+        <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+          {items.map((item, index) => (
+            <li className="flex gap-2" key={`${title}-${index}`}>
+              <span aria-hidden="true" className={accent}>
+                •
+              </span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </article>
+  );
+}
+
+function BestChoice({ label, name }) {
+  return (
+    <div className="bg-[#0d1914] px-4 py-3">
+      <dt className="text-xs text-slate-500">{label}</dt>
+      <dd className="mt-1 font-bold text-white">{formatValue(name)}</dd>
+    </div>
+  );
+}
+
+function AiAnalysisResult({ result }) {
+  const { analysis } = result;
+  const totalTokens = result.usage?.totalTokens;
+
+  return (
+    <div className="mt-6">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+        <span className="rounded-full border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-1.5 text-cyan-200">
+          {result.provider} · {result.model}
+        </span>
+        <span className="rounded-full border border-white/10 px-3 py-1.5">
+          ML evidence only
+        </span>
+        {totalTokens !== null && totalTokens !== undefined && (
+          <span className="rounded-full border border-white/10 px-3 py-1.5">
+            {totalTokens.toLocaleString()} tokens
+          </span>
+        )}
+      </div>
+
+      <h3 className="mt-5 text-2xl font-black tracking-tight text-white">
+        {analysis.title}
+      </h3>
+      <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-300">
+        {analysis.executiveSummary}
+      </p>
+
+      <div className="mt-6 rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.04] p-5">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+          Target play style
+        </p>
+        <p className="mt-2 text-sm leading-7 text-slate-200">
+          {analysis.targetProfile.playStyle}
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <InsightList
+          accent="text-emerald-300"
+          items={analysis.targetProfile.strengths}
+          title="Strengths"
+        />
+        <InsightList
+          accent="text-amber-300"
+          items={analysis.targetProfile.weaknesses}
+          title="Weaknesses"
+        />
+        <InsightList
+          accent="text-rose-300"
+          items={analysis.targetProfile.risks}
+          title="Risks"
+        />
+      </div>
+
+      <div className="mt-6">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+          AI shortlist
+        </p>
+        <div className="mt-3 grid gap-4 lg:grid-cols-2">
+          {analysis.recommendations.map((recommendation, index) => (
+            <article
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-5"
+              key={`${recommendation.playerName}-${index}`}
+            >
+              <div className="flex items-start gap-3">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-cyan-300/10 text-xs font-black text-cyan-300">
+                  {index + 1}
+                </span>
+                <div>
+                  <h4 className="font-bold text-white">
+                    {recommendation.playerName}
+                  </h4>
+                  <p className="mt-1 text-sm leading-6 text-slate-400">
+                    {recommendation.fitSummary}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-300">
+                    Why it fits
+                  </p>
+                  <ul className="mt-2 space-y-1.5 text-xs leading-5 text-slate-300">
+                    {recommendation.reasons.map((reason, reasonIndex) => (
+                      <li key={`${recommendation.playerName}-reason-${reasonIndex}`}>
+                        • {reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">
+                    Watch points
+                  </p>
+                  {recommendation.concerns.length === 0 ? (
+                    <p className="mt-2 text-xs text-slate-500">
+                      No major concern identified.
+                    </p>
+                  ) : (
+                    <ul className="mt-2 space-y-1.5 text-xs leading-5 text-slate-400">
+                      {recommendation.concerns.map(
+                        (concern, concernIndex) => (
+                          <li
+                            key={`${recommendation.playerName}-concern-${concernIndex}`}
+                          >
+                            • {concern}
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <dl className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+        <BestChoice label="Best overall" name={analysis.bestChoices.overall} />
+        <BestChoice
+          label="Closest style"
+          name={analysis.bestChoices.styleMatch}
+        />
+        <BestChoice label="Best value" name={analysis.bestChoices.value} />
+        <BestChoice
+          label="Best potential"
+          name={analysis.bestChoices.potential}
+        />
+      </dl>
+
+      <p className="mt-5 border-t border-white/[0.08] pt-4 text-xs leading-5 text-slate-500">
+        {analysis.confidenceNote}
+      </p>
+    </div>
+  );
+}
+
+function AiAnalysisPanel({ aiState, onGenerate, onRetry }) {
+  return (
+    <section className="mt-10 overflow-hidden rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-300/[0.08] via-white/[0.035] to-emerald-300/[0.04] p-6 sm:p-8">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">
+            AI scouting analysis
+          </p>
+          <h2 className="mt-2 text-xl font-bold text-white">
+            Turn ML evidence into a scouting brief
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+            Gemini compares the target with the ML shortlist, then explains
+            strengths, risks, value and potential. It only receives the
+            dataset evidence shown in this report.
+          </p>
+        </div>
+
+        {aiState.status === "idle" && (
+          <button
+            className="shrink-0 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
+            onClick={onGenerate}
+            type="button"
+          >
+            Generate AI analysis
+          </button>
+        )}
+
+        {aiState.status === "loading" && (
+          <button
+            aria-busy="true"
+            className="inline-flex shrink-0 cursor-wait items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-5 py-3 text-sm font-bold text-cyan-200"
+            disabled
+            type="button"
+          >
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-cyan-100/30 border-t-cyan-100" />
+            Analyzing…
+          </button>
+        )}
+      </div>
+
+      {aiState.status === "loading" && (
+        <div aria-live="polite" className="mt-6 grid gap-3 sm:grid-cols-3">
+          {[0, 1, 2].map((item) => (
+            <div
+              className="h-24 animate-pulse rounded-2xl bg-white/[0.05]"
+              key={item}
+            />
+          ))}
+        </div>
+      )}
+
+      {aiState.status === "error" && (
+        <div
+          aria-live="assertive"
+          className="mt-6 rounded-2xl border border-rose-300/20 bg-rose-300/[0.06] p-5"
+        >
+          <p className="text-sm font-bold text-rose-200">
+            AI analysis unavailable
+          </p>
+          <p className="mt-2 text-sm text-slate-400">
+            {aiState.error.message}
+          </p>
+          <button
+            className="mt-4 rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-cyan-300/30 hover:text-cyan-200"
+            onClick={onRetry}
+            type="button"
+          >
+            Try AI analysis again
+          </button>
+        </div>
+      )}
+
+      {aiState.status === "success" && aiState.result && (
+        <AiAnalysisResult result={aiState.result} />
+      )}
+    </section>
+  );
+}
+
 function ModelCard({ modelName, players, style }) {
   return (
     <article
@@ -474,6 +740,13 @@ function Result() {
     result: null,
     error: null,
   });
+  const aiRequestKey = playerName.toLocaleLowerCase();
+  const [aiState, setAiState] = useState({
+    key: "",
+    status: "idle",
+    result: null,
+    error: null,
+  });
 
   useEffect(() => {
     let isActive = true;
@@ -533,6 +806,15 @@ function Result() {
     () => Object.entries(currentState.result?.results || {}),
     [currentState.result]
   );
+  const currentAiState =
+    aiState.key === aiRequestKey
+      ? aiState
+      : {
+          key: aiRequestKey,
+          status: "idle",
+          result: null,
+          error: null,
+        };
 
   function retry() {
     clearRecommendationCache(playerName);
@@ -541,6 +823,47 @@ function Result() {
 
   function selectPlayer(name) {
     setSearchParams({ player: name });
+  }
+
+  async function generateAiAnalysis() {
+    const activeKey = aiRequestKey;
+
+    setAiState({
+      key: activeKey,
+      status: "loading",
+      result: null,
+      error: null,
+    });
+
+    try {
+      const result = await getAiAnalysis(playerName);
+      setAiState((state) =>
+        state.key === activeKey
+          ? {
+              key: activeKey,
+              status: "success",
+              result,
+              error: null,
+            }
+          : state
+      );
+    } catch (error) {
+      setAiState((state) =>
+        state.key === activeKey
+          ? {
+              key: activeKey,
+              status: "error",
+              result: null,
+              error: readAiApiError(error),
+            }
+          : state
+      );
+    }
+  }
+
+  function retryAiAnalysis() {
+    clearAiAnalysisCache(playerName);
+    generateAiAnalysis();
   }
 
   return (
@@ -640,6 +963,12 @@ function Result() {
             </header>
 
             <TargetAttributes target={currentState.result.target} />
+
+            <AiAnalysisPanel
+              aiState={currentAiState}
+              onGenerate={generateAiAnalysis}
+              onRetry={retryAiAnalysis}
+            />
 
             <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-8">
               <div>

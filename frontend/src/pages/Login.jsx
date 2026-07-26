@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/useAuth";
 import { supabase } from "../lib/supabase";
@@ -9,20 +9,18 @@ const socialProviders = [
   { label: "GitHub", provider: "github" },
 ];
 
-function getReturnPath(location) {
-  const from = location.state?.from;
-  if (!from?.pathname) {
-    return "/";
-  }
+const POST_LOGIN_PATH = "/";
 
-  return `${from.pathname}${from.search || ""}${from.hash || ""}`;
+function getAuthCallbackUrl(returnPath) {
+  const url = new URL("/auth/callback", window.location.origin);
+  url.searchParams.set("next", returnPath);
+  return url.toString();
 }
 
 function Login() {
   const { isAuthenticated, isConfigured, loading, refresh } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
-  const returnPath = useMemo(() => getReturnPath(location), [location]);
+  const returnPath = POST_LOGIN_PATH;
   const [mode, setMode] = useState("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,7 +59,7 @@ function Login() {
             email,
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}${returnPath}`,
+              emailRedirectTo: getAuthCallbackUrl(returnPath),
             },
           })
         : supabase.auth.signInWithPassword({
@@ -108,7 +106,7 @@ function Login() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}${returnPath}`,
+        redirectTo: getAuthCallbackUrl(returnPath),
       },
     });
 
