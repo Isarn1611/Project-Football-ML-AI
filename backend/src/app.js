@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
-const { searchPlayersByName } = require("./services/playerService");
+const { requireAuth } = require("./middleware/requireAuth");
+const { searchPlayers } = require("./services/playerService");
 const {
     getMlHealth,
     getPlayerRecommendations,
@@ -21,10 +22,9 @@ app.get("/", (req, res) => {
     });
 });
 
-app.get("/api/players/search", async (req, res, next) => {
+app.get("/api/players/search", requireAuth, async (req, res, next) => {
     try {
-        const { name, limit } = req.query;
-        const result = await searchPlayersByName(name, limit);
+        const result = await searchPlayers(req.query);
 
         res.json(result);
     } catch (error) {
@@ -41,7 +41,7 @@ app.get("/api/ml/health", async (_req, res, next) => {
     }
 });
 
-app.post("/api/recommendations", async (req, res, next) => {
+app.post("/api/recommendations", requireAuth, async (req, res, next) => {
     try {
         const result = await getPlayerRecommendations(req.body?.playerName);
         res.json(result);
@@ -58,7 +58,7 @@ app.get("/api/ai/health", (_req, res, next) => {
     }
 });
 
-app.post("/api/ai/analyze", async (req, res, next) => {
+app.post("/api/ai/analyze", requireAuth, async (req, res, next) => {
     try {
         const mlResult = await getPlayerRecommendations(req.body?.playerName);
         const result = await analyzeScoutReport(mlResult);

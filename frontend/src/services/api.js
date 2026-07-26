@@ -1,8 +1,25 @@
 import axios from "axios";
 
+import { supabase } from "../lib/supabase";
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
   timeout: 130000,
+});
+
+api.interceptors.request.use(async (config) => {
+  if (!supabase) return config;
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session?.access_token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${session.access_token}`;
+  }
+
+  return config;
 });
 
 const recommendationCache = new Map();
@@ -27,6 +44,20 @@ export function getRecommendations(playerName) {
   }
 
   return recommendationCache.get(cacheKey);
+}
+
+export function searchPlayers(filters = {}) {
+  const params = Object.fromEntries(
+    Object.entries(filters).filter(([, value]) => {
+      return value !== undefined && value !== null && value !== "";
+    })
+  );
+
+  return api
+    .get("/api/players/search", {
+      params,
+    })
+    .then((response) => response.data);
 }
 
 export function clearRecommendationCache(playerName) {

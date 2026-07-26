@@ -4,6 +4,10 @@ const { after, before, test } = require("node:test");
 
 const app = require("../src/app");
 
+const AUTH_HEADER = {
+  Authorization: "Bearer valid-test-token",
+};
+
 let backendServer;
 let backendUrl;
 let mlServer;
@@ -15,20 +19,20 @@ let originalGeminiModel;
 let lastGeminiRequest;
 
 const mockAnalysis = {
-  title: "รายงานวิเคราะห์ Kevin De Bruyne",
-  executiveSummary: "นักเตะเป้าหมายมีจุดเด่นด้านการสร้างสรรค์เกม",
+  title: "Kevin De Bruyne scouting analysis",
+  executiveSummary: "The target player profiles as a creative midfielder.",
   targetProfile: {
-    playStyle: "เพลย์เมกเกอร์ที่สร้างโอกาสจากแดนกลาง",
-    strengths: ["Passing และ Vision สูง"],
-    weaknesses: ["ต้องประเมินข้อมูลเกมรับเพิ่มเติม"],
-    risks: ["ผลวิเคราะห์อ้างอิงจากชุดข้อมูลที่ให้มา"],
+    playStyle: "A central playmaker who creates chances from midfield.",
+    strengths: ["High passing and vision evidence."],
+    weaknesses: ["Defensive evidence needs further review."],
+    risks: ["The analysis is limited to the supplied dataset."],
   },
   recommendations: [
     {
       playerName: "Candidate One",
-      fitSummary: "มีรูปแบบการจ่ายบอลใกล้เคียง",
-      reasons: ["ติดอันดับจาก K-NN"],
-      concerns: ["PA ต่ำกว่าเป้าหมาย"],
+      fitSummary: "A close passing-profile match.",
+      reasons: ["Ranked by K-NN evidence."],
+      concerns: ["Lower PA than the target."],
     },
   ],
   bestChoices: {
@@ -37,7 +41,7 @@ const mockAnalysis = {
     value: "Candidate One",
     potential: "Candidate One",
   },
-  confidenceNote: "ML similarity ไม่ได้รับประกันผลงานในอนาคต",
+  confidenceNote: "ML similarity is evidence, not a performance guarantee.",
 };
 
 function listen(server) {
@@ -71,6 +75,10 @@ before(async () => {
   originalGeminiApiUrl = process.env.GEMINI_API_URL;
   originalGeminiApiKey = process.env.GEMINI_API_KEY;
   originalGeminiModel = process.env.GEMINI_MODEL;
+  app.locals.verifySupabaseUser = async (token) =>
+    token === "valid-test-token"
+      ? { id: "test-user-id", email: "scout@example.com" }
+      : null;
 
   mlServer = http.createServer((request, response) => {
     if (request.method === "GET" && request.url === "/health") {
@@ -216,6 +224,7 @@ after(async () => {
   await close(backendServer);
   await close(mlServer);
   await close(geminiServer);
+  delete app.locals.verifySupabaseUser;
 
   if (originalMlApiUrl === undefined) {
     delete process.env.ML_API_URL;
@@ -260,6 +269,7 @@ test("POST /api/recommendations proxies the ML result", async () => {
   const response = await fetch(`${backendUrl}/api/recommendations`, {
     method: "POST",
     headers: {
+      ...AUTH_HEADER,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -278,6 +288,7 @@ test("POST /api/recommendations validates playerName", async () => {
   const response = await fetch(`${backendUrl}/api/recommendations`, {
     method: "POST",
     headers: {
+      ...AUTH_HEADER,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -293,6 +304,7 @@ test("POST /api/recommendations preserves ambiguous-name details", async () => {
   const response = await fetch(`${backendUrl}/api/recommendations`, {
     method: "POST",
     headers: {
+      ...AUTH_HEADER,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -304,6 +316,21 @@ test("POST /api/recommendations preserves ambiguous-name details", async () => {
   assert.equal(response.status, 409);
   assert.equal(payload.code, "AMBIGUOUS_PLAYER_NAME");
   assert.equal(payload.details.matches.length, 2);
+});
+
+test("POST /api/recommendations rejects missing sessions", async () => {
+  const response = await fetch(`${backendUrl}/api/recommendations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      playerName: "Kevin De Bruyne",
+    }),
+  });
+
+  assert.equal(response.status, 401);
+  assert.equal((await response.json()).code, "UNAUTHENTICATED");
 });
 
 test("GET /api/ai/health reports Gemini configuration", async () => {
@@ -321,6 +348,7 @@ test("POST /api/ai/analyze sends trusted ML context to Gemini", async () => {
   const response = await fetch(`${backendUrl}/api/ai/analyze`, {
     method: "POST",
     headers: {
+      ...AUTH_HEADER,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -360,6 +388,7 @@ test("POST /api/ai/analyze validates playerName before calling Gemini", async ()
   const response = await fetch(`${backendUrl}/api/ai/analyze`, {
     method: "POST",
     headers: {
+      ...AUTH_HEADER,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -369,4 +398,19 @@ test("POST /api/ai/analyze validates playerName before calling Gemini", async ()
 
   assert.equal(response.status, 400);
   assert.equal((await response.json()).code, "INVALID_PLAYER_NAME");
+});
+
+test("POST /api/ai/analyze rejects missing sessions", async () => {
+  const response = await fetch(`${backendUrl}/api/ai/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      playerName: "Kevin De Bruyne",
+    }),
+  });
+
+  assert.equal(response.status, 401);
+  assert.equal((await response.json()).code, "UNAUTHENTICATED");
 });

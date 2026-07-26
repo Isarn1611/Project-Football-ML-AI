@@ -1,12 +1,34 @@
 require("dotenv").config();
 
+const { createClient } = require("@supabase/supabase-js");
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_PUBLISHABLE_KEY =
+  process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+
+let supabaseAuthClient;
 
 function ensureSupabaseConfig() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY in backend .env");
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error(
+      "Missing SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY or SUPABASE_ANON_KEY in backend .env"
+    );
   }
+}
+
+function getSupabaseAuthClient() {
+  ensureSupabaseConfig();
+
+  if (!supabaseAuthClient) {
+    supabaseAuthClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+  }
+
+  return supabaseAuthClient;
 }
 
 async function supabaseRequest(path, searchParams = {}) {
@@ -14,15 +36,19 @@ async function supabaseRequest(path, searchParams = {}) {
 
   const url = new URL(`/rest/v1/${path}`, SUPABASE_URL);
   Object.entries(searchParams).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, String(value));
+    const values = Array.isArray(value) ? value : [value];
+
+    for (const entry of values) {
+      if (entry !== undefined && entry !== null && entry !== "") {
+        url.searchParams.append(key, String(entry));
+      }
     }
   });
 
   const response = await fetch(url, {
     headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
     },
   });
 
@@ -40,5 +66,6 @@ async function supabaseRequest(path, searchParams = {}) {
 }
 
 module.exports = {
+  getSupabaseAuthClient,
   supabaseRequest,
 };
