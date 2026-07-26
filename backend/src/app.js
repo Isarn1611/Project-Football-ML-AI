@@ -1,6 +1,11 @@
 const express = require("express");
 const cors = require("cors");
+const { requireAuth } = require("./middleware/requireAuth");
 const { searchPlayersByName } = require("./services/playerService");
+const {
+    getMlHealth,
+    getPlayerRecommendations,
+} = require("./services/recommendationService");
 
 const app = express();
 
@@ -13,7 +18,7 @@ app.get("/", (req, res) => {
     });
 });
 
-app.get("/api/players/search", async (req, res, next) => {
+app.get("/api/players/search", requireAuth, async (req, res, next) => {
     try {
         const { name, limit } = req.query;
         const result = await searchPlayersByName(name, limit);
@@ -24,10 +29,31 @@ app.get("/api/players/search", async (req, res, next) => {
     }
 });
 
+app.get("/api/ml/health", async (_req, res, next) => {
+    try {
+        const result = await getMlHealth();
+        res.json(result);
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post("/api/recommendations", requireAuth, async (req, res, next) => {
+    try {
+        const result = await getPlayerRecommendations(req.body?.playerName);
+        res.json(result);
+    } catch (error) {
+        next(error);
+    }
+});
+
 app.use((error, req, res, _next) => {
-    console.error(error);
+    if (!error.status || error.status >= 500) {
+        console.error(error);
+    }
 
     res.status(error.status || 500).json({
+        code: error.code,
         message: error.message || "Internal server error",
         details: error.details,
     });
