@@ -5,13 +5,10 @@ import {
   Breadcrumb,
   Button,
   Card,
-  Col,
-  Descriptions,
   Empty,
   List,
   Progress,
   Result as AntResult,
-  Row,
   Skeleton,
   Space,
   Spin,
@@ -24,11 +21,18 @@ import {
   ArrowLeftOutlined,
   BarChartOutlined,
   BulbOutlined,
+  CheckCircleOutlined,
+  DownOutlined,
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+  MinusCircleOutlined,
+  RadarChartOutlined,
   ReloadOutlined,
   RobotOutlined,
   SearchOutlined,
   StarFilled,
   StarOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 
 import {
@@ -205,9 +209,20 @@ function getPlayerSummary(player) {
   return [player?.Club, getPlayerPosition(player)].filter(Boolean).join(" / ");
 }
 
+function getPlayerInitials(name) {
+  return String(name || "")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
 function ShortlistButton({ disabled, isSaved, onClick, size = "middle" }) {
   return (
     <Button
+      className="shortlist-button"
       disabled={disabled}
       icon={isSaved ? <StarFilled /> : <StarOutlined />}
       onClick={onClick}
@@ -235,18 +250,24 @@ function ReportMetric({ detail, label, value }) {
 
 function ReportBreadcrumb({ playerName }) {
   return (
-    <Breadcrumb
-      className="report-breadcrumb"
-      items={[
-        {
-          title: <Link to="/">Search</Link>,
-        },
-        {
-          title: <span>{playerName}</span>,
-        },
-      ]}
-      separator="/"
-    />
+    <nav aria-label="Scouting report navigation" className="report-navigation">
+      <Link className="report-back-link" to="/">
+        <ArrowLeftOutlined />
+        <span>Back to player database</span>
+      </Link>
+      <Breadcrumb
+        className="report-breadcrumb"
+        items={[
+          {
+            title: <span>Scouting report</span>,
+          },
+          {
+            title: <span>{playerName}</span>,
+          },
+        ]}
+        separator="/"
+      />
+    </nav>
   );
 }
 
@@ -322,12 +343,17 @@ function ErrorState({ error, onRetry, onSelectPlayer }) {
   );
 }
 
-function AttributeGroupCard({ groupName, attributes }) {
+function AttributeGroupCard({ groupName, attributes, split = false }) {
   const style = attributeGroupStyles[groupName] || attributeGroupStyles.Technical;
+  const entries = Object.entries(attributes);
+  const midpoint = Math.ceil(entries.length / 2);
+  const columns = split
+    ? [entries.slice(0, midpoint), entries.slice(midpoint)]
+    : [entries];
 
   return (
     <Card
-      className="attribute-card"
+      className={`attribute-card${split ? " is-split" : ""}`}
       size="small"
       title={
         <Space>
@@ -336,28 +362,32 @@ function AttributeGroupCard({ groupName, attributes }) {
         </Space>
       }
     >
-      <Space direction="vertical" size={12} style={{ width: "100%" }}>
-        {Object.entries(attributes).map(([attributeName, value]) => {
-          const normalizedValue = normalizeAttribute(value);
+      <div className="attribute-list">
+        {columns.map((column, columnIndex) => (
+          <div className="attribute-column" key={`column-${columnIndex}`}>
+            {column.map(([attributeName, value]) => {
+              const normalizedValue = normalizeAttribute(value);
 
-          return (
-            <div className="attribute-row" key={attributeName}>
-              <div className="attribute-line">
-                <Text ellipsis type="secondary">
-                  {attributeName}
-                </Text>
-                <Text strong>{formatValue(value)}</Text>
-              </div>
-              <Progress
-                percent={(normalizedValue / 20) * 100}
-                showInfo={false}
-                size="small"
-                strokeColor={style.color}
-              />
-            </div>
-          );
-        })}
-      </Space>
+              return (
+                <div className="attribute-row" key={attributeName}>
+                  <div className="attribute-line">
+                    <Text ellipsis type="secondary">
+                      {attributeName}
+                    </Text>
+                    <Text strong>{formatValue(value)}</Text>
+                  </div>
+                  <Progress
+                    percent={(normalizedValue / 20) * 100}
+                    showInfo={false}
+                    size="small"
+                    strokeColor={style.color}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </Card>
   );
 }
@@ -400,13 +430,21 @@ function PhysicalRadarCard({ attributes }) {
 
   if (items.length < 3) return null;
 
-  const center = 120;
-  const radius = 74;
-  const labelRadius = 99;
-  const levels = [0.25, 0.5, 0.75, 1];
+  const center = 160;
+  const radius = 102;
+  const labelRadius = 134;
+  const levels = [0.2, 0.4, 0.6, 0.8, 1];
   const average = Math.round(
     items.reduce((total, item) => total + item.value, 0) / items.length
   );
+  const grade =
+    average >= 16
+      ? "Elite"
+      : average >= 14
+        ? "Strong"
+        : average >= 12
+          ? "Balanced"
+          : "Developing";
   const dataPoints = getRadarPointString(
     items,
     radius,
@@ -416,94 +454,109 @@ function PhysicalRadarCard({ attributes }) {
 
   return (
     <Card
-      className="physical-radar-card"
+      className="physical-radar-card physical-profile-card"
       size="small"
       title={
-        <Space>
-          <Tag color="gold">Physical radar</Tag>
-          <Text type="secondary">1-20</Text>
-        </Space>
+        <div className="radar-card-heading">
+          <span>
+            <strong>Physical profile</strong>
+            <small>{items.length} attributes · scale 1–20</small>
+          </span>
+          <span className="radar-grade">{grade}</span>
+        </div>
       }
     >
-      <svg
-        aria-label="Physical attributes radar chart"
-        className="radar-chart"
-        role="img"
-        viewBox="0 0 240 240"
-      >
-        {levels.map((level) => (
-          <polygon
-            className="radar-grid"
-            key={level}
-            points={getRadarPointString(items, radius * level, center)}
-          />
-        ))}
-
-        {items.map((item, index) => {
-          const axisPoint = getRadarPoint(index, items.length, radius, center);
-          const labelPoint = getRadarPoint(
-            index,
-            items.length,
-            labelRadius,
-            center
-          );
-          const horizontalOffset = labelPoint.x - center;
-
-          return (
-            <g key={item.name}>
-              <line
-                className="radar-axis"
-                x1={center}
-                x2={axisPoint.x}
-                y1={center}
-                y2={axisPoint.y}
-              />
-              <text
-                className="radar-label"
-                dominantBaseline="middle"
-                textAnchor={
-                  horizontalOffset > 12
-                    ? "start"
-                    : horizontalOffset < -12
-                      ? "end"
-                      : "middle"
-                }
-                x={labelPoint.x}
-                y={labelPoint.y}
-              >
-                {item.label}
-              </text>
-            </g>
-          );
-        })}
-
-        <polygon className="radar-area" points={dataPoints} />
-        {items.map((item, index) => {
-          const point = getRadarPoint(
-            index,
-            items.length,
-            radius * (item.value / 20),
-            center
-          );
-
-          return (
-            <circle
-              className="radar-point"
-              cx={point.x}
-              cy={point.y}
-              key={item.name}
-              r="3.5"
+      <div className="radar-chart-shell">
+        <svg
+          aria-label="Physical attributes radar chart"
+          className="radar-chart"
+          role="img"
+          viewBox="0 0 320 320"
+        >
+          {levels.map((level) => (
+            <polygon
+              className="radar-grid"
+              key={level}
+              points={getRadarPointString(items, radius * level, center)}
             />
-          );
-        })}
+          ))}
 
-        <text className="radar-score-value" x={center} y={center - 3}>
-          {average}
-        </text>
-        <text className="radar-score-label" x={center} y={center + 15}>
-          avg
-        </text>
-      </svg>
+          {items.map((item, index) => {
+            const axisPoint = getRadarPoint(index, items.length, radius, center);
+            const labelPoint = getRadarPoint(
+              index,
+              items.length,
+              labelRadius,
+              center
+            );
+            const horizontalOffset = labelPoint.x - center;
+
+            return (
+              <g key={item.name}>
+                <line
+                  className="radar-axis"
+                  x1={center}
+                  x2={axisPoint.x}
+                  y1={center}
+                  y2={axisPoint.y}
+                />
+                <text
+                  className="radar-label"
+                  dominantBaseline="middle"
+                  textAnchor={
+                    horizontalOffset > 12
+                      ? "start"
+                      : horizontalOffset < -12
+                        ? "end"
+                        : "middle"
+                  }
+                  x={labelPoint.x}
+                  y={labelPoint.y}
+                >
+                  {item.label}
+                </text>
+              </g>
+            );
+          })}
+
+          <polygon className="radar-area" points={dataPoints} />
+          {items.map((item, index) => {
+            const point = getRadarPoint(
+              index,
+              items.length,
+              radius * (item.value / 20),
+              center
+            );
+
+            return (
+              <circle
+                className="radar-point"
+                cx={point.x}
+                cy={point.y}
+                key={item.name}
+                r="4"
+              />
+            );
+          })}
+
+          <circle className="radar-score-backdrop" cx={center} cy={center} r="27" />
+          <text className="radar-score-value" x={center} y={center - 3}>
+            {average}
+          </text>
+          <text className="radar-score-label" x={center} y={center + 15}>
+            avg / 20
+          </text>
+        </svg>
+      </div>
+
+      <div className="physical-attribute-grid">
+        {items.map((item) => (
+          <div className="physical-attribute-chip" key={item.name}>
+            <span>{item.label}</span>
+            <strong>{formatValue(item.value)}</strong>
+          </div>
+        ))}
+      </div>
     </Card>
   );
 }
@@ -513,6 +566,10 @@ function TargetAttributes({ target }) {
     target.Attributes,
     target.FullPosition || target.Position
   );
+  const barGroups = groups.filter(([groupName]) => groupName !== "Physical");
+  const physicalAttributes = groups.find(
+    ([groupName]) => groupName === "Physical"
+  )?.[1];
 
   if (groups.length === 0) return null;
 
@@ -534,24 +591,36 @@ function TargetAttributes({ target }) {
         </div>
       </div>
 
-      <Row gutter={[16, 16]}>
-        {groups.map(([groupName, attributes]) => (
-          <Col key={groupName} lg={groups.length === 4 ? 6 : 8} md={12} xs={24}>
-            <Space direction="vertical" size={16} style={{ width: "100%" }}>
-              <AttributeGroupCard attributes={attributes} groupName={groupName} />
-              {groupName === "Physical" && (
-                <PhysicalRadarCard attributes={attributes} />
-              )}
-            </Space>
-          </Col>
-        ))}
-      </Row>
+      <div
+        className={`attribute-overview-layout${
+          physicalAttributes ? "" : " without-radar"
+        }`}
+      >
+        <div className="attribute-bar-stack">
+          {barGroups.map(([groupName, attributes]) => (
+            <AttributeGroupCard
+              attributes={attributes}
+              groupName={groupName}
+              key={groupName}
+              split
+            />
+          ))}
+        </div>
+
+        {physicalAttributes && (
+          <PhysicalRadarCard attributes={physicalAttributes} />
+        )}
+      </div>
     </section>
   );
 }
 
 function CandidateAttributeDetails({ player }) {
   const groups = getVisibleAttributeGroups(player.Attributes, player.Position);
+  const barGroups = groups.filter(([groupName]) => groupName !== "Physical");
+  const physicalAttributes = groups.find(
+    ([groupName]) => groupName === "Physical"
+  )?.[1];
 
   if (groups.length === 0) {
     return (
@@ -563,43 +632,69 @@ function CandidateAttributeDetails({ player }) {
   }
 
   return (
-    <div className="candidate-detail-grid">
-      {groups.map(([groupName, attributes]) => {
-        const style =
-          attributeGroupStyles[groupName] || attributeGroupStyles.Technical;
+    <div className="candidate-attribute-overview">
+      <div className="candidate-attribute-heading">
+        <span>
+          <span className="section-kicker">Candidate profile</span>
+          <strong>Attribute snapshot</strong>
+        </span>
+        <span className="candidate-attribute-meta">
+          <span>{formatValue(player.Position)}</span>
+          <span>Age {formatValue(player.Age)}</span>
+        </span>
+      </div>
 
-        return (
-          <div key={groupName}>
-            <div className="candidate-detail-title" style={{ color: style.color }}>
-              {groupName}
-            </div>
-            {Object.entries(attributes).map(([attributeName, value]) => (
-              <div className="detail-attribute" key={attributeName}>
-                <Text ellipsis type="secondary">
-                  {attributeName}
-                </Text>
-                <Text strong>{formatValue(value)}</Text>
-              </div>
-            ))}
-          </div>
-        );
-      })}
+      <div
+        className={`attribute-overview-layout candidate-attribute-layout${
+          physicalAttributes ? "" : " without-radar"
+        }`}
+      >
+        <div className="attribute-bar-stack">
+          {barGroups.map(([groupName, attributes]) => (
+            <AttributeGroupCard
+              attributes={attributes}
+              groupName={groupName}
+              key={groupName}
+              split
+            />
+          ))}
+        </div>
+
+        {physicalAttributes && (
+          <PhysicalRadarCard attributes={physicalAttributes} />
+        )}
+      </div>
     </div>
   );
 }
 
-function InsightList({ items, title }) {
+function InsightList({ icon, items, title, tone }) {
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
-    <List
-      bordered
-      dataSource={safeItems}
-      header={<Text strong>{title}</Text>}
-      locale={{ emptyText: "No evidence available." }}
-      renderItem={(item) => <List.Item>{item}</List.Item>}
-      size="small"
-    />
+    <section className={`insight-card is-${tone}`}>
+      <header className="insight-card-header">
+        <span className="insight-card-icon">{icon}</span>
+        <span>
+          <strong>{title}</strong>
+          <small>{safeItems.length} signals</small>
+        </span>
+      </header>
+      <ul className="insight-list">
+        {safeItems.length > 0 ? (
+          safeItems.map((item, index) => (
+            <li key={`${title}-${index}`}>
+              <span>{index + 1}</span>
+              <p>{item}</p>
+            </li>
+          ))
+        ) : (
+          <li className="is-empty">
+            <p>No evidence available.</p>
+          </li>
+        )}
+      </ul>
+    </section>
   );
 }
 
@@ -616,10 +711,16 @@ function AiAnalysisResult({
     : [];
   const bestChoices = analysis.bestChoices || {};
   const totalTokens = result.usage?.totalTokens;
+  const decisionChoices = [
+    ["Best overall", bestChoices.overall],
+    ["Closest style", bestChoices.styleMatch],
+    ["Best value", bestChoices.value],
+    ["Best potential", bestChoices.potential],
+  ];
 
   return (
-    <Space direction="vertical" size={18} style={{ width: "100%" }}>
-      <Space wrap>
+    <div className="ai-analysis-content">
+      <div className="ai-analysis-meta">
         <Tag color="cyan">
           {result.provider} / {result.model}
         </Tag>
@@ -627,41 +728,59 @@ function AiAnalysisResult({
         {totalTokens !== null && totalTokens !== undefined && (
           <Tag>{totalTokens.toLocaleString()} tokens</Tag>
         )}
-      </Space>
-
-      <div>
-        <Title level={3} style={{ margin: 0 }}>
-          {analysis.title}
-        </Title>
-        <Paragraph style={{ marginTop: 8 }}>{analysis.executiveSummary}</Paragraph>
       </div>
 
-      <Alert
-        description={targetProfile.playStyle}
-        message="Target play style"
-        showIcon
-        type="info"
-      />
+      <div className="ai-analysis-summary">
+        <span className="section-kicker">ScoutAI verdict</span>
+        <h3>{analysis.title}</h3>
+        <p>{analysis.executiveSummary}</p>
+      </div>
 
-      <Row gutter={[16, 16]}>
-        <Col lg={8} xs={24}>
-          <InsightList items={targetProfile.strengths} title="Strengths" />
-        </Col>
-        <Col lg={8} xs={24}>
-          <InsightList items={targetProfile.weaknesses} title="Weaknesses" />
-        </Col>
-        <Col lg={8} xs={24}>
-          <InsightList items={targetProfile.risks} title="Risks" />
-        </Col>
-      </Row>
+      <section className="ai-play-style">
+        <span className="ai-play-style-icon">
+          <RadarChartOutlined />
+        </span>
+        <span>
+          <strong>Target play style</strong>
+          <p>{targetProfile.playStyle}</p>
+        </span>
+      </section>
 
-      <div>
-        <Title level={4}>Suggested shortlist</Title>
-        <List
-          grid={{ gutter: 16, lg: 2, md: 2, sm: 1, xs: 1 }}
-          dataSource={recommendations}
-          locale={{ emptyText: "No AI recommendations available." }}
-          renderItem={(recommendation, index) => {
+      <div className="insight-grid">
+        <InsightList
+          icon={<CheckCircleOutlined />}
+          items={targetProfile.strengths}
+          title="Strengths"
+          tone="positive"
+        />
+        <InsightList
+          icon={<MinusCircleOutlined />}
+          items={targetProfile.weaknesses}
+          title="Weaknesses"
+          tone="neutral"
+        />
+        <InsightList
+          icon={<ExclamationCircleOutlined />}
+          items={targetProfile.risks}
+          title="Risks"
+          tone="warning"
+        />
+      </div>
+
+      <section className="ai-shortlist-section">
+        <div className="ai-shortlist-heading">
+          <div>
+            <span className="section-kicker">Recommended targets</span>
+            <h4>Suggested shortlist</h4>
+          </div>
+          <span className="ai-shortlist-count">
+            {recommendations.length} players
+          </span>
+        </div>
+
+        {recommendations.length > 0 ? (
+          <div className="ai-shortlist-grid">
+            {recommendations.map((recommendation, index) => {
             const recommendationPlayer = {
               Name: recommendation.playerName,
               sourceRecommendation: recommendation,
@@ -670,21 +789,16 @@ function AiAnalysisResult({
             const isSaved = shortlistKeys.has(playerKey);
 
             return (
-              <List.Item>
-                <div className="ai-recommendation">
-                  <Space
-                    align="start"
-                    style={{ justifyContent: "space-between", width: "100%" }}
-                  >
-                    <Space align="start">
-                      <Tag color="cyan">{index + 1}</Tag>
-                      <div>
-                        <Text strong>{recommendation.playerName}</Text>
-                        <Paragraph style={{ marginTop: 6 }}>
-                          {recommendation.fitSummary}
-                        </Paragraph>
-                      </div>
-                    </Space>
+              <article className="ai-recommendation" key={playerKey || index}>
+                <header className="ai-recommendation-header">
+                  <span className="ai-recommendation-rank">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="ai-recommendation-title">
+                    <strong>{recommendation.playerName}</strong>
+                    <p>{recommendation.fitSummary}</p>
+                  </span>
+                  <span className="ai-recommendation-action">
                     <ShortlistButton
                       disabled={shortlistActionKey === playerKey}
                       isSaved={isSaved}
@@ -693,64 +807,85 @@ function AiAnalysisResult({
                       }
                       size="small"
                     />
-                  </Space>
+                  </span>
+                </header>
 
-                  <Row gutter={[16, 8]}>
-                    <Col sm={12} xs={24}>
-                      <Text strong>Why it fits</Text>
-                      <ul className="plain-list">
-                        {(recommendation.reasons || []).map((reason, reasonIndex) => (
-                          <li key={`${recommendation.playerName}-reason-${reasonIndex}`}>
-                            {reason}
+                <div className="ai-recommendation-evidence">
+                  <section className="is-fit">
+                    <header>
+                      <CheckCircleOutlined />
+                      Why it fits
+                    </header>
+                    <ul>
+                      {(recommendation.reasons || []).map((reason, reasonIndex) => (
+                        <li key={`${recommendation.playerName}-reason-${reasonIndex}`}>
+                          {reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+
+                  <section className="is-watch">
+                    <header>
+                      <ExclamationCircleOutlined />
+                      Watch points
+                    </header>
+                    {(recommendation.concerns || []).length === 0 ? (
+                      <p className="ai-no-concerns">
+                        No major concern identified.
+                      </p>
+                    ) : (
+                      <ul>
+                        {recommendation.concerns.map((concern, concernIndex) => (
+                          <li
+                            key={`${recommendation.playerName}-concern-${concernIndex}`}
+                          >
+                            {concern}
                           </li>
                         ))}
                       </ul>
-                    </Col>
-                    <Col sm={12} xs={24}>
-                      <Text strong>Watch points</Text>
-                      {(recommendation.concerns || []).length === 0 ? (
-                        <Paragraph style={{ marginTop: 8 }} type="secondary">
-                          No major concern identified.
-                        </Paragraph>
-                      ) : (
-                        <ul className="plain-list">
-                          {recommendation.concerns.map((concern, concernIndex) => (
-                            <li
-                              key={`${recommendation.playerName}-concern-${concernIndex}`}
-                            >
-                              {concern}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </Col>
-                  </Row>
+                    )}
+                  </section>
                 </div>
-              </List.Item>
+              </article>
             );
-          }}
-        />
-      </div>
+            })}
+          </div>
+        ) : (
+          <Empty
+            description="No AI recommendations available."
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        )}
+      </section>
 
-      <Descriptions bordered column={{ lg: 4, md: 2, xs: 1 }} size="small">
-        <Descriptions.Item label="Best overall">
-          {formatValue(bestChoices.overall)}
-        </Descriptions.Item>
-        <Descriptions.Item label="Closest style">
-          {formatValue(bestChoices.styleMatch)}
-        </Descriptions.Item>
-        <Descriptions.Item label="Best value">
-          {formatValue(bestChoices.value)}
-        </Descriptions.Item>
-        <Descriptions.Item label="Best potential">
-          {formatValue(bestChoices.potential)}
-        </Descriptions.Item>
-      </Descriptions>
+      <section className="ai-decision-summary">
+        <header>
+          <span className="ai-decision-icon">
+            <TrophyOutlined />
+          </span>
+          <span>
+            <strong>Decision summary</strong>
+            <small>Best option by recruitment goal</small>
+          </span>
+        </header>
+        <div className="ai-decision-grid">
+          {decisionChoices.map(([label, player]) => (
+            <div className="ai-decision-item" key={label}>
+              <span>{label}</span>
+              <strong>{formatValue(player)}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {analysis.confidenceNote && (
-        <Paragraph type="secondary">{analysis.confidenceNote}</Paragraph>
+        <div className="ai-confidence-note">
+          <InfoCircleOutlined />
+          <p>{analysis.confidenceNote}</p>
+        </div>
       )}
-    </Space>
+    </div>
   );
 }
 
@@ -764,7 +899,7 @@ function AiAnalysisPanel({
 }) {
   return (
     <Card
-      className="report-section"
+      className="ai-analysis-card report-section"
       extra={
         aiState.status === "idle" ? (
           <Button icon={<RobotOutlined />} onClick={onGenerate} type="primary">
@@ -773,10 +908,15 @@ function AiAnalysisPanel({
         ) : null
       }
       title={
-        <Space>
-          <BulbOutlined />
-          <span>AI scouting analysis</span>
-        </Space>
+        <div className="report-card-heading">
+          <span className="report-card-heading-icon">
+            <BulbOutlined />
+          </span>
+          <span>
+            <strong>AI scouting analysis</strong>
+            <small>Evidence-backed decision support</small>
+          </span>
+        </div>
       }
     >
       {aiState.status === "idle" && (
@@ -825,9 +965,17 @@ function ModelTable({
   style,
   onToggleShortlist,
 }) {
+  function canExpandPlayer(player) {
+    return (
+      !String(player.Name).includes("OUTLIER") &&
+      getVisibleAttributeGroups(player.Attributes, player.Position).length > 0
+    );
+  }
+
   const columns = [
     {
       align: "center",
+      className: "model-rank-column",
       key: "rank",
       title: "#",
       width: 56,
@@ -937,10 +1085,23 @@ function ModelTable({
         columns={columns}
         dataSource={players}
         expandable={{
+          columnWidth: 50,
+          expandIcon: ({ expanded, onExpand, record }) =>
+            canExpandPlayer(record) ? (
+              <button
+                aria-label={`${expanded ? "Hide" : "Show"} ${record.Name} attribute details`}
+                aria-expanded={expanded}
+                className={`model-expand-button${expanded ? " is-expanded" : ""}`}
+                onClick={(event) => onExpand(record, event)}
+                type="button"
+              >
+                <DownOutlined />
+              </button>
+            ) : (
+              <span className="model-expand-placeholder" />
+            ),
           expandedRowRender: (player) => <CandidateAttributeDetails player={player} />,
-          rowExpandable: (player) =>
-            !String(player.Name).includes("OUTLIER") &&
-            getVisibleAttributeGroups(player.Attributes, player.Position).length > 0,
+          rowExpandable: canExpandPlayer,
         }}
         locale={{
           emptyText: (
@@ -1266,16 +1427,26 @@ function Result() {
       )}
 
       {currentState.status === "success" && currentState.result && (
-        <>
+        <div className="result-workspace">
           <ReportBreadcrumb playerName={currentState.result.target.Name} />
 
           <section className="report-hero">
-            <div>
+            <div className="report-player-avatar" aria-hidden="true">
+              {getPlayerInitials(currentState.result.target.Name)}
+              <span />
+            </div>
+
+            <div className="report-player-identity">
               <span className="section-kicker">Scouting report</span>
               <h1 className="page-title">{currentState.result.target.Name}</h1>
               <p className="page-subtitle">
                 {currentState.result.target.Display_Name}
               </p>
+              <div className="report-player-context">
+                <span>{formatValue(currentState.result.target.Club)}</span>
+                <span>{formatValue(currentState.result.target.Nationality)}</span>
+                <span>{formatValue(getPlayerPosition(currentState.result.target))}</span>
+              </div>
             </div>
 
             <div className="report-hero-actions">
@@ -1335,10 +1506,15 @@ function Result() {
           <Card
             className="model-card report-section"
             title={
-              <Space>
-                <BarChartOutlined />
-                <span>Model recommendations</span>
-              </Space>
+              <div className="report-card-heading">
+                <span className="report-card-heading-icon">
+                  <BarChartOutlined />
+                </span>
+                <span>
+                  <strong>Model recommendations</strong>
+                  <small>Five matching approaches, one clearer shortlist</small>
+                </span>
+              </div>
             }
           >
             <div className="model-summary-grid">
@@ -1386,7 +1562,7 @@ function Result() {
               })}
             />
           </Card>
-        </>
+        </div>
       )}
     </AppShell>
   );
