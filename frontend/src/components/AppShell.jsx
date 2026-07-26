@@ -50,6 +50,10 @@ function AppShell({ children, extra }) {
           <div className="app-header-left">
             <Link className="brand-link" to="/">
               <img className="brand-logo" src={scoutAiWordmark} alt="ScoutAI" />
+              <span className="brand-product">
+                Recruitment
+                <small>intelligence</small>
+              </span>
             </Link>
           </div>
 

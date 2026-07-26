@@ -136,24 +136,36 @@ export async function upsertShortlistPlayer(userId, player, source) {
 
 export async function removeShortlistItem(userId, itemId) {
   const client = requireSupabase();
-  const { error } = await client
+  const { data, error } = await client
     .from(SHORTLIST_TABLE)
     .delete()
     .eq("user_id", userId)
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .select("id");
 
   if (error) throw error;
+  if (!data?.length) {
+    throw new Error(
+      "Shortlist delete was not applied. Run the latest shortlist delete RLS migration in Supabase.",
+    );
+  }
 }
 
 export async function removeShortlistPlayer(userId, playerKey) {
   const client = requireSupabase();
-  const { error } = await client
+  const { data, error } = await client
     .from(SHORTLIST_TABLE)
     .delete()
     .eq("user_id", userId)
-    .eq("player_key", playerKey);
+    .eq("player_key", playerKey)
+    .select("id");
 
   if (error) throw error;
+  if (!data?.length) {
+    throw new Error(
+      "Shortlist delete was not applied. Run the latest shortlist delete RLS migration in Supabase.",
+    );
+  }
 }
 
 export async function loadSearchHistory(userId, limit = 25) {
@@ -210,13 +222,19 @@ export async function recordSearch(userId, query, metadata = {}) {
 
 export async function removeSearchHistoryItem(userId, itemId) {
   const client = requireSupabase();
-  const { error } = await client
+  const { data, error } = await client
     .from(SEARCH_HISTORY_TABLE)
     .delete()
     .eq("user_id", userId)
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .select("id");
 
   if (error) throw error;
+  if (!data?.length) {
+    throw new Error(
+      "Search history delete was not applied. Run the latest search history RLS migration in Supabase.",
+    );
+  }
 }
 
 export async function clearSearchHistory(userId) {

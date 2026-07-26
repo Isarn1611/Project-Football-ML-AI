@@ -12,17 +12,20 @@ import {
   Space,
   Spin,
   Table,
-  Tag,
   Typography,
 } from "antd";
 import {
+  ArrowRightOutlined,
   ClearOutlined,
+  DatabaseOutlined,
   DeleteOutlined,
   FilterOutlined,
   HistoryOutlined,
+  RadarChartOutlined,
   ReloadOutlined,
   SearchOutlined,
   StarOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 
 import { useAuth } from "../auth/useAuth";
@@ -112,6 +115,16 @@ function formatMoney(value) {
   }).format(value);
 }
 
+function getPlayerInitials(name) {
+  return String(name || "")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
 function buildBrowserParams(values, limit = PLAYER_PAGE_SIZE) {
   return {
     ...values,
@@ -121,6 +134,10 @@ function buildBrowserParams(values, limit = PLAYER_PAGE_SIZE) {
 
 function readDataError(error) {
   const message = error?.message || "Could not load scouting workspace data.";
+  if (message.includes("Shortlist delete was not applied")) {
+    return "Could not permanently remove this player. Run the latest shortlist delete RLS migration in Supabase.";
+  }
+
   if (
     message.includes("player_search_history") ||
     message.includes("row-level security policy")
@@ -160,13 +177,18 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
       key: "player",
       title: "Player",
       render: (_, item) => (
-        <Space direction="vertical" size={0}>
-          <Text strong>{item.player_name}</Text>
-          <Text type="secondary">
-            {[item.club, item.position].filter(Boolean).join(" / ") ||
-              "Club or position unavailable"}
-          </Text>
-        </Space>
+        <div className="workspace-player">
+          <span className="workspace-row-avatar" aria-hidden="true">
+            {getPlayerInitials(item.player_name)}
+          </span>
+          <span className="workspace-player-copy">
+            <Text strong>{item.player_name}</Text>
+            <Text type="secondary">
+              {[item.club, item.position].filter(Boolean).join(" / ") ||
+                "Club or position unavailable"}
+            </Text>
+          </span>
+        </div>
       ),
     },
     {
@@ -174,14 +196,18 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
       key: "source",
       responsive: ["md"],
       title: "Source",
-      render: (source) => <Tag color="blue">{source || "Manual"}</Tag>,
+      render: (source) => (
+        <span className="workspace-source-pill">{source || "Manual"}</span>
+      ),
     },
     {
       dataIndex: "updated_at",
       key: "updated_at",
       responsive: ["lg"],
       title: "Saved",
-      render: formatDateTime,
+      render: (value) => (
+        <span className="workspace-date">{formatDateTime(value)}</span>
+      ),
     },
     {
       key: "actions",
@@ -190,6 +216,7 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
       render: (_, item) => (
         <Space>
           <Button
+            className="workspace-open-button"
             icon={<SearchOutlined />}
             onClick={() => onAnalyze(item.player_name)}
           >
@@ -197,6 +224,7 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
           </Button>
           <Button
             aria-label={`Remove ${item.player_name} from shortlist`}
+            className="workspace-remove-button"
             danger
             icon={<DeleteOutlined />}
             onClick={() => onRemove(item.id)}
@@ -210,13 +238,18 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
 
   return (
     <Card
-      className="workspace-card"
+      className="workspace-card shortlist-card"
       title={
-        <Space>
-          <StarOutlined />
-          <span>Shortlist</span>
-          <Tag>{items.length}</Tag>
-        </Space>
+        <div className="workspace-card-heading">
+          <span className="workspace-card-icon">
+            <StarOutlined />
+          </span>
+          <span className="workspace-card-title">
+            <strong>Shortlist</strong>
+            <small>Players saved for review</small>
+          </span>
+          <span className="workspace-card-count">{items.length}</span>
+        </div>
       }
     >
       <Table
@@ -245,21 +278,37 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
       dataIndex: "query",
       key: "query",
       title: "Search",
-      render: (query) => <Text strong>{query}</Text>,
+      render: (query) => (
+        <div className="workspace-player">
+          <span className="workspace-row-avatar is-history" aria-hidden="true">
+            {getPlayerInitials(query)}
+          </span>
+          <span className="workspace-player-copy">
+            <Text strong>{query}</Text>
+            <Text type="secondary">Player report</Text>
+          </span>
+        </div>
+      ),
     },
     {
       dataIndex: "result_count",
       key: "result_count",
       responsive: ["md"],
       title: "Results",
-      render: (value) => (value === null || value === undefined ? "-" : value),
+      render: (value) => (
+        <span className="workspace-result-pill">
+          {value === null || value === undefined ? "-" : value}
+        </span>
+      ),
     },
     {
       dataIndex: "created_at",
       key: "created_at",
       responsive: ["lg"],
       title: "Date",
-      render: formatDateTime,
+      render: (value) => (
+        <span className="workspace-date">{formatDateTime(value)}</span>
+      ),
     },
     {
       key: "actions",
@@ -267,11 +316,16 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
       width: 128,
       render: (_, item) => (
         <Space>
-          <Button icon={<HistoryOutlined />} onClick={() => onAnalyze(item.query)}>
+          <Button
+            className="workspace-open-button"
+            icon={<HistoryOutlined />}
+            onClick={() => onAnalyze(item.query)}
+          >
             Open
           </Button>
           <Button
             aria-label={`Delete ${item.query} from search history`}
+            className="workspace-remove-button"
             danger
             icon={<DeleteOutlined />}
             onClick={() => onRemove(item.id)}
@@ -285,7 +339,7 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
 
   return (
     <Card
-      className="workspace-card"
+      className="workspace-card history-card"
       extra={
         items.length > 0 ? (
           <Button danger icon={<ClearOutlined />} onClick={onClear} type="text">
@@ -294,11 +348,16 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
         ) : null
       }
       title={
-        <Space>
-          <HistoryOutlined />
-          <span>Search history</span>
-          <Tag>{items.length}</Tag>
-        </Space>
+        <div className="workspace-card-heading">
+          <span className="workspace-card-icon">
+            <HistoryOutlined />
+          </span>
+          <span className="workspace-card-title">
+            <strong>Search history</strong>
+            <small>Your recent scouting activity</small>
+          </span>
+          <span className="workspace-card-count">{items.length}</span>
+        </div>
       }
     >
       <Table
@@ -323,6 +382,7 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
 
 function PlayerDatabasePanel({ onAnalyze }) {
   const [browserForm] = Form.useForm();
+  const [nameSearch, setNameSearch] = useState("");
   const [browserState, setBrowserState] = useState({
     loading: false,
     error: "",
@@ -404,8 +464,21 @@ function PlayerDatabasePanel({ onAnalyze }) {
   }
 
   function resetFilters() {
+    setNameSearch("");
     browserForm.resetFields();
     applyFilters(playerBrowserDefaults, PLAYER_PAGE_SIZE);
+  }
+
+  function searchByName(value) {
+    const cleanedName = String(value || "").trim();
+    setNameSearch(cleanedName);
+    applyFilters(
+      {
+        ...browserForm.getFieldsValue(),
+        name: cleanedName,
+      },
+      PLAYER_PAGE_SIZE
+    );
   }
 
   function loadMorePlayers() {
@@ -414,7 +487,13 @@ function PlayerDatabasePanel({ onAnalyze }) {
       PLAYER_MAX_RESULTS
     );
 
-    applyFilters(browserForm.getFieldsValue(), nextLimit);
+    applyFilters(
+      {
+        ...browserForm.getFieldsValue(),
+        name: nameSearch,
+      },
+      nextLimit
+    );
   }
 
   const columns = [
@@ -423,13 +502,18 @@ function PlayerDatabasePanel({ onAnalyze }) {
       key: "player",
       title: "Player",
       render: (_, player) => (
-        <div className="database-player-cell">
-          <Text strong>{player.name}</Text>
-          <Text type="secondary">
-            {[player.club, player.nationality, player.position]
-              .filter(Boolean)
-              .join(" / ") || "Profile details unavailable"}
-          </Text>
+        <div className="database-player">
+          <span className="database-player-avatar" aria-hidden="true">
+            {getPlayerInitials(player.name)}
+          </span>
+          <div className="database-player-cell">
+            <Text strong>{player.name}</Text>
+            <Text type="secondary">
+              {[player.club, player.nationality, player.position]
+                .filter(Boolean)
+                .join(" / ") || "Profile details unavailable"}
+            </Text>
+          </div>
         </div>
       ),
     },
@@ -445,10 +529,15 @@ function PlayerDatabasePanel({ onAnalyze }) {
       title: "CA / PA",
       width: 120,
       render: (_, player) => (
-        <Space size={6}>
-          <Tag color="blue">{player.currentAbility ?? "-"}</Tag>
-          <Tag color="green">{player.potentialAbility ?? "-"}</Tag>
-        </Space>
+        <div className="ability-pair">
+          <span className="ability-pill is-current">
+            {player.currentAbility ?? "-"}
+          </span>
+          <ArrowRightOutlined aria-hidden="true" />
+          <span className="ability-pill is-potential">
+            {player.potentialAbility ?? "-"}
+          </span>
+        </div>
       ),
     },
     {
@@ -473,9 +562,9 @@ function PlayerDatabasePanel({ onAnalyze }) {
       width: 122,
       render: (_, player) => (
         <Button
-          icon={<SearchOutlined />}
+          className="analyze-player-button"
+          icon={<RadarChartOutlined />}
           onClick={() => onAnalyze(player.name)}
-          type="primary"
         >
           Analyze
         </Button>
@@ -489,20 +578,59 @@ function PlayerDatabasePanel({ onAnalyze }) {
   return (
     <Card
       className="player-browser-card"
-      extra={<Tag color="blue">{browserState.count} shown</Tag>}
+      extra={
+        <span className="database-result-count">
+          <strong>{browserState.count}</strong> shown
+        </span>
+      }
       title={
-        <Space>
-          <FilterOutlined />
-          <span>Player database</span>
-        </Space>
+        <div className="database-card-header">
+          <div className="database-card-heading">
+            <span className="database-card-icon">
+              <DatabaseOutlined />
+            </span>
+            <span>
+              <strong>Player database</strong>
+              <small>Explore and compare the complete player pool</small>
+            </span>
+          </div>
+          <div className="database-name-search" role="search">
+            <Input
+              allowClear
+              aria-label="Search player by name"
+              onChange={(event) => {
+                const value = event.target.value;
+                setNameSearch(value);
+                if (!value) searchByName("");
+              }}
+              onPressEnter={() => searchByName(nameSearch)}
+              placeholder="Search player by name"
+              value={nameSearch}
+            />
+            <Button
+              aria-label="Search players"
+              className="database-name-search-button"
+              icon={<SearchOutlined />}
+              loading={browserState.loading}
+              onClick={() => searchByName(nameSearch)}
+              shape="circle"
+            />
+          </div>
+        </div>
       }
     >
       <div className="player-database-grid">
         <div className="player-filter-sidebar">
+          <div className="player-filter-sidebar-heading">
+            <span>
+              <FilterOutlined />
+              Refine players
+            </span>
+            <small>12 filters</small>
+          </div>
           <div className="player-browser-intro">
             <Text type="secondary">
-              Filter the player pool, review matching candidates, then open a
-              full similarity report for the player you want to scout.
+              Narrow the database to the profile your recruitment plan needs.
             </Text>
           </div>
 
@@ -510,61 +638,75 @@ function PlayerDatabasePanel({ onAnalyze }) {
             form={browserForm}
             initialValues={playerBrowserDefaults}
             layout="vertical"
-            onFinish={applyFilters}
+            onFinish={(values) =>
+              applyFilters(
+                {
+                  ...values,
+                  name: nameSearch,
+                },
+                PLAYER_PAGE_SIZE
+              )
+            }
             requiredMark={false}
           >
-            <div className="player-filter-grid">
-              <Form.Item label="Name" name="name">
-                <Input
-                  allowClear
-                  placeholder="e.g. Bellingham"
-                  prefix={<SearchOutlined />}
-                />
-              </Form.Item>
+            <div className="player-filter-scroll">
+              <div className="player-filter-grid">
+                <Form.Item label="Club" name="club">
+                  <Input allowClear placeholder="e.g. Dortmund" />
+                </Form.Item>
 
-              <Form.Item label="Club" name="club">
-                <Input allowClear placeholder="e.g. Dortmund" />
-              </Form.Item>
+                <Form.Item label="Nationality" name="nationality">
+                  <Input allowClear placeholder="e.g. England" />
+                </Form.Item>
 
-              <Form.Item label="Nationality" name="nationality">
-                <Input allowClear placeholder="e.g. England" />
-              </Form.Item>
+                <Form.Item label="Position" name="position">
+                  <Select options={positionOptions} />
+                </Form.Item>
 
-              <Form.Item label="Position" name="position">
-                <Select options={positionOptions} />
-              </Form.Item>
+                <Form.Item label="Preset" name="preset">
+                  <Select options={presetOptions} />
+                </Form.Item>
 
-              <Form.Item label="Preset" name="preset">
-                <Select options={presetOptions} />
-              </Form.Item>
+                <Form.Item label="Min age" name="minAge">
+                  <InputNumber max={45} min={15} placeholder="18" />
+                </Form.Item>
 
-              <Form.Item label="Min age" name="minAge">
-                <InputNumber max={45} min={15} placeholder="18" />
-              </Form.Item>
+                <Form.Item label="Max age" name="maxAge">
+                  <InputNumber max={45} min={15} placeholder="24" />
+                </Form.Item>
 
-              <Form.Item label="Max age" name="maxAge">
-                <InputNumber max={45} min={15} placeholder="24" />
-              </Form.Item>
+                <Form.Item label="Min CA" name="minCA">
+                  <InputNumber max={200} min={1} placeholder="130" />
+                </Form.Item>
 
-              <Form.Item label="Min CA" name="minCA">
-                <InputNumber max={200} min={1} placeholder="130" />
-              </Form.Item>
+                <Form.Item label="Min PA" name="minPA">
+                  <InputNumber max={200} min={1} placeholder="150" />
+                </Form.Item>
 
-              <Form.Item label="Min PA" name="minPA">
-                <InputNumber max={200} min={1} placeholder="150" />
-              </Form.Item>
+                <Form.Item label="Max value" name="maxValue">
+                  <Select
+                    allowClear
+                    options={valueOptions}
+                    placeholder="Any budget"
+                  />
+                </Form.Item>
 
-              <Form.Item label="Max value" name="maxValue">
-                <Select allowClear options={valueOptions} placeholder="Any budget" />
-              </Form.Item>
+                <Form.Item label="Max wage" name="maxSalary">
+                  <Select
+                    allowClear
+                    options={wageOptions}
+                    placeholder="Any wage"
+                  />
+                </Form.Item>
 
-              <Form.Item label="Max wage" name="maxSalary">
-                <Select allowClear options={wageOptions} placeholder="Any wage" />
-              </Form.Item>
-
-              <Form.Item label="Sort by" name="sort">
-                <Select allowClear options={sortOptions} placeholder="Default order" />
-              </Form.Item>
+                <Form.Item label="Sort by" name="sort">
+                  <Select
+                    allowClear
+                    options={sortOptions}
+                    placeholder="Default order"
+                  />
+                </Form.Item>
+              </div>
             </div>
 
             <div className="player-filter-actions">
@@ -579,6 +721,19 @@ function PlayerDatabasePanel({ onAnalyze }) {
         </div>
 
         <div className="player-results-area">
+          <div className="player-results-toolbar">
+            <div>
+              <strong>Matching players</strong>
+              <span>{browserState.count} profiles in this view</span>
+            </div>
+            <span className="ability-legend">
+              <i className="is-current" />
+              Current
+              <i className="is-potential" />
+              Potential
+            </span>
+          </div>
+
           {browserState.error && (
             <Alert
               message={browserState.error}
@@ -602,7 +757,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
             }}
             pagination={false}
             rowKey={(player) => player.uid || player.id || player.name}
-            scroll={{ x: 780 }}
+            scroll={{ x: 780, y: 470 }}
             size="middle"
           />
           <div className="player-load-more">
@@ -695,10 +850,8 @@ function Search() {
 
     try {
       await removeShortlistItem(user.id, id);
-      setWorkspaceState((state) => ({
-        ...state,
-        shortlist: state.shortlist.filter((item) => item.id !== id),
-      }));
+      const shortlist = await loadShortlist(user.id);
+      setWorkspaceState((state) => ({ ...state, error: "", shortlist }));
     } catch (removeError) {
       setWorkspaceState((state) => ({
         ...state,
@@ -743,56 +896,96 @@ function Search() {
 
   return (
     <AppShell>
-      <section className="page-intro">
-        <div>
-          <span className="section-kicker">Scouting workspace</span>
-          <h1 className="page-title search-page-title">
-            Manage your shortlist and scout the next player.
-          </h1>
-          <p className="page-subtitle">
-            Use the player database to filter candidates and open a full
-            report. Saved players and search history stay in your workspace.
-          </p>
-        </div>
-      </section>
-
-      {workspaceState.error && (
-        <Alert
-          message={workspaceState.error}
-          showIcon
-          style={{ marginBottom: 16 }}
-          type="warning"
-        />
-      )}
-
-      <section className="database-section">
-        <PlayerDatabasePanel onAnalyze={startAnalysis} />
-      </section>
-
-      <section className="report-section" id="workspace">
-        {workspaceState.loading ? (
-          <Card>
-            <Spin />
-            <Text style={{ marginLeft: 12 }} type="secondary">
-              Loading scouting workspace
-            </Text>
-          </Card>
-        ) : (
-          <div className="workspace-stack">
-            <ShortlistPanel
-              items={workspaceState.shortlist}
-              onAnalyze={startAnalysis}
-              onRemove={removeShortlist}
-            />
-            <HistoryPanel
-              items={workspaceState.history}
-              onAnalyze={startAnalysis}
-              onClear={clearHistory}
-              onRemove={removeHistory}
-            />
+      <div className="search-workspace">
+        <section className="page-intro search-hero">
+          <div className="search-hero-copy">
+            <span className="search-hero-badge">
+              <i />
+              Recruitment intelligence
+            </span>
+            <span className="section-kicker">Scouting workspace</span>
+            <h1 className="page-title search-page-title">
+              Find the player your system is missing.
+            </h1>
+            <p className="page-subtitle">
+              Filter the player pool, compare potential, and turn the strongest
+              candidates into reports your recruitment team can act on.
+            </p>
           </div>
+
+          <div className="search-hero-summary" aria-label="Workspace summary">
+            <div className="search-summary-item">
+              <span className="search-summary-icon">
+                <TeamOutlined />
+              </span>
+              <span>
+                <strong>8,452</strong>
+                <small>Player profiles</small>
+              </span>
+            </div>
+            <div className="search-summary-item">
+              <span className="search-summary-icon">
+                <StarOutlined />
+              </span>
+              <span>
+                <strong>
+                  {workspaceState.loading ? "-" : workspaceState.shortlist.length}
+                </strong>
+                <small>Saved players</small>
+              </span>
+            </div>
+            <div className="search-summary-item">
+              <span className="search-summary-icon">
+                <HistoryOutlined />
+              </span>
+              <span>
+                <strong>
+                  {workspaceState.loading ? "-" : workspaceState.history.length}
+                </strong>
+                <small>Recent searches</small>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {workspaceState.error && (
+          <Alert
+            message={workspaceState.error}
+            showIcon
+            style={{ marginBottom: 16 }}
+            type="warning"
+          />
         )}
-      </section>
+
+        <section className="database-section">
+          <PlayerDatabasePanel onAnalyze={startAnalysis} />
+        </section>
+
+        <section className="report-section" id="workspace">
+          {workspaceState.loading ? (
+            <Card className="workspace-loading-card">
+              <Spin />
+              <Text style={{ marginLeft: 12 }} type="secondary">
+                Loading scouting workspace
+              </Text>
+            </Card>
+          ) : (
+            <div className="workspace-stack">
+              <ShortlistPanel
+                items={workspaceState.shortlist}
+                onAnalyze={startAnalysis}
+                onRemove={removeShortlist}
+              />
+              <HistoryPanel
+                items={workspaceState.history}
+                onAnalyze={startAnalysis}
+                onClear={clearHistory}
+                onRemove={removeHistory}
+              />
+            </div>
+          )}
+        </section>
+      </div>
     </AppShell>
   );
 }

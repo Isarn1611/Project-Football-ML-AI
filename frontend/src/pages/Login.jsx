@@ -1,30 +1,21 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { Alert, Button, Divider, Form, Input } from "antd";
 import {
-  Alert,
-  Button,
-  Card,
-  Divider,
-  Form,
-  Input,
-  Segmented,
-  Space,
-  Statistic,
-  Typography,
-} from "antd";
-import {
+  ArrowRightOutlined,
   GithubOutlined,
   GoogleOutlined,
-  LoginOutlined,
   LockOutlined,
   MailOutlined,
+  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 
 import { useAuth } from "../auth/useAuth";
+import authHero from "../assets/scoutai-auth-hero.png";
+import authHeroAnalysis from "../assets/scoutai-auth-hero-analysis.png";
+import authHeroPath from "../assets/scoutai-auth-hero-path.png";
 import scoutAiWordmark from "../assets/scoutai-wordmark.png";
 import { supabase } from "../lib/supabase";
-
-const { Text } = Typography;
 
 const socialProviders = [
   { icon: <GoogleOutlined />, label: "Google", provider: "google" },
@@ -32,6 +23,46 @@ const socialProviders = [
 ];
 
 const POST_LOGIN_PATH = "/";
+const AUTO_SLIDE_DELAY = 6500;
+
+const heroSlides = [
+  {
+    image: authHero,
+    kicker: "Built for better decisions",
+    title: ["See the player.", "Know the fit."],
+    description:
+      "One clear workspace for player discovery, model-backed insight, and every report your recruitment team trusts.",
+    proof: [
+      ["8,452", "players"],
+      ["89", "attributes"],
+      ["5", "models"],
+    ],
+  },
+  {
+    image: authHeroAnalysis,
+    kicker: "Evidence before instinct",
+    title: ["Turn data into", "a clearer decision."],
+    description:
+      "Compare the attributes that matter, surface hidden strengths, and give every recommendation useful context.",
+    proof: [
+      ["89", "attributes"],
+      ["1", "clear view"],
+      ["24/7", "access"],
+    ],
+  },
+  {
+    image: authHeroPath,
+    kicker: "From shortlist to signing",
+    title: ["Build the case.", "Back the player."],
+    description:
+      "Keep saved players, search history, and scouting reports together from the first look to the final call.",
+    proof: [
+      ["1", "workspace"],
+      ["0", "lost reports"],
+      ["100%", "private"],
+    ],
+  },
+];
 
 function readAuthError(error) {
   const message = error?.message || "Could not complete sign in.";
@@ -71,10 +102,65 @@ function Login() {
     error: "",
     message: "",
   });
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [carouselPaused, setCarouselPaused] = useState(false);
+  const pointerStartX = useRef(null);
+  const currentSlide = heroSlides[activeSlide];
+
+  useEffect(() => {
+    if (
+      carouselPaused ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % heroSlides.length);
+    }, AUTO_SLIDE_DELAY);
+
+    return () => window.clearInterval(intervalId);
+  }, [carouselPaused]);
 
   function changeMode(nextMode) {
     setMode(nextMode);
     setFormState({ loading: false, error: "", message: "" });
+  }
+
+  function moveSlide(direction) {
+    setActiveSlide(
+      (current) =>
+        (current + direction + heroSlides.length) % heroSlides.length,
+    );
+  }
+
+  function handleCarouselKeyDown(event) {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      moveSlide(-1);
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      moveSlide(1);
+    }
+  }
+
+  function handlePointerDown(event) {
+    pointerStartX.current = event.clientX;
+  }
+
+  function handlePointerUp(event) {
+    if (pointerStartX.current === null) {
+      return;
+    }
+
+    const distance = event.clientX - pointerStartX.current;
+    pointerStartX.current = null;
+
+    if (Math.abs(distance) > 45) {
+      moveSlide(distance > 0 ? -1 : 1);
+    }
   }
 
   if (!loading && isAuthenticated) {
@@ -161,82 +247,139 @@ function Login() {
 
   return (
     <main className="login-shell">
-      <section className="login-container">
-        <div className="login-copy">
+      <section className="login-container" aria-label="ScoutAI authentication">
+        <aside
+          aria-label={`ScoutAI highlights, slide ${activeSlide + 1} of ${heroSlides.length}`}
+          aria-roledescription="carousel"
+          className="login-visual"
+          onBlur={() => setCarouselPaused(false)}
+          onFocus={() => setCarouselPaused(true)}
+          onKeyDown={handleCarouselKeyDown}
+          onPointerDown={handlePointerDown}
+          onPointerEnter={() => setCarouselPaused(true)}
+          onPointerLeave={() => {
+            pointerStartX.current = null;
+            setCarouselPaused(false);
+          }}
+          onPointerUp={handlePointerUp}
+          tabIndex={0}
+        >
+          <div
+            className="login-visual-track"
+            style={{ transform: `translate3d(-${activeSlide * 100}%, 0, 0)` }}
+          >
+            {heroSlides.map((slide, index) => (
+              <img
+                alt=""
+                aria-hidden={index !== activeSlide}
+                className="login-visual-image"
+                decoding="async"
+                draggable="false"
+                fetchPriority={index === 0 ? "high" : "auto"}
+                key={slide.image}
+                loading={index === 0 ? "eager" : "lazy"}
+                src={slide.image}
+              />
+            ))}
+          </div>
+          <div className="login-visual-overlay" aria-hidden="true" />
+
           <div className="login-brand">
             <img
               className="login-brand-logo"
               src={scoutAiWordmark}
               alt="ScoutAI"
             />
-            <Text type="secondary">Football Manager player intelligence</Text>
+            <span>Player intelligence</span>
           </div>
 
-          <div>
-            <span className="section-kicker">Secure scouting workspace</span>
-            <h1 className="page-title">Sign in to open the player database.</h1>
-            <p className="page-subtitle">
-              Reports, saved players, and search history are tied to your
-              account.
+          <div className="login-visual-copy" key={activeSlide}>
+            <span className="login-visual-kicker">{currentSlide.kicker}</span>
+            <h1>
+              {currentSlide.title[0]}
+              <br />
+              {currentSlide.title[1]}
+            </h1>
+            <p>{currentSlide.description}</p>
+            <div className="login-proof" aria-label="Platform coverage">
+              {currentSlide.proof.map(([value, label]) => (
+                <span key={label}>
+                  <strong>{value}</strong> {label}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="login-visual-dots" aria-label="Choose a highlight">
+            {heroSlides.map((slide, index) => (
+              <button
+                aria-label={`Show slide ${index + 1}: ${slide.title.join(" ")}`}
+                aria-pressed={activeSlide === index}
+                className={activeSlide === index ? "is-active" : ""}
+                key={slide.image}
+                onClick={() => setActiveSlide(index)}
+                type="button"
+              />
+            ))}
+          </div>
+        </aside>
+
+        <section className="auth-panel">
+          <div className="login-mobile-brand">
+            <img src={scoutAiWordmark} alt="ScoutAI" />
+            <span>Player intelligence</span>
+          </div>
+
+          <div className="auth-heading">
+            <span className="auth-eyebrow">
+              <SafetyCertificateOutlined />
+              Secure scouting workspace
+            </span>
+            <h2>{mode === "signIn" ? "Welcome back" : "Create your account"}</h2>
+            <p>
+              {mode === "signIn"
+                ? "New to ScoutAI?"
+                : "Already have a ScoutAI account?"}{" "}
+              <button
+                className="auth-mode-link"
+                onClick={() =>
+                  changeMode(mode === "signIn" ? "signUp" : "signIn")
+                }
+                type="button"
+              >
+                {mode === "signIn" ? "Create an account" : "Sign in"}
+              </button>
             </p>
           </div>
-
-          <div className="metric-grid">
-            <Card size="small">
-              <Statistic title="Players" value={8452} />
-            </Card>
-            <Card size="small">
-              <Statistic title="Attributes" value={89} />
-            </Card>
-            <Card size="small">
-              <Statistic title="Models" value={5} />
-            </Card>
-          </div>
-        </div>
-
-        <Card
-          bordered
-          className="auth-card"
-          title={mode === "signIn" ? "Sign in" : "Create account"}
-        >
-          <Segmented
-            block
-            onChange={changeMode}
-            options={[
-              { label: "Sign in", value: "signIn" },
-              { label: "Sign up", value: "signUp" },
-            ]}
-            value={mode}
-          />
 
           {!isConfigured && (
             <Alert
               message="Supabase is not configured for this frontend."
               showIcon
-              style={{ marginTop: 16 }}
               type="warning"
             />
           )}
 
-          <Space direction="vertical" size={10} style={{ marginTop: 20, width: "100%" }}>
+          <div className="auth-social-grid">
             {socialProviders.map(({ icon, label, provider }) => (
               <Button
                 block
-                className="auth-centered-button"
+                className="auth-social-button"
                 disabled={formState.loading || !isConfigured}
                 icon={icon}
                 key={provider}
                 onClick={() => signInWithProvider(provider)}
                 size="large"
               >
-                Continue with {label}
+                {label}
               </Button>
             ))}
-          </Space>
+          </div>
 
-          <Divider plain>or</Divider>
+          <Divider plain>or continue with email</Divider>
 
           <Form
+            className="auth-form"
             disabled={formState.loading || !isConfigured}
             layout="vertical"
             onFinish={handleSubmit}
@@ -254,9 +397,9 @@ function Login() {
                 autoComplete="email"
                 autoFocus
                 className="auth-input"
-                prefix={<MailOutlined />}
+                prefix={<MailOutlined aria-hidden="true" />}
                 size="large"
-                placeholder="you@club.com"
+                placeholder="name@club.com"
               />
             </Form.Item>
 
@@ -269,11 +412,17 @@ function Login() {
               ]}
             >
               <Input.Password
-                autoComplete={mode === "signIn" ? "current-password" : "new-password"}
+                autoComplete={
+                  mode === "signIn" ? "current-password" : "new-password"
+                }
                 className="auth-input"
-                prefix={<LockOutlined />}
+                prefix={<LockOutlined aria-hidden="true" />}
                 size="large"
-                placeholder="At least 6 characters"
+                placeholder={
+                  mode === "signIn"
+                    ? "Enter your password"
+                    : "At least 6 characters"
+                }
               />
             </Form.Item>
 
@@ -297,17 +446,22 @@ function Login() {
 
             <Button
               block
-              className="auth-centered-button"
+              className="auth-submit-button"
               htmlType="submit"
-              icon={<LoginOutlined />}
               loading={formState.loading}
               size="large"
               type="primary"
             >
               {mode === "signIn" ? "Sign in" : "Create account"}
+              <ArrowRightOutlined />
             </Button>
           </Form>
-        </Card>
+
+          <p className="auth-privacy-note">
+            <LockOutlined aria-hidden="true" />
+            Your reports, saved players, and search history stay private.
+          </p>
+        </section>
       </section>
     </main>
   );
