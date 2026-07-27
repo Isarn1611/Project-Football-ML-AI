@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Breadcrumb,
@@ -43,6 +44,7 @@ import {
 } from "../services/api";
 import { useAuth } from "../auth/useAuth";
 import AppShell from "../components/AppShell";
+import i18n from "../i18n";
 import {
   getPlayerKey,
   loadShortlist,
@@ -53,42 +55,30 @@ import {
 
 const { Paragraph, Text, Title } = Typography;
 
-const compactCurrencyFormatter = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "GBP",
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
 const modelStyles = [
   {
-    badge: "Clone finder",
+    badgeKey: "clone",
     color: "#1677ff",
-    description: "Closest overall attribute profile",
     tag: "blue",
   },
   {
-    badge: "Style match",
+    badgeKey: "style",
     color: "#13c2c2",
-    description: "Nearest technical and role similarity",
     tag: "cyan",
   },
   {
-    badge: "Strict radius",
+    badgeKey: "radius",
     color: "#722ed1",
-    description: "Only players inside a tighter match range",
     tag: "purple",
   },
   {
-    badge: "Tactical group",
+    badgeKey: "group",
     color: "#faad14",
-    description: "Players from the same statistical cluster",
     tag: "gold",
   },
   {
-    badge: "Outlier check",
+    badgeKey: "outlier",
     color: "#f5222d",
-    description: "Flags candidates that sit outside the normal pattern",
     tag: "red",
   },
 ];
@@ -118,7 +108,12 @@ function formatCompactCurrency(value) {
     value === "" ||
     !Number.isFinite(numericValue)
     ? "-"
-    : compactCurrencyFormatter.format(numericValue);
+    : new Intl.NumberFormat(i18n.language === "th" ? "th-TH" : "en-GB", {
+        style: "currency",
+        currency: "GBP",
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }).format(numericValue);
 }
 
 function normalizeScore(score) {
@@ -145,30 +140,30 @@ function getVisibleAttributeGroups(attributes, position) {
   );
 }
 
-function readApiError(error) {
+function readApiError(error, t) {
   const payload = error.response?.data;
   return {
     status: error.response?.status,
     code: payload?.code || "REQUEST_FAILED",
     message:
       payload?.message ||
-      "Could not complete the scouting analysis. Make sure the app services are running, then try again.",
+      t("errors.analysis"),
     matches: payload?.details?.matches || [],
   };
 }
 
-function readAiApiError(error) {
+function readAiApiError(error, t) {
   const payload = error.response?.data;
   return {
     code: payload?.code || "AI_REQUEST_FAILED",
     message:
       payload?.message ||
-      "Could not generate the AI analysis. Check the AI setup and try again.",
+      t("errors.ai"),
   };
 }
 
-function readShortlistError(error) {
-  const message = error?.message || "Could not update shortlist.";
+function readShortlistError(error, t) {
+  const message = error?.message || t("errors.shortlist");
   if (
     message.includes("player_search_history") ||
     message.includes("row-level security policy")
@@ -220,16 +215,19 @@ function getPlayerInitials(name) {
 }
 
 function ShortlistButton({ disabled, isSaved, onClick, size = "middle" }) {
+  const { t } = useTranslation("result");
+
   return (
     <Button
-      className="shortlist-button"
+      aria-pressed={isSaved}
+      className={`shortlist-button${isSaved ? " is-saved" : ""}`}
       disabled={disabled}
       icon={isSaved ? <StarFilled /> : <StarOutlined />}
       onClick={onClick}
       size={size}
-      type={isSaved ? "default" : "primary"}
+      type="default"
     >
-      {isSaved ? "Saved" : "Save"}
+      {isSaved ? t("actions.saved") : t("actions.save")}
     </Button>
   );
 }
@@ -249,17 +247,19 @@ function ReportMetric({ detail, label, value }) {
 }
 
 function ReportBreadcrumb({ playerName }) {
+  const { t } = useTranslation("result");
+
   return (
-    <nav aria-label="Scouting report navigation" className="report-navigation">
+    <nav aria-label={t("breadcrumb.label")} className="report-navigation">
       <Link className="report-back-link" to="/">
         <ArrowLeftOutlined />
-        <span>Back to player database</span>
+        <span>{t("breadcrumb.back")}</span>
       </Link>
       <Breadcrumb
         className="report-breadcrumb"
         items={[
           {
-            title: <span>Scouting report</span>,
+            title: <span>{t("breadcrumb.report")}</span>,
           },
           {
             title: <span>{playerName}</span>,
@@ -272,18 +272,18 @@ function ReportBreadcrumb({ playerName }) {
 }
 
 function LoadingState({ playerName }) {
+  const { t } = useTranslation("result");
+
   return (
     <div aria-live="polite" className="state-center">
       <Space align="center" direction="vertical" size={16}>
         <Spin size="large" />
         <div>
-          <span className="section-kicker">Five engines running</span>
+          <span className="section-kicker">{t("loading.kicker")}</span>
           <Title level={2} style={{ margin: "8px 0 0" }}>
-            Analyzing {playerName}
+            {t("loading.analyzing", { name: playerName })}
           </Title>
-          <Paragraph type="secondary">
-            Comparing weighted attributes across the player dataset.
-          </Paragraph>
+          <Paragraph type="secondary">{t("loading.description")}</Paragraph>
         </div>
       </Space>
     </div>
@@ -291,6 +291,7 @@ function LoadingState({ playerName }) {
 }
 
 function ErrorState({ error, onRetry, onSelectPlayer }) {
+  const { t } = useTranslation("result");
   const matches = Array.isArray(error.matches) ? error.matches : [];
   const hasMatches = matches.length > 0;
 
@@ -298,17 +299,17 @@ function ErrorState({ error, onRetry, onSelectPlayer }) {
     <Card>
       <AntResult
         status={hasMatches ? "warning" : "error"}
-        title={hasMatches ? "That name matches more than one player." : error.message}
-        subTitle={hasMatches ? "Choose the exact player to continue." : undefined}
+        title={hasMatches ? t("errors.ambiguous") : error.message}
+        subTitle={hasMatches ? t("errors.chooseExact") : undefined}
         extra={
           error.code === "MISSING_PLAYER" ? (
             <Link className="app-nav-button" to="/">
               <ArrowLeftOutlined />
-              Choose a player
+              {t("actions.choosePlayer")}
             </Link>
           ) : !hasMatches ? (
             <Button icon={<ReloadOutlined />} onClick={onRetry} type="primary">
-              Try again
+              {t("actions.tryAgain")}
             </Button>
           ) : null
         }
@@ -327,7 +328,7 @@ function ErrorState({ error, onRetry, onSelectPlayer }) {
                   onClick={() => onSelectPlayer(match.Name)}
                   type="primary"
                 >
-                  Analyze
+                  {t("actions.analyze")}
                 </Button>,
               ]}
             >
@@ -344,6 +345,7 @@ function ErrorState({ error, onRetry, onSelectPlayer }) {
 }
 
 function AttributeGroupCard({ groupName, attributes, split = false }) {
+  const { t } = useTranslation("result");
   const style = attributeGroupStyles[groupName] || attributeGroupStyles.Technical;
   const entries = Object.entries(attributes);
   const midpoint = Math.ceil(entries.length / 2);
@@ -357,7 +359,7 @@ function AttributeGroupCard({ groupName, attributes, split = false }) {
       size="small"
       title={
         <Space>
-          <Tag color={style.tag}>{groupName}</Tag>
+          <Tag color={style.tag}>{t(`groups.${groupName}`)}</Tag>
           <Text type="secondary">1-20</Text>
         </Space>
       }
@@ -422,6 +424,7 @@ function getRadarLabel(attributeName) {
 }
 
 function PhysicalRadarCard({ attributes }) {
+  const { t } = useTranslation("result");
   const items = Object.entries(attributes || {}).map(([name, value]) => ({
     label: getRadarLabel(name),
     name,
@@ -439,12 +442,12 @@ function PhysicalRadarCard({ attributes }) {
   );
   const grade =
     average >= 16
-      ? "Elite"
+      ? t("grades.elite")
       : average >= 14
-        ? "Strong"
+        ? t("grades.strong")
         : average >= 12
-          ? "Balanced"
-          : "Developing";
+          ? t("grades.balanced")
+          : t("grades.developing");
   const dataPoints = getRadarPointString(
     items,
     radius,
@@ -459,8 +462,10 @@ function PhysicalRadarCard({ attributes }) {
       title={
         <div className="radar-card-heading">
           <span>
-            <strong>Physical profile</strong>
-            <small>{items.length} attributes · scale 1–20</small>
+            <strong>{t("attributes.physical")}</strong>
+            <small>
+              {t("attributes.attributes", { count: items.length })}
+            </small>
           </span>
           <span className="radar-grade">{grade}</span>
         </div>
@@ -468,7 +473,7 @@ function PhysicalRadarCard({ attributes }) {
     >
       <div className="radar-chart-shell">
         <svg
-          aria-label="Physical attributes radar chart"
+          aria-label={t("attributes.chartAria")}
           className="radar-chart"
           role="img"
           viewBox="0 0 320 320"
@@ -544,7 +549,7 @@ function PhysicalRadarCard({ attributes }) {
             {average}
           </text>
           <text className="radar-score-label" x={center} y={center + 15}>
-            avg / 20
+            {t("attributes.average")}
           </text>
         </svg>
       </div>
@@ -562,6 +567,7 @@ function PhysicalRadarCard({ attributes }) {
 }
 
 function TargetAttributes({ target }) {
+  const { t } = useTranslation("result");
   const groups = getVisibleAttributeGroups(
     target.Attributes,
     target.FullPosition || target.Position
@@ -577,17 +583,27 @@ function TargetAttributes({ target }) {
     <section className="attribute-section">
       <div className="attribute-heading">
         <div>
-          <span className="section-kicker">Player profile</span>
+          <span className="section-kicker">
+            {t("attributes.playerProfile")}
+          </span>
           <Title level={3} style={{ margin: "4px 0 0" }}>
-            Attribute overview
+            {t("attributes.overview")}
           </Title>
         </div>
         <div className="attribute-tags">
           <Tag>{formatValue(target.Nationality)}</Tag>
           <Tag>{formatValue(target.Height)} cm</Tag>
           <Tag>{formatValue(target.Weight)} kg</Tag>
-          <Tag>Left foot {formatValue(target.LeftFoot)}</Tag>
-          <Tag>Right foot {formatValue(target.RightFoot)}</Tag>
+          <Tag>
+            {t("attributes.leftFoot", {
+              value: formatValue(target.LeftFoot),
+            })}
+          </Tag>
+          <Tag>
+            {t("attributes.rightFoot", {
+              value: formatValue(target.RightFoot),
+            })}
+          </Tag>
         </div>
       </div>
 
@@ -616,6 +632,7 @@ function TargetAttributes({ target }) {
 }
 
 function CandidateAttributeDetails({ player }) {
+  const { t } = useTranslation("result");
   const groups = getVisibleAttributeGroups(player.Attributes, player.Position);
   const barGroups = groups.filter(([groupName]) => groupName !== "Physical");
   const physicalAttributes = groups.find(
@@ -625,7 +642,7 @@ function CandidateAttributeDetails({ player }) {
   if (groups.length === 0) {
     return (
       <Empty
-        description="No attribute snapshot available."
+        description={t("attributes.noSnapshot")}
         image={Empty.PRESENTED_IMAGE_SIMPLE}
       />
     );
@@ -635,12 +652,14 @@ function CandidateAttributeDetails({ player }) {
     <div className="candidate-attribute-overview">
       <div className="candidate-attribute-heading">
         <span>
-          <span className="section-kicker">Candidate profile</span>
-          <strong>Attribute snapshot</strong>
+          <span className="section-kicker">{t("attributes.candidate")}</span>
+          <strong>{t("attributes.snapshot")}</strong>
         </span>
         <span className="candidate-attribute-meta">
           <span>{formatValue(player.Position)}</span>
-          <span>Age {formatValue(player.Age)}</span>
+          <span>
+            {t("attributes.age", { value: formatValue(player.Age) })}
+          </span>
         </span>
       </div>
 
@@ -669,6 +688,7 @@ function CandidateAttributeDetails({ player }) {
 }
 
 function InsightList({ icon, items, title, tone }) {
+  const { t } = useTranslation("result");
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
@@ -677,7 +697,7 @@ function InsightList({ icon, items, title, tone }) {
         <span className="insight-card-icon">{icon}</span>
         <span>
           <strong>{title}</strong>
-          <small>{safeItems.length} signals</small>
+          <small>{t("ai.signals", { count: safeItems.length })}</small>
         </span>
       </header>
       <ul className="insight-list">
@@ -690,7 +710,7 @@ function InsightList({ icon, items, title, tone }) {
           ))
         ) : (
           <li className="is-empty">
-            <p>No evidence available.</p>
+            <p>{t("ai.noEvidence")}</p>
           </li>
         )}
       </ul>
@@ -704,6 +724,7 @@ function AiAnalysisResult({
   shortlistKeys,
   onToggleShortlist,
 }) {
+  const { t } = useTranslation("result");
   const analysis = result.analysis || {};
   const targetProfile = analysis.targetProfile || {};
   const recommendations = Array.isArray(analysis.recommendations)
@@ -712,10 +733,10 @@ function AiAnalysisResult({
   const bestChoices = analysis.bestChoices || {};
   const totalTokens = result.usage?.totalTokens;
   const decisionChoices = [
-    ["Best overall", bestChoices.overall],
-    ["Closest style", bestChoices.styleMatch],
-    ["Best value", bestChoices.value],
-    ["Best potential", bestChoices.potential],
+    [t("decisions.overall"), bestChoices.overall],
+    [t("decisions.style"), bestChoices.styleMatch],
+    [t("decisions.value"), bestChoices.value],
+    [t("decisions.potential"), bestChoices.potential],
   ];
 
   return (
@@ -724,14 +745,16 @@ function AiAnalysisResult({
         <Tag color="cyan">
           {result.provider} / {result.model}
         </Tag>
-        <Tag>Dataset evidence</Tag>
+        <Tag>{t("ai.datasetEvidence")}</Tag>
         {totalTokens !== null && totalTokens !== undefined && (
-          <Tag>{totalTokens.toLocaleString()} tokens</Tag>
+          <Tag>
+            {t("ai.tokens", { count: totalTokens.toLocaleString() })}
+          </Tag>
         )}
       </div>
 
       <div className="ai-analysis-summary">
-        <span className="section-kicker">ScoutAI verdict</span>
+        <span className="section-kicker">{t("ai.verdict")}</span>
         <h3>{analysis.title}</h3>
         <p>{analysis.executiveSummary}</p>
       </div>
@@ -741,7 +764,7 @@ function AiAnalysisResult({
           <RadarChartOutlined />
         </span>
         <span>
-          <strong>Target play style</strong>
+          <strong>{t("ai.targetStyle")}</strong>
           <p>{targetProfile.playStyle}</p>
         </span>
       </section>
@@ -750,19 +773,19 @@ function AiAnalysisResult({
         <InsightList
           icon={<CheckCircleOutlined />}
           items={targetProfile.strengths}
-          title="Strengths"
+          title={t("ai.strengths")}
           tone="positive"
         />
         <InsightList
           icon={<MinusCircleOutlined />}
           items={targetProfile.weaknesses}
-          title="Weaknesses"
+          title={t("ai.weaknesses")}
           tone="neutral"
         />
         <InsightList
           icon={<ExclamationCircleOutlined />}
           items={targetProfile.risks}
-          title="Risks"
+          title={t("ai.risks")}
           tone="warning"
         />
       </div>
@@ -770,11 +793,11 @@ function AiAnalysisResult({
       <section className="ai-shortlist-section">
         <div className="ai-shortlist-heading">
           <div>
-            <span className="section-kicker">Recommended targets</span>
-            <h4>Suggested shortlist</h4>
+            <span className="section-kicker">{t("ai.recommended")}</span>
+            <h4>{t("ai.shortlist")}</h4>
           </div>
           <span className="ai-shortlist-count">
-            {recommendations.length} players
+            {t("models.candidates", { count: recommendations.length })}
           </span>
         </div>
 
@@ -814,7 +837,7 @@ function AiAnalysisResult({
                   <section className="is-fit">
                     <header>
                       <CheckCircleOutlined />
-                      Why it fits
+                      {t("ai.whyFits")}
                     </header>
                     <ul>
                       {(recommendation.reasons || []).map((reason, reasonIndex) => (
@@ -828,11 +851,11 @@ function AiAnalysisResult({
                   <section className="is-watch">
                     <header>
                       <ExclamationCircleOutlined />
-                      Watch points
+                      {t("ai.watchPoints")}
                     </header>
                     {(recommendation.concerns || []).length === 0 ? (
                       <p className="ai-no-concerns">
-                        No major concern identified.
+                        {t("ai.noConcern")}
                       </p>
                     ) : (
                       <ul>
@@ -853,7 +876,7 @@ function AiAnalysisResult({
           </div>
         ) : (
           <Empty
-            description="No AI recommendations available."
+            description={t("ai.noRecommendations")}
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         )}
@@ -865,8 +888,8 @@ function AiAnalysisResult({
             <TrophyOutlined />
           </span>
           <span>
-            <strong>Decision summary</strong>
-            <small>Best option by recruitment goal</small>
+            <strong>{t("ai.decisionTitle")}</strong>
+            <small>{t("ai.decisionSubtitle")}</small>
           </span>
         </header>
         <div className="ai-decision-grid">
@@ -897,13 +920,15 @@ function AiAnalysisPanel({
   onRetry,
   onToggleShortlist,
 }) {
+  const { t } = useTranslation("result");
+
   return (
     <Card
       className="ai-analysis-card report-section"
       extra={
         aiState.status === "idle" ? (
           <Button icon={<RobotOutlined />} onClick={onGenerate} type="primary">
-            Generate brief
+            {t("actions.generateBrief")}
           </Button>
         ) : null
       }
@@ -913,15 +938,15 @@ function AiAnalysisPanel({
             <BulbOutlined />
           </span>
           <span>
-            <strong>AI scouting analysis</strong>
-            <small>Evidence-backed decision support</small>
+            <strong>{t("ai.analysisTitle")}</strong>
+            <small>{t("ai.analysisSubtitle")}</small>
           </span>
         </div>
       }
     >
       {aiState.status === "idle" && (
         <Paragraph type="secondary">
-          Create a short scouting brief from the player data in this report.
+          {t("ai.createBrief")}
         </Paragraph>
       )}
 
@@ -933,11 +958,11 @@ function AiAnalysisPanel({
         <Alert
           action={
             <Button icon={<ReloadOutlined />} onClick={onRetry} size="small">
-              Try again
+              {t("actions.tryAgain")}
             </Button>
           }
           description={aiState.error.message}
-          message="AI analysis unavailable"
+          message={t("ai.unavailable")}
           showIcon
           type="error"
         />
@@ -965,6 +990,8 @@ function ModelTable({
   style,
   onToggleShortlist,
 }) {
+  const { t } = useTranslation("result");
+
   function canExpandPlayer(player) {
     return (
       !String(player.Name).includes("OUTLIER") &&
@@ -985,7 +1012,7 @@ function ModelTable({
       className: "model-player-column",
       dataIndex: "Name",
       key: "name",
-      title: "Player",
+      title: t("attributes.playerProfile"),
       render: (name, player) => {
         const isOutlier = String(name).includes("OUTLIER");
         return (
@@ -994,7 +1021,7 @@ function ModelTable({
               {name}
             </Text>
             <Text type="secondary">
-              {getPlayerSummary(player) || "Club unavailable"}
+              {getPlayerSummary(player) || t("models.clubUnavailable")}
             </Text>
           </div>
         );
@@ -1003,7 +1030,7 @@ function ModelTable({
     {
       dataIndex: "Score",
       key: "score",
-      title: "Similarity",
+      title: t("models.similarity"),
       width: 220,
       render: (score) => {
         const normalizedScore = normalizeScore(score);
@@ -1025,7 +1052,7 @@ function ModelTable({
       dataIndex: "Age",
       key: "age",
       responsive: ["md"],
-      title: "Age",
+      title: t("attributes.age", { value: "" }).trim(),
       width: 80,
       render: formatValue,
     },
@@ -1042,7 +1069,7 @@ function ModelTable({
       dataIndex: "MarketValue",
       key: "marketValue",
       responsive: ["lg"],
-      title: "Value",
+      title: t("attributes.marketValue"),
       width: 110,
       render: formatCompactCurrency,
     },
@@ -1077,7 +1104,7 @@ function ModelTable({
           <Text strong>{modelBadge}</Text>
           <Text type="secondary">{modelDescription}</Text>
         </div>
-        <Tag>{players.length} candidates</Tag>
+        <Tag>{t("models.candidates", { count: players.length })}</Tag>
       </div>
 
       <Table
@@ -1089,7 +1116,10 @@ function ModelTable({
           expandIcon: ({ expanded, onExpand, record }) =>
             canExpandPlayer(record) ? (
               <button
-                aria-label={`${expanded ? "Hide" : "Show"} ${record.Name} attribute details`}
+                aria-label={t(
+                  expanded ? "actions.hideDetails" : "actions.showDetails",
+                  { name: record.Name }
+                )}
                 aria-expanded={expanded}
                 className={`model-expand-button${expanded ? " is-expanded" : ""}`}
                 onClick={(event) => onExpand(record, event)}
@@ -1106,7 +1136,7 @@ function ModelTable({
         locale={{
           emptyText: (
             <Empty
-              description="No player passed this model's matching criteria."
+              description={t("models.empty")}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ),
@@ -1120,6 +1150,7 @@ function ModelTable({
 }
 
 function Result() {
+  const { i18n, t } = useTranslation("result");
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const recordedHistoryKeys = useRef(new Set());
@@ -1132,7 +1163,8 @@ function Result() {
     result: null,
     error: null,
   });
-  const aiRequestKey = playerName.toLocaleLowerCase();
+  const aiLanguage = i18n.resolvedLanguage === "th" ? "th" : "en";
+  const aiRequestKey = `${aiLanguage}:${playerName.toLocaleLowerCase()}`;
   const [aiState, setAiState] = useState({
     key: "",
     status: "idle",
@@ -1172,7 +1204,7 @@ function Result() {
             key: requestKey,
             status: "error",
             result: null,
-            error: readApiError(requestError),
+            error: readApiError(requestError, t),
           });
         }
       });
@@ -1180,7 +1212,7 @@ function Result() {
     return () => {
       isActive = false;
     };
-  }, [playerName, requestKey]);
+  }, [playerName, requestKey, t]);
 
   useEffect(() => {
     let isActive = true;
@@ -1217,7 +1249,7 @@ function Result() {
         if (!isActive) return;
         setShortlistState({
           actionKey: "",
-          error: readShortlistError(error),
+          error: readShortlistError(error, t),
           items: [],
           loading: false,
         });
@@ -1226,7 +1258,7 @@ function Result() {
     return () => {
       isActive = false;
     };
-  }, [user?.id]);
+  }, [t, user?.id]);
 
   const currentState = useMemo(() => {
     if (!playerName) {
@@ -1235,7 +1267,7 @@ function Result() {
         result: null,
         error: {
           code: "MISSING_PLAYER",
-          message: "No player was selected for analysis.",
+          message: t("errors.missing"),
           matches: [],
         },
       };
@@ -1248,7 +1280,7 @@ function Result() {
           result: null,
           error: null,
         };
-  }, [playerName, requestKey, requestState]);
+  }, [playerName, requestKey, requestState, t]);
 
   const models = useMemo(
     () => Object.entries(currentState.result?.results || {}),
@@ -1302,10 +1334,10 @@ function Result() {
     }).catch((error) => {
       setShortlistState((state) => ({
         ...state,
-        error: readShortlistError(error),
+        error: readShortlistError(error, t),
       }));
     });
-  }, [currentState, playerName, requestKey, user?.id]);
+  }, [currentState, playerName, requestKey, t, user?.id]);
 
   function retry() {
     clearRecommendationCache(playerName);
@@ -1320,7 +1352,7 @@ function Result() {
     if (!user?.id) {
       setShortlistState((state) => ({
         ...state,
-        error: "Sign in is required to save players.",
+        error: t("errors.signIn"),
       }));
       return;
     }
@@ -1329,7 +1361,7 @@ function Result() {
     if (!playerKey) {
       setShortlistState((state) => ({
         ...state,
-        error: "Could not identify this player.",
+        error: t("errors.identify"),
       }));
       return;
     }
@@ -1368,7 +1400,7 @@ function Result() {
       setShortlistState((state) => ({
         ...state,
         actionKey: "",
-        error: readShortlistError(error),
+        error: readShortlistError(error, t),
       }));
     }
   }
@@ -1384,7 +1416,7 @@ function Result() {
     });
 
     try {
-      const result = await getAiAnalysis(playerName);
+      const result = await getAiAnalysis(playerName, aiLanguage);
       setAiState((state) =>
         state.key === activeKey
           ? {
@@ -1402,7 +1434,7 @@ function Result() {
               key: activeKey,
               status: "error",
               result: null,
-              error: readAiApiError(error),
+              error: readAiApiError(error, t),
             }
           : state
       );
@@ -1410,7 +1442,7 @@ function Result() {
   }
 
   function retryAiAnalysis() {
-    clearAiAnalysisCache(playerName);
+    clearAiAnalysisCache(playerName, aiLanguage);
     generateAiAnalysis();
   }
 
@@ -1437,7 +1469,7 @@ function Result() {
             </div>
 
             <div className="report-player-identity">
-              <span className="section-kicker">Scouting report</span>
+              <span className="section-kicker">{t("report.kicker")}</span>
               <h1 className="page-title">{currentState.result.target.Name}</h1>
               <p className="page-subtitle">
                 {currentState.result.target.Display_Name}
@@ -1465,20 +1497,22 @@ function Result() {
 
           <div className="report-metrics">
             <ReportMetric
-              label="Position"
+              label={t("attributes.position")}
               value={formatValue(getPlayerPosition(currentState.result.target))}
             />
             <ReportMetric
-              label="Age"
+              label={t("attributes.ageLabel")}
               value={formatValue(currentState.result.target.Age)}
             />
             <ReportMetric
-              detail={`Potential ${formatValue(getPlayerPa(currentState.result.target))}`}
-              label="Current ability"
+              detail={t("attributes.potential", {
+                value: formatValue(getPlayerPa(currentState.result.target)),
+              })}
+              label={t("attributes.currentAbility")}
               value={formatValue(getPlayerCa(currentState.result.target))}
             />
             <ReportMetric
-              label="Market value"
+              label={t("attributes.marketValue")}
               value={formatCompactCurrency(currentState.result.target.MarketValue)}
             />
           </div>
@@ -1511,25 +1545,25 @@ function Result() {
                   <BarChartOutlined />
                 </span>
                 <span>
-                  <strong>Model recommendations</strong>
-                  <small>Five matching approaches, one clearer shortlist</small>
+                  <strong>{t("models.recommendations")}</strong>
+                  <small>{t("models.subtitle")}</small>
                 </span>
               </div>
             }
           >
             <div className="model-summary-grid">
               <div>
-                <Text type="secondary">Candidates found</Text>
+                <Text type="secondary">{t("models.candidatesFound")}</Text>
                 <Text strong>{totalRecommendations}</Text>
               </div>
               <div>
-                <Text type="secondary">Attributes compared</Text>
+                <Text type="secondary">{t("models.attributesCompared")}</Text>
                 <Text strong>
                   {formatValue(currentState.result.model?.featureCount)}
                 </Text>
               </div>
               <div>
-                <Text type="secondary">Matching approaches</Text>
+                <Text type="secondary">{t("models.approaches")}</Text>
                 <Text strong>{models.length}</Text>
               </div>
             </div>
@@ -1538,18 +1572,24 @@ function Result() {
               className="model-tabs"
               items={models.map(([modelName, players], index) => {
                 const style = modelStyles[index % modelStyles.length];
+                const modelBadge = t(
+                  `models.styles.${style.badgeKey}.badge`
+                );
+                const modelDescription = t(
+                  `models.styles.${style.badgeKey}.description`
+                );
                 return {
                   key: modelName,
                   label: (
                     <span className="model-tab-label">
-                      <Tag color={style.tag}>{style.badge}</Tag>
+                      <Tag color={style.tag}>{modelBadge}</Tag>
                       <span>{players.length}</span>
                     </span>
                   ),
                   children: (
                     <ModelTable
-                      modelBadge={style.badge}
-                      modelDescription={style.description}
+                      modelBadge={modelBadge}
+                      modelDescription={modelDescription}
                       modelName={modelName}
                       players={players}
                       shortlistActionKey={shortlistState.actionKey}

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Button,
@@ -21,6 +22,7 @@ import {
   DeleteOutlined,
   FilterOutlined,
   HistoryOutlined,
+  LoadingOutlined,
   RadarChartOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -51,24 +53,6 @@ const playerBrowserDefaults = {
   preset: "",
 };
 
-const presetOptions = [
-  { label: "No preset", value: "" },
-  { label: "Wonderkids", value: "wonderkids" },
-  { label: "Bargains", value: "bargains" },
-  { label: "Elite players", value: "elite" },
-];
-
-const positionOptions = [
-  { label: "Any position", value: "" },
-  { label: "Goalkeeper", value: "goalkeeper" },
-  { label: "Defender", value: "defender" },
-  { label: "Full back / wing back", value: "fullback" },
-  { label: "Midfielder", value: "midfielder" },
-  { label: "Playmaker", value: "playmaker" },
-  { label: "Winger", value: "winger" },
-  { label: "Striker", value: "striker" },
-];
-
 const valueOptions = [
   { label: "GBP 1m", value: 1000000 },
   { label: "GBP 5m", value: 5000000 },
@@ -78,34 +62,25 @@ const valueOptions = [
   { label: "GBP 100m", value: 100000000 },
 ];
 
-const wageOptions = [
-  { label: "GBP 25k / week", value: 25000 },
-  { label: "GBP 50k / week", value: 50000 },
-  { label: "GBP 100k / week", value: 100000 },
-  { label: "GBP 250k / week", value: 250000 },
-  { label: "GBP 500k / week", value: 500000 },
+const wageValues = [
+  ["GBP 25k", 25000],
+  ["GBP 50k", 50000],
+  ["GBP 100k", 100000],
+  ["GBP 250k", 250000],
+  ["GBP 500k", 500000],
 ];
 
-const sortOptions = [
-  { label: "Highest CA", value: "ability_desc" },
-  { label: "Highest PA", value: "potential_desc" },
-  { label: "Lowest value", value: "value_asc" },
-  { label: "Lowest wage", value: "wage_asc" },
-  { label: "Youngest", value: "age_asc" },
-  { label: "Name A-Z", value: "name_asc" },
-];
+function formatDateTime(value, t, language) {
+  if (!value) return t("players.unknownTime");
 
-function formatDateTime(value) {
-  if (!value) return "Unknown time";
-
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(language === "th" ? "th-TH" : "en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
 }
 
-function formatMoney(value) {
-  if (!value || value < 0) return "Unknown";
+function formatMoney(value, t) {
+  if (!value || value < 0) return t("players.unknown");
 
   return new Intl.NumberFormat("en-GB", {
     currency: "GBP",
@@ -132,17 +107,24 @@ function buildBrowserParams(values, limit = PLAYER_PAGE_SIZE) {
   };
 }
 
-function readDataError(error) {
-  const message = error?.message || "Could not load scouting workspace data.";
+function readDataError(error, t) {
+  const message = error?.message || t("errors.workspace");
+  if (
+    error?.response?.status === 401 ||
+    message.includes("Authentication is required")
+  ) {
+    return t("errors.authentication");
+  }
+
   if (message.includes("Shortlist delete was not applied")) {
-    return "Could not permanently remove this player. Run the latest shortlist delete RLS migration in Supabase.";
+    return t("errors.shortlistDeleteMigration");
   }
 
   if (
     message.includes("player_search_history") ||
     message.includes("row-level security policy")
   ) {
-    return "Search history policy needs to be updated in Supabase. Run the latest search history RLS SQL migration.";
+    return t("errors.historyPolicyMigration");
   }
 
   if (
@@ -150,7 +132,7 @@ function readDataError(error) {
     message.includes("player_search_history") ||
     message.includes("Could not find the table")
   ) {
-    return "Run the Supabase shortlist/history SQL migration before using this workspace.";
+    return t("errors.workspaceMigration");
   }
 
   return message;
@@ -171,11 +153,12 @@ function writeLastPlayerResult(playerName) {
 }
 
 function ShortlistPanel({ items, onAnalyze, onRemove }) {
+  const { i18n, t } = useTranslation("search");
   const columns = [
     {
       dataIndex: "player_name",
       key: "player",
-      title: "Player",
+      title: t("players.player"),
       render: (_, item) => (
         <div className="workspace-player">
           <span className="workspace-row-avatar" aria-hidden="true">
@@ -185,7 +168,7 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
             <Text strong>{item.player_name}</Text>
             <Text type="secondary">
               {[item.club, item.position].filter(Boolean).join(" / ") ||
-                "Club or position unavailable"}
+                t("players.positionUnavailable")}
             </Text>
           </span>
         </div>
@@ -195,18 +178,22 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
       dataIndex: "source",
       key: "source",
       responsive: ["md"],
-      title: "Source",
+      title: t("players.source"),
       render: (source) => (
-        <span className="workspace-source-pill">{source || "Manual"}</span>
+        <span className="workspace-source-pill">
+          {source || t("players.manual")}
+        </span>
       ),
     },
     {
       dataIndex: "updated_at",
       key: "updated_at",
       responsive: ["lg"],
-      title: "Saved",
+      title: t("shortlist.saved"),
       render: (value) => (
-        <span className="workspace-date">{formatDateTime(value)}</span>
+        <span className="workspace-date">
+          {formatDateTime(value, t, i18n.language)}
+        </span>
       ),
     },
     {
@@ -220,15 +207,19 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
             icon={<SearchOutlined />}
             onClick={() => onAnalyze(item.player_name)}
           >
-            Open
+            {t("actions.open")}
           </Button>
           <Button
-            aria-label={`Remove ${item.player_name} from shortlist`}
+            aria-label={t("shortlist.removeAria", {
+              name: item.player_name,
+            })}
             className="workspace-remove-button"
             danger
             icon={<DeleteOutlined />}
             onClick={() => onRemove(item.id)}
-            title={`Remove ${item.player_name}`}
+            title={t("shortlist.removeAria", {
+              name: item.player_name,
+            })}
             type="text"
           />
         </Space>
@@ -245,8 +236,8 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
             <StarOutlined />
           </span>
           <span className="workspace-card-title">
-            <strong>Shortlist</strong>
-            <small>Players saved for review</small>
+            <strong>{t("shortlist.title")}</strong>
+            <small>{t("shortlist.subtitle")}</small>
           </span>
           <span className="workspace-card-count">{items.length}</span>
         </div>
@@ -258,7 +249,7 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
         locale={{
           emptyText: (
             <Empty
-              description="Save players from a scouting report to build your shortlist."
+              description={t("shortlist.empty")}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ),
@@ -273,11 +264,12 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
 }
 
 function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
+  const { i18n, t } = useTranslation("search");
   const columns = [
     {
       dataIndex: "query",
       key: "query",
-      title: "Search",
+      title: t("history.search"),
       render: (query) => (
         <div className="workspace-player">
           <span className="workspace-row-avatar is-history" aria-hidden="true">
@@ -285,7 +277,7 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
           </span>
           <span className="workspace-player-copy">
             <Text strong>{query}</Text>
-            <Text type="secondary">Player report</Text>
+            <Text type="secondary">{t("history.playerReport")}</Text>
           </span>
         </div>
       ),
@@ -294,7 +286,7 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
       dataIndex: "result_count",
       key: "result_count",
       responsive: ["md"],
-      title: "Results",
+      title: t("history.results"),
       render: (value) => (
         <span className="workspace-result-pill">
           {value === null || value === undefined ? "-" : value}
@@ -305,9 +297,11 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
       dataIndex: "created_at",
       key: "created_at",
       responsive: ["lg"],
-      title: "Date",
+      title: t("history.date"),
       render: (value) => (
-        <span className="workspace-date">{formatDateTime(value)}</span>
+        <span className="workspace-date">
+          {formatDateTime(value, t, i18n.language)}
+        </span>
       ),
     },
     {
@@ -321,15 +315,15 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
             icon={<HistoryOutlined />}
             onClick={() => onAnalyze(item.query)}
           >
-            Open
+            {t("actions.open")}
           </Button>
           <Button
-            aria-label={`Delete ${item.query} from search history`}
+            aria-label={t("history.deleteAria", { name: item.query })}
             className="workspace-remove-button"
             danger
             icon={<DeleteOutlined />}
             onClick={() => onRemove(item.id)}
-            title={`Delete ${item.query}`}
+            title={t("history.deleteAria", { name: item.query })}
             type="text"
           />
         </Space>
@@ -343,7 +337,7 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
       extra={
         items.length > 0 ? (
           <Button danger icon={<ClearOutlined />} onClick={onClear} type="text">
-            Clear
+            {t("actions.clear")}
           </Button>
         ) : null
       }
@@ -353,8 +347,8 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
             <HistoryOutlined />
           </span>
           <span className="workspace-card-title">
-            <strong>Search history</strong>
-            <small>Your recent scouting activity</small>
+            <strong>{t("history.title")}</strong>
+            <small>{t("history.subtitle")}</small>
           </span>
           <span className="workspace-card-count">{items.length}</span>
         </div>
@@ -366,7 +360,7 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
         locale={{
           emptyText: (
             <Empty
-              description="Searches will appear here after you run a scouting report."
+              description={t("history.empty")}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ),
@@ -381,8 +375,16 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
 }
 
 function PlayerDatabasePanel({ onAnalyze }) {
+  const { t } = useTranslation("search");
   const [browserForm] = Form.useForm();
+  const browserRequestController = useRef(null);
+  const browserRequestId = useRef(0);
   const [nameSearch, setNameSearch] = useState("");
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
+  const [filterFeedback, setFilterFeedback] = useState({
+    status: "",
+    text: "",
+  });
   const [browserState, setBrowserState] = useState({
     loading: false,
     error: "",
@@ -390,11 +392,44 @@ function PlayerDatabasePanel({ onAnalyze }) {
     count: 0,
     limit: PLAYER_PAGE_SIZE,
   });
+  const presetOptions = [
+    { label: t("options.presets.none"), value: "" },
+    { label: t("options.presets.wonderkids"), value: "wonderkids" },
+    { label: t("options.presets.bargains"), value: "bargains" },
+    { label: t("options.presets.elite"), value: "elite" },
+  ];
+  const positionOptions = [
+    { label: t("options.positions.any"), value: "" },
+    { label: t("options.positions.goalkeeper"), value: "goalkeeper" },
+    { label: t("options.positions.defender"), value: "defender" },
+    { label: t("options.positions.fullback"), value: "fullback" },
+    { label: t("options.positions.midfielder"), value: "midfielder" },
+    { label: t("options.positions.playmaker"), value: "playmaker" },
+    { label: t("options.positions.winger"), value: "winger" },
+    { label: t("options.positions.striker"), value: "striker" },
+  ];
+  const wageOptions = wageValues.map(([valueLabel, value]) => ({
+    label: t("players.wagePerWeek", { value: valueLabel }),
+    value,
+  }));
+  const sortOptions = [
+    { label: t("options.sort.ability"), value: "ability_desc" },
+    { label: t("options.sort.potential"), value: "potential_desc" },
+    { label: t("options.sort.value"), value: "value_asc" },
+    { label: t("options.sort.wage"), value: "wage_asc" },
+    { label: t("options.sort.age"), value: "age_asc" },
+    { label: t("options.sort.name"), value: "name_asc" },
+  ];
 
   useEffect(() => {
     let isActive = true;
 
     async function loadInitialPlayers() {
+      const requestId = ++browserRequestId.current;
+      const controller = new AbortController();
+      browserRequestController.current?.abort();
+      browserRequestController.current = controller;
+
       setBrowserState((state) => ({
         ...state,
         loading: true,
@@ -403,9 +438,10 @@ function PlayerDatabasePanel({ onAnalyze }) {
 
       try {
         const result = await searchPlayers(
-          buildBrowserParams(playerBrowserDefaults, PLAYER_PAGE_SIZE)
+          buildBrowserParams(playerBrowserDefaults, PLAYER_PAGE_SIZE),
+          { signal: controller.signal }
         );
-        if (!isActive) return;
+        if (!isActive || requestId !== browserRequestId.current) return;
         setBrowserState({
           loading: false,
           error: "",
@@ -414,13 +450,14 @@ function PlayerDatabasePanel({ onAnalyze }) {
           limit: PLAYER_PAGE_SIZE,
         });
       } catch (loadError) {
-        if (!isActive) return;
+        if (controller.signal.aborted) return;
+        if (!isActive || requestId !== browserRequestId.current) return;
         setBrowserState({
           loading: false,
           error:
             loadError?.response?.data?.message ||
             loadError?.message ||
-            "Could not load player database.",
+            t("errors.database"),
           players: [],
           count: 0,
           limit: PLAYER_PAGE_SIZE,
@@ -432,10 +469,32 @@ function PlayerDatabasePanel({ onAnalyze }) {
 
     return () => {
       isActive = false;
+      browserRequestController.current?.abort();
+      browserRequestId.current += 1;
     };
-  }, []);
+  }, [t]);
 
-  async function applyFilters(values, limit = PLAYER_PAGE_SIZE) {
+  async function applyFilters(
+    values,
+    limit = PLAYER_PAGE_SIZE,
+    successMessage = ""
+  ) {
+    const requestId = ++browserRequestId.current;
+    const controller = new AbortController();
+    browserRequestController.current?.abort();
+    browserRequestController.current = controller;
+
+    if (successMessage) {
+      setIsApplyingFilters(true);
+      setFilterFeedback({
+        status: "loading",
+        text:
+          successMessage === t("feedback.filtersReset")
+            ? t("feedback.resetting")
+            : t("feedback.applying"),
+      });
+    }
+
     setBrowserState((state) => ({
       ...state,
       loading: true,
@@ -443,7 +502,11 @@ function PlayerDatabasePanel({ onAnalyze }) {
     }));
 
     try {
-      const result = await searchPlayers(buildBrowserParams(values, limit));
+      const result = await searchPlayers(buildBrowserParams(values, limit), {
+        signal: controller.signal,
+      });
+      if (requestId !== browserRequestId.current) return;
+
       setBrowserState({
         loading: false,
         error: "",
@@ -451,22 +514,50 @@ function PlayerDatabasePanel({ onAnalyze }) {
         count: result.count || 0,
         limit,
       });
+
+      if (successMessage) {
+        setFilterFeedback({
+          status: "success",
+          text: t("feedback.shown", {
+            count: result.count || 0,
+            message: successMessage,
+          }),
+        });
+      }
     } catch (filterError) {
+      if (controller.signal.aborted) return;
+      if (requestId !== browserRequestId.current) return;
+
       setBrowserState((state) => ({
         ...state,
         loading: false,
         error:
           filterError?.response?.data?.message ||
           filterError?.message ||
-          "Could not filter the player database.",
+          t("errors.filter"),
       }));
+
+      if (successMessage) {
+        setFilterFeedback({
+          status: "error",
+          text: t("errors.apply"),
+        });
+      }
+    } finally {
+      if (requestId === browserRequestId.current && successMessage) {
+        setIsApplyingFilters(false);
+      }
     }
   }
 
   function resetFilters() {
     setNameSearch("");
     browserForm.resetFields();
-    applyFilters(playerBrowserDefaults, PLAYER_PAGE_SIZE);
+    applyFilters(
+      playerBrowserDefaults,
+      PLAYER_PAGE_SIZE,
+      t("feedback.filtersReset")
+    );
   }
 
   function searchByName(value) {
@@ -500,7 +591,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
     {
       dataIndex: "name",
       key: "player",
-      title: "Player",
+      title: t("players.player"),
       render: (_, player) => (
         <div className="database-player">
           <span className="database-player-avatar" aria-hidden="true">
@@ -511,7 +602,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
             <Text type="secondary">
               {[player.club, player.nationality, player.position]
                 .filter(Boolean)
-                .join(" / ") || "Profile details unavailable"}
+                .join(" / ") || t("players.profileUnavailable")}
             </Text>
           </div>
         </div>
@@ -520,7 +611,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
     {
       dataIndex: "age",
       key: "age",
-      title: "Age",
+      title: t("players.age"),
       width: 80,
       render: (age) => age ?? "-",
     },
@@ -544,17 +635,20 @@ function PlayerDatabasePanel({ onAnalyze }) {
       dataIndex: "marketValue",
       key: "marketValue",
       responsive: ["md"],
-      title: "Value",
+      title: t("players.value"),
       width: 120,
-      render: formatMoney,
+      render: (value) => formatMoney(value, t),
     },
     {
       dataIndex: "salary",
       key: "salary",
       responsive: ["lg"],
-      title: "Wage",
+      title: t("players.wage"),
       width: 130,
-      render: (value) => (value ? `${formatMoney(value)} / week` : "Unknown"),
+      render: (value) =>
+        value
+          ? t("players.wagePerWeek", { value: formatMoney(value, t) })
+          : t("players.unknown"),
     },
     {
       key: "actions",
@@ -566,7 +660,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
           icon={<RadarChartOutlined />}
           onClick={() => onAnalyze(player.name)}
         >
-          Analyze
+          {t("actions.analyze")}
         </Button>
       ),
     },
@@ -580,7 +674,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
       className="player-browser-card"
       extra={
         <span className="database-result-count">
-          <strong>{browserState.count}</strong> shown
+          <strong>{browserState.count}</strong> {t("database.shown")}
         </span>
       }
       title={
@@ -590,25 +684,25 @@ function PlayerDatabasePanel({ onAnalyze }) {
               <DatabaseOutlined />
             </span>
             <span>
-              <strong>Player database</strong>
-              <small>Explore and compare the complete player pool</small>
+              <strong>{t("database.title")}</strong>
+              <small>{t("database.description")}</small>
             </span>
           </div>
           <div className="database-name-search" role="search">
             <Input
               allowClear
-              aria-label="Search player by name"
+              aria-label={t("database.searchPlaceholder")}
               onChange={(event) => {
                 const value = event.target.value;
                 setNameSearch(value);
                 if (!value) searchByName("");
               }}
               onPressEnter={() => searchByName(nameSearch)}
-              placeholder="Search player by name"
+              placeholder={t("database.searchPlaceholder")}
               value={nameSearch}
             />
             <Button
-              aria-label="Search players"
+              aria-label={t("database.searchAria")}
               className="database-name-search-button"
               icon={<SearchOutlined />}
               loading={browserState.loading}
@@ -624,13 +718,13 @@ function PlayerDatabasePanel({ onAnalyze }) {
           <div className="player-filter-sidebar-heading">
             <span>
               <FilterOutlined />
-              Refine players
+              {t("filters.title")}
             </span>
-            <small>12 filters</small>
+            <small>{t("filters.count")}</small>
           </div>
           <div className="player-browser-intro">
             <Text type="secondary">
-              Narrow the database to the profile your recruitment plan needs.
+              {t("filters.description")}
             </Text>
           </div>
 
@@ -644,78 +738,117 @@ function PlayerDatabasePanel({ onAnalyze }) {
                   ...values,
                   name: nameSearch,
                 },
-                PLAYER_PAGE_SIZE
+                PLAYER_PAGE_SIZE,
+                t("feedback.filtersApplied")
               )
             }
             requiredMark={false}
           >
             <div className="player-filter-scroll">
               <div className="player-filter-grid">
-                <Form.Item label="Club" name="club">
-                  <Input allowClear placeholder="e.g. Dortmund" />
+                <Form.Item label={t("filters.club")} name="club">
+                  <Input
+                    allowClear
+                    placeholder={t("filters.clubPlaceholder")}
+                  />
                 </Form.Item>
 
-                <Form.Item label="Nationality" name="nationality">
-                  <Input allowClear placeholder="e.g. England" />
+                <Form.Item label={t("filters.nationality")} name="nationality">
+                  <Input
+                    allowClear
+                    placeholder={t("filters.nationalityPlaceholder")}
+                  />
                 </Form.Item>
 
-                <Form.Item label="Position" name="position">
+                <Form.Item label={t("filters.position")} name="position">
                   <Select options={positionOptions} />
                 </Form.Item>
 
-                <Form.Item label="Preset" name="preset">
-                  <Select options={presetOptions} />
+                <Form.Item label={t("filters.preset")} name="preset">
+                  <Select
+                    onChange={(preset) =>
+                      applyFilters(
+                        {
+                          ...browserForm.getFieldsValue(),
+                          name: nameSearch,
+                          preset,
+                        },
+                        PLAYER_PAGE_SIZE,
+                        t("feedback.presetApplied")
+                      )
+                    }
+                    options={presetOptions}
+                  />
                 </Form.Item>
 
-                <Form.Item label="Min age" name="minAge">
+                <Form.Item label={t("filters.minAge")} name="minAge">
                   <InputNumber max={45} min={15} placeholder="18" />
                 </Form.Item>
 
-                <Form.Item label="Max age" name="maxAge">
+                <Form.Item label={t("filters.maxAge")} name="maxAge">
                   <InputNumber max={45} min={15} placeholder="24" />
                 </Form.Item>
 
-                <Form.Item label="Min CA" name="minCA">
+                <Form.Item label={t("filters.minCA")} name="minCA">
                   <InputNumber max={200} min={1} placeholder="130" />
                 </Form.Item>
 
-                <Form.Item label="Min PA" name="minPA">
+                <Form.Item label={t("filters.minPA")} name="minPA">
                   <InputNumber max={200} min={1} placeholder="150" />
                 </Form.Item>
 
-                <Form.Item label="Max value" name="maxValue">
+                <Form.Item label={t("filters.maxValue")} name="maxValue">
                   <Select
                     allowClear
                     options={valueOptions}
-                    placeholder="Any budget"
+                    placeholder={t("filters.anyBudget")}
                   />
                 </Form.Item>
 
-                <Form.Item label="Max wage" name="maxSalary">
+                <Form.Item label={t("filters.maxWage")} name="maxSalary">
                   <Select
                     allowClear
                     options={wageOptions}
-                    placeholder="Any wage"
+                    placeholder={t("filters.anyWage")}
                   />
                 </Form.Item>
 
-                <Form.Item label="Sort by" name="sort">
+                <Form.Item label={t("filters.sortBy")} name="sort">
                   <Select
                     allowClear
                     options={sortOptions}
-                    placeholder="Default order"
+                    placeholder={t("filters.defaultOrder")}
                   />
                 </Form.Item>
               </div>
             </div>
 
             <div className="player-filter-actions">
-              <Button htmlType="submit" icon={<FilterOutlined />} type="primary">
-                Apply filters
+              <Button
+                htmlType="submit"
+                icon={
+                  isApplyingFilters ? (
+                    <LoadingOutlined spin />
+                  ) : (
+                    <FilterOutlined />
+                  )
+                }
+                type="primary"
+              >
+                {isApplyingFilters
+                  ? t("actions.applying")
+                  : t("actions.apply")}
               </Button>
               <Button icon={<ReloadOutlined />} onClick={resetFilters}>
-                Reset filters
+                {t("actions.reset")}
               </Button>
+              <span
+                aria-live="polite"
+                className={`player-filter-feedback is-${filterFeedback.status}`}
+                role="status"
+              >
+                {filterFeedback.text}
+              </span>
             </div>
           </Form>
         </div>
@@ -723,14 +856,16 @@ function PlayerDatabasePanel({ onAnalyze }) {
         <div className="player-results-area">
           <div className="player-results-toolbar">
             <div>
-              <strong>Matching players</strong>
-              <span>{browserState.count} profiles in this view</span>
+              <strong>{t("database.matching")}</strong>
+              <span>
+                {t("database.profilesInView", { count: browserState.count })}
+              </span>
             </div>
             <span className="ability-legend">
               <i className="is-current" />
-              Current
+              {t("players.current")}
               <i className="is-potential" />
-              Potential
+              PA
             </span>
           </div>
 
@@ -750,7 +885,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
             locale={{
               emptyText: (
                 <Empty
-                  description="No players match those filters."
+                  description={t("database.noMatches")}
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
                 />
               ),
@@ -766,7 +901,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
               loading={browserState.loading}
               onClick={loadMorePlayers}
             >
-              Load more players
+              {t("actions.loadMore")}
             </Button>
           </div>
         </div>
@@ -776,6 +911,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
 }
 
 function Search() {
+  const { t } = useTranslation("search");
   const navigate = useNavigate();
   const { user } = useAuth();
   const [workspaceState, setWorkspaceState] = useState({
@@ -820,7 +956,7 @@ function Search() {
         if (!isActive) return;
         setWorkspaceState({
           loading: false,
-          error: readDataError(workspaceError),
+          error: readDataError(workspaceError, t),
           shortlist: [],
           history: [],
         });
@@ -829,14 +965,14 @@ function Search() {
     return () => {
       isActive = false;
     };
-  }, [user?.id]);
+  }, [t, user?.id]);
 
   function startAnalysis(name) {
     const cleanedName = String(name || "").trim();
     if (cleanedName.length < 2) {
       setWorkspaceState((state) => ({
         ...state,
-        error: "Select a player before opening a scouting report.",
+        error: t("errors.selectPlayer"),
       }));
       return;
     }
@@ -855,7 +991,7 @@ function Search() {
     } catch (removeError) {
       setWorkspaceState((state) => ({
         ...state,
-        error: readDataError(removeError),
+        error: readDataError(removeError, t),
       }));
     }
   }
@@ -872,7 +1008,7 @@ function Search() {
     } catch (removeError) {
       setWorkspaceState((state) => ({
         ...state,
-        error: readDataError(removeError),
+        error: readDataError(removeError, t),
       }));
     }
   }
@@ -889,7 +1025,7 @@ function Search() {
     } catch (clearError) {
       setWorkspaceState((state) => ({
         ...state,
-        error: readDataError(clearError),
+        error: readDataError(clearError, t),
       }));
     }
   }
@@ -901,26 +1037,26 @@ function Search() {
           <div className="search-hero-copy">
             <span className="search-hero-badge">
               <i />
-              Recruitment intelligence
+              {t("hero.badge")}
             </span>
-            <span className="section-kicker">Scouting workspace</span>
+            <span className="section-kicker">{t("hero.kicker")}</span>
             <h1 className="page-title search-page-title">
-              Find the player your system is missing.
+              {t("hero.title")}
             </h1>
-            <p className="page-subtitle">
-              Filter the player pool, compare potential, and turn the strongest
-              candidates into reports your recruitment team can act on.
-            </p>
+            <p className="page-subtitle">{t("hero.description")}</p>
           </div>
 
-          <div className="search-hero-summary" aria-label="Workspace summary">
+          <div
+            className="search-hero-summary"
+            aria-label={t("hero.summary")}
+          >
             <div className="search-summary-item">
               <span className="search-summary-icon">
                 <TeamOutlined />
               </span>
               <span>
                 <strong>8,452</strong>
-                <small>Player profiles</small>
+                <small>{t("shortlist.playerProfiles")}</small>
               </span>
             </div>
             <div className="search-summary-item">
@@ -931,7 +1067,7 @@ function Search() {
                 <strong>
                   {workspaceState.loading ? "-" : workspaceState.shortlist.length}
                 </strong>
-                <small>Saved players</small>
+                <small>{t("shortlist.savedPlayers")}</small>
               </span>
             </div>
             <div className="search-summary-item">
@@ -942,7 +1078,7 @@ function Search() {
                 <strong>
                   {workspaceState.loading ? "-" : workspaceState.history.length}
                 </strong>
-                <small>Recent searches</small>
+                <small>{t("history.recentSearches")}</small>
               </span>
             </div>
           </div>
@@ -966,7 +1102,7 @@ function Search() {
             <Card className="workspace-loading-card">
               <Spin />
               <Text style={{ marginLeft: 12 }} type="secondary">
-                Loading scouting workspace
+                {t("hero.loading")}
               </Text>
             </Card>
           ) : (

@@ -61,7 +61,10 @@ app.get("/api/ai/health", (_req, res, next) => {
 app.post("/api/ai/analyze", requireAuth, async (req, res, next) => {
     try {
         const mlResult = await getPlayerRecommendations(req.body?.playerName);
-        const result = await analyzeScoutReport(mlResult);
+        const result = await analyzeScoutReport(
+            mlResult,
+            req.body?.language
+        );
         res.json(result);
     } catch (error) {
         next(error);
