@@ -69,13 +69,19 @@ export function clearRecommendationCache(playerName) {
   recommendationCache.delete(cacheKey);
 }
 
-export function getAiAnalysis(playerName) {
+function normalizeAiLanguage(language) {
+  return language === "th" ? "th" : "en";
+}
+
+export function getAiAnalysis(playerName, language = "en") {
   const normalizedName = String(playerName || "").trim();
-  const cacheKey = `en:${normalizedName.toLocaleLowerCase()}`;
+  const normalizedLanguage = normalizeAiLanguage(language);
+  const cacheKey = `${normalizedLanguage}:${normalizedName.toLocaleLowerCase()}`;
 
   if (!aiAnalysisCache.has(cacheKey)) {
     const request = api
       .post("/api/ai/analyze", {
+        language: normalizedLanguage,
         playerName: normalizedName,
       })
       .then((response) => response.data)
@@ -90,8 +96,11 @@ export function getAiAnalysis(playerName) {
   return aiAnalysisCache.get(cacheKey);
 }
 
-export function clearAiAnalysisCache(playerName) {
-  const cacheKey = `en:${String(playerName || "").trim().toLocaleLowerCase()}`;
+export function clearAiAnalysisCache(playerName, language = "en") {
+  const normalizedLanguage = normalizeAiLanguage(language);
+  const cacheKey = `${normalizedLanguage}:${String(playerName || "")
+    .trim()
+    .toLocaleLowerCase()}`;
   aiAnalysisCache.delete(cacheKey);
 }
 

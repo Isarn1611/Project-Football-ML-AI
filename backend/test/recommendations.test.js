@@ -360,6 +360,7 @@ test("POST /api/ai/analyze sends trusted ML context to Gemini", async () => {
   assert.equal(response.status, 200);
   assert.equal(payload.provider, "gemini");
   assert.equal(payload.model, "gemini-3.6-flash");
+  assert.equal(payload.language, "en");
   assert.equal(payload.analysis.title, mockAnalysis.title);
   assert.equal(payload.usage.totalTokens, 300);
   assert.equal(lastGeminiRequest.apiKey, "test-gemini-key");
@@ -382,6 +383,44 @@ test("POST /api/ai/analyze sends trusted ML context to Gemini", async () => {
   assert.equal(scoutContext.target.name, "Kevin De Bruyne");
   assert.equal(scoutContext.candidates[0].name, "Candidate One");
   assert.equal(scoutContext.candidates[0].evidence[0].score, 87.5);
+  assert.deepEqual(scoutContext.responseLanguage, {
+    code: "en",
+    name: "English",
+  });
+});
+
+test("POST /api/ai/analyze instructs Gemini to answer in Thai", async () => {
+  const response = await fetch(`${backendUrl}/api/ai/analyze`, {
+    method: "POST",
+    headers: {
+      ...AUTH_HEADER,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      language: "th",
+      playerName: "Kevin De Bruyne",
+    }),
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.language, "th");
+  assert.match(
+    lastGeminiRequest.body.systemInstruction.parts[0].text,
+    /natural Thai/
+  );
+  assert.doesNotMatch(
+    lastGeminiRequest.body.systemInstruction.parts[0].text,
+    /clear English/
+  );
+
+  const scoutContext = JSON.parse(
+    lastGeminiRequest.body.contents[0].parts[0].text
+  );
+  assert.deepEqual(scoutContext.responseLanguage, {
+    code: "th",
+    name: "Thai",
+  });
 });
 
 test("POST /api/ai/analyze validates playerName before calling Gemini", async () => {

@@ -1150,7 +1150,7 @@ function ModelTable({
 }
 
 function Result() {
-  const { t } = useTranslation("result");
+  const { i18n, t } = useTranslation("result");
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const recordedHistoryKeys = useRef(new Set());
@@ -1163,7 +1163,8 @@ function Result() {
     result: null,
     error: null,
   });
-  const aiRequestKey = playerName.toLocaleLowerCase();
+  const aiLanguage = i18n.resolvedLanguage === "th" ? "th" : "en";
+  const aiRequestKey = `${aiLanguage}:${playerName.toLocaleLowerCase()}`;
   const [aiState, setAiState] = useState({
     key: "",
     status: "idle",
@@ -1415,7 +1416,7 @@ function Result() {
     });
 
     try {
-      const result = await getAiAnalysis(playerName);
+      const result = await getAiAnalysis(playerName, aiLanguage);
       setAiState((state) =>
         state.key === activeKey
           ? {
@@ -1441,7 +1442,7 @@ function Result() {
   }
 
   function retryAiAnalysis() {
-    clearAiAnalysisCache(playerName);
+    clearAiAnalysisCache(playerName, aiLanguage);
     generateAiAnalysis();
   }
 
