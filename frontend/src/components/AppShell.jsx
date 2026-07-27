@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Layout } from "antd";
+import { useTranslation } from "react-i18next";
 
 import scoutAiWordmark from "../assets/scoutai-wordmark.png";
 import AuthMenu from "./AuthMenu";
@@ -22,6 +23,7 @@ function writeLastPlayerResult(playerName) {
 }
 
 function AppShell({ children, extra }) {
+  const { t } = useTranslation("common");
   const location = useLocation();
   const currentReportPlayer = location.pathname.startsWith("/result")
     ? new URLSearchParams(location.search).get("player")?.trim() || ""
@@ -51,8 +53,8 @@ function AppShell({ children, extra }) {
             <Link className="brand-link" to="/">
               <img className="brand-logo" src={scoutAiWordmark} alt="ScoutAI" />
               <span className="brand-product">
-                Recruitment
-                <small>intelligence</small>
+                {t("shell.product")}
+                <small>{t("shell.productSuffix")}</small>
               </span>
             </Link>
           </div>

@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { App as AntApp, ConfigProvider, theme as antdTheme } from "antd";
+import enUS from "antd/locale/en_US";
+import thTH from "antd/locale/th_TH";
 
 import { AuthProvider } from "./auth/AuthProvider";
 import { InterfaceSettingsProvider } from "./interface/InterfaceSettingsProvider";
@@ -49,7 +51,7 @@ const lightTheme = {
 };
 
 function ThemedApp() {
-  const { darkMode } = useInterfaceSettings();
+  const { darkMode, language } = useInterfaceSettings();
   const scoutTheme = useMemo(
     () => ({
       ...lightTheme,
@@ -94,7 +96,7 @@ function ThemedApp() {
   );
 
   return (
-    <ConfigProvider theme={scoutTheme}>
+    <ConfigProvider locale={language === "th" ? thTH : enUS} theme={scoutTheme}>
       <AntApp>
         <BrowserRouter>
           <AuthProvider>

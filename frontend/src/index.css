@@ -376,6 +376,27 @@ input {
   background: #eaf6f0;
 }
 
+.language-setting {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.language-setting > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #52675d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.language-setting .ant-segmented {
+  padding: 3px;
+  border-radius: 10px;
+  background: #f1f5f3;
+}
+
 .dark-mode-button.ant-btn {
   min-height: 44px;
   border-color: #d9e5df;
@@ -4260,6 +4281,14 @@ html[data-color-mode="dark"] .interface-settings-heading small {
 html[data-color-mode="dark"] .interface-settings-icon {
   color: #8bd0ad;
   background: #20382c;
+}
+
+html[data-color-mode="dark"] .language-setting > span {
+  color: #a9bbb1;
+}
+
+html[data-color-mode="dark"] .language-setting .ant-segmented {
+  background: #121c17;
 }
 
 html[data-color-mode="dark"] .dark-mode-button.ant-btn {

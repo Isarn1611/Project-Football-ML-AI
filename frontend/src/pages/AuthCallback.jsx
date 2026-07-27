@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Card, Result, Spin, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/useAuth";
 import { supabase } from "../lib/supabase";
@@ -49,27 +50,28 @@ function getCallbackError(searchParams) {
   return decodeCallbackError(queryError || getHashError());
 }
 
-function readCallbackError(message) {
+function readCallbackError(message, t) {
   if (!message) {
     return "";
   }
 
   if (/unable to exchange external code/i.test(message)) {
-    return "Google sign in could not be completed. Check the OAuth redirect settings, then try again.";
+    return t("callback.errors.exchange");
   }
 
   if (/rate limit/i.test(message)) {
-    return "Too many sign-in attempts. Wait a few minutes, then try again.";
+    return t("callback.errors.rateLimit");
   }
 
   if (/access_denied/i.test(message)) {
-    return "Sign in was cancelled before access was granted.";
+    return t("callback.errors.cancelled");
   }
 
   return message;
 }
 
 function AuthCallback() {
+  const { t } = useTranslation("auth");
   const { refresh } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -80,13 +82,13 @@ function AuthCallback() {
 
     async function finishSignIn() {
       if (!supabase) {
-        setError("Sign in is not configured for this app.");
+        setError(t("callback.errors.notConfigured"));
         return;
       }
 
       const callbackError = getCallbackError(searchParams);
       if (callbackError) {
-        setError(readCallbackError(callbackError));
+        setError(readCallbackError(callbackError, t));
         return;
       }
 
@@ -98,7 +100,7 @@ function AuthCallback() {
           await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError) {
-          setError(readCallbackError(exchangeError.message));
+          setError(readCallbackError(exchangeError.message, t));
           return;
         }
       }
@@ -109,7 +111,7 @@ function AuthCallback() {
       if (nextState.user) {
         navigate(next, { replace: true });
       } else {
-        setError("Sign in finished, but no session was found. Try signing in again.");
+        setError(t("callback.errors.noSession"));
       }
     }
 
@@ -118,7 +120,7 @@ function AuthCallback() {
     return () => {
       isActive = false;
     };
-  }, [navigate, refresh, searchParams]);
+  }, [navigate, refresh, searchParams, t]);
 
   return (
     <main className="login-shell">
@@ -132,20 +134,20 @@ function AuthCallback() {
                   onClick={() => navigate("/login", { replace: true })}
                   type="primary"
                 >
-                  Back to login
+                  {t("callback.back")}
                 </Button>
               }
               status="error"
               subTitle={error}
-              title="Could not finish sign in"
+              title={t("callback.title")}
             />
           ) : (
             <div style={{ padding: 28, textAlign: "center" }}>
               <Spin size="large" />
               <Paragraph style={{ margin: "18px 0 4px" }}>
-                <Text strong>Finishing sign in</Text>
+                <Text strong>{t("callback.finishing")}</Text>
               </Paragraph>
-              <Text type="secondary">You will be redirected automatically.</Text>
+              <Text type="secondary">{t("callback.redirecting")}</Text>
             </div>
           )}
         </Card>

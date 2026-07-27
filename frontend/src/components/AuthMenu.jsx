@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Avatar, Button, Popover, Typography } from "antd";
+import { Avatar, Button, Popover, Segmented, Typography } from "antd";
 import {
   LogoutOutlined,
   MoonOutlined,
   SettingOutlined,
   SunOutlined,
+  TranslationOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/useAuth";
 import { useInterfaceSettings } from "../interface/useInterfaceSettings";
@@ -16,8 +18,10 @@ const PLAYER_DRAFT_STORAGE_KEY = "scoutai.playerSearchDraft";
 const LAST_PLAYER_RESULT_STORAGE_KEY = "scoutai.lastPlayerResult";
 const PLAYER_SESSION_CHANGE_EVENT = "scoutai-player-session-change";
 function AuthMenu() {
+  const { t } = useTranslation("common");
   const { signOut, user } = useAuth();
-  const { darkMode, toggleDarkMode } = useInterfaceSettings();
+  const { darkMode, language, setLanguage, toggleDarkMode } =
+    useInterfaceSettings();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -46,9 +50,26 @@ function AuthMenu() {
           <SettingOutlined />
         </span>
         <span>
-          <strong>Interface settings</strong>
-          <small>Personalize your workspace</small>
+          <strong>{t("settings.title")}</strong>
+          <small>{t("settings.subtitle")}</small>
         </span>
+      </div>
+
+      <div className="language-setting">
+        <span>
+          <TranslationOutlined />
+          {t("language.label")}
+        </span>
+        <Segmented
+          aria-label={t("language.label")}
+          block
+          onChange={setLanguage}
+          options={[
+            { label: t("language.english"), value: "en" },
+            { label: t("language.thai"), value: "th" },
+          ]}
+          value={language}
+        />
       </div>
 
       <Button
@@ -58,7 +79,7 @@ function AuthMenu() {
         icon={darkMode ? <SunOutlined /> : <MoonOutlined />}
         onClick={toggleDarkMode}
       >
-        {darkMode ? "Use light mode" : "Use dark mode"}
+        {darkMode ? t("settings.lightMode") : t("settings.darkMode")}
       </Button>
     </div>
   );
@@ -68,7 +89,9 @@ function AuthMenu() {
       <div className="auth-identity">
         <Avatar className="auth-avatar" icon={<UserOutlined />} size={34} />
         <span className="auth-user-copy">
-          <Typography.Text className="auth-label">Signed in</Typography.Text>
+          <Typography.Text className="auth-label">
+            {t("shell.signedIn")}
+          </Typography.Text>
           <Typography.Text className="auth-email" ellipsis>
             {user?.email}
           </Typography.Text>
@@ -84,11 +107,11 @@ function AuthMenu() {
         trigger="click"
       >
         <Button
-          aria-label="Open interface settings"
+          aria-label={t("settings.open")}
           className={`auth-settings-button ${settingsOpen ? "is-active" : ""}`}
           icon={<SettingOutlined />}
           shape="circle"
-          title="Interface settings"
+          title={t("settings.title")}
         />
       </Popover>
       <Button
@@ -99,7 +122,7 @@ function AuthMenu() {
         onClick={handleSignOut}
         size="middle"
       >
-        Sign out
+        {t("shell.signOut")}
       </Button>
     </div>
   );

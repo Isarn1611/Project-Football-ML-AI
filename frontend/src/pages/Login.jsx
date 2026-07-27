@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Alert, Button, Divider, Form, Input } from "antd";
+import { useTranslation } from "react-i18next";
 import {
   ArrowRightOutlined,
   GithubOutlined,
@@ -25,62 +26,25 @@ const socialProviders = [
 const POST_LOGIN_PATH = "/";
 const AUTO_SLIDE_DELAY = 6500;
 
-const heroSlides = [
-  {
-    image: authHero,
-    kicker: "Built for better decisions",
-    title: ["See the player.", "Know the fit."],
-    description:
-      "One clear workspace for player discovery, model-backed insight, and every report your recruitment team trusts.",
-    proof: [
-      ["8,452", "players"],
-      ["89", "attributes"],
-      ["5", "models"],
-    ],
-  },
-  {
-    image: authHeroAnalysis,
-    kicker: "Evidence before instinct",
-    title: ["Turn data into", "a clearer decision."],
-    description:
-      "Compare the attributes that matter, surface hidden strengths, and give every recommendation useful context.",
-    proof: [
-      ["89", "attributes"],
-      ["1", "clear view"],
-      ["24/7", "access"],
-    ],
-  },
-  {
-    image: authHeroPath,
-    kicker: "From shortlist to signing",
-    title: ["Build the case.", "Back the player."],
-    description:
-      "Keep saved players, search history, and scouting reports together from the first look to the final call.",
-    proof: [
-      ["1", "workspace"],
-      ["0", "lost reports"],
-      ["100%", "private"],
-    ],
-  },
-];
+const heroImages = [authHero, authHeroAnalysis, authHeroPath];
 
-function readAuthError(error) {
-  const message = error?.message || "Could not complete sign in.";
+function readAuthError(error, t) {
+  const message = error?.message || t("errors.generic");
 
   if (/rate limit/i.test(message)) {
-    return "Too many requests. Wait a few minutes, then try again.";
+    return t("errors.rateLimit");
   }
 
   if (/invalid login credentials/i.test(message)) {
-    return "Email or password is incorrect.";
+    return t("errors.invalidCredentials");
   }
 
   if (/email not confirmed/i.test(message)) {
-    return "Confirm your email before signing in.";
+    return t("errors.emailUnconfirmed");
   }
 
   if (/provider is not enabled/i.test(message)) {
-    return "This sign-in method is not enabled yet.";
+    return t("errors.providerDisabled");
   }
 
   return message;
@@ -93,6 +57,7 @@ function getAuthCallbackUrl(returnPath) {
 }
 
 function Login() {
+  const { t } = useTranslation("auth");
   const { isAuthenticated, isConfigured, loading, refresh } = useAuth();
   const navigate = useNavigate();
   const returnPath = POST_LOGIN_PATH;
@@ -105,6 +70,14 @@ function Login() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [carouselPaused, setCarouselPaused] = useState(false);
   const pointerStartX = useRef(null);
+  const heroSlides = useMemo(
+    () =>
+      t("hero.slides", { returnObjects: true }).map((slide, index) => ({
+        ...slide,
+        image: heroImages[index],
+      })),
+    [t]
+  );
   const currentSlide = heroSlides[activeSlide];
 
   useEffect(() => {
@@ -120,7 +93,7 @@ function Login() {
     }, AUTO_SLIDE_DELAY);
 
     return () => window.clearInterval(intervalId);
-  }, [carouselPaused]);
+  }, [carouselPaused, heroSlides.length]);
 
   function changeMode(nextMode) {
     setMode(nextMode);
@@ -171,7 +144,7 @@ function Login() {
     if (!supabase) {
       setFormState({
         loading: false,
-        error: "Supabase is not configured for this frontend.",
+        error: t("errors.supabase"),
         message: "",
       });
       return;
@@ -198,7 +171,7 @@ function Login() {
     if (error) {
       setFormState({
         loading: false,
-        error: readAuthError(error),
+        error: readAuthError(error, t),
         message: "",
       });
       return;
@@ -208,7 +181,7 @@ function Login() {
       setFormState({
         loading: false,
         error: "",
-        message: "Account created. Check your email to confirm it.",
+        message: t("accountCreated"),
       });
       return;
     }
@@ -221,7 +194,7 @@ function Login() {
     if (!supabase) {
       setFormState({
         loading: false,
-        error: "Supabase is not configured for this frontend.",
+        error: t("errors.supabase"),
         message: "",
       });
       return;
@@ -239,7 +212,7 @@ function Login() {
     if (error) {
       setFormState({
         loading: false,
-        error: readAuthError(error),
+        error: readAuthError(error, t),
         message: "",
       });
     }
@@ -249,7 +222,10 @@ function Login() {
     <main className="login-shell">
       <section className="login-container" aria-label="ScoutAI authentication">
         <aside
-          aria-label={`ScoutAI highlights, slide ${activeSlide + 1} of ${heroSlides.length}`}
+          aria-label={t("carousel.label", {
+            current: activeSlide + 1,
+            total: heroSlides.length,
+          })}
           aria-roledescription="carousel"
           className="login-visual"
           onBlur={() => setCarouselPaused(false)}
@@ -290,7 +266,7 @@ function Login() {
               src={scoutAiWordmark}
               alt="ScoutAI"
             />
-            <span>Player intelligence</span>
+            <span>{t("hero.brand")}</span>
           </div>
 
           <div className="login-visual-copy" key={activeSlide}>
@@ -301,7 +277,10 @@ function Login() {
               {currentSlide.title[1]}
             </h1>
             <p>{currentSlide.description}</p>
-            <div className="login-proof" aria-label="Platform coverage">
+            <div
+              className="login-proof"
+              aria-label={t("carousel.platformCoverage")}
+            >
               {currentSlide.proof.map(([value, label]) => (
                 <span key={label}>
                   <strong>{value}</strong> {label}
@@ -310,10 +289,16 @@ function Login() {
             </div>
           </div>
 
-          <div className="login-visual-dots" aria-label="Choose a highlight">
+          <div
+            className="login-visual-dots"
+            aria-label={t("carousel.choose")}
+          >
             {heroSlides.map((slide, index) => (
               <button
-                aria-label={`Show slide ${index + 1}: ${slide.title.join(" ")}`}
+                aria-label={t("carousel.showSlide", {
+                  number: index + 1,
+                  title: slide.title.join(" "),
+                })}
                 aria-pressed={activeSlide === index}
                 className={activeSlide === index ? "is-active" : ""}
                 key={slide.image}
@@ -327,19 +312,21 @@ function Login() {
         <section className="auth-panel">
           <div className="login-mobile-brand">
             <img src={scoutAiWordmark} alt="ScoutAI" />
-            <span>Player intelligence</span>
+            <span>{t("hero.brand")}</span>
           </div>
 
           <div className="auth-heading">
             <span className="auth-eyebrow">
               <SafetyCertificateOutlined />
-              Secure scouting workspace
+              {t("secureWorkspace")}
             </span>
-            <h2>{mode === "signIn" ? "Welcome back" : "Create your account"}</h2>
+            <h2>
+              {mode === "signIn" ? t("welcomeBack") : t("createYourAccount")}
+            </h2>
             <p>
               {mode === "signIn"
-                ? "New to ScoutAI?"
-                : "Already have a ScoutAI account?"}{" "}
+                ? t("newMember")
+                : t("alreadyMember")}{" "}
               <button
                 className="auth-mode-link"
                 onClick={() =>
@@ -347,14 +334,14 @@ function Login() {
                 }
                 type="button"
               >
-                {mode === "signIn" ? "Create an account" : "Sign in"}
+                {mode === "signIn" ? t("createAccount") : t("signIn")}
               </button>
             </p>
           </div>
 
           {!isConfigured && (
             <Alert
-              message="Supabase is not configured for this frontend."
+              message={t("errors.supabase")}
               showIcon
               type="warning"
             />
@@ -376,7 +363,7 @@ function Login() {
             ))}
           </div>
 
-          <Divider plain>or continue with email</Divider>
+          <Divider plain>{t("continueEmail")}</Divider>
 
           <Form
             className="auth-form"
@@ -386,11 +373,11 @@ function Login() {
             requiredMark={false}
           >
             <Form.Item
-              label="Email"
+              label={t("email")}
               name="email"
               rules={[
-                { required: true, message: "Enter your email." },
-                { type: "email", message: "Enter a valid email." },
+                { required: true, message: t("emailRequired") },
+                { type: "email", message: t("emailInvalid") },
               ]}
             >
               <Input
@@ -404,11 +391,11 @@ function Login() {
             </Form.Item>
 
             <Form.Item
-              label="Password"
+              label={t("password")}
               name="password"
               rules={[
-                { required: true, message: "Enter your password." },
-                { min: 6, message: "Use at least 6 characters." },
+                { required: true, message: t("passwordRequired") },
+                { min: 6, message: t("passwordMin") },
               ]}
             >
               <Input.Password
@@ -420,8 +407,8 @@ function Login() {
                 size="large"
                 placeholder={
                   mode === "signIn"
-                    ? "Enter your password"
-                    : "At least 6 characters"
+                    ? t("passwordPlaceholder")
+                    : t("passwordCreatePlaceholder")
                 }
               />
             </Form.Item>
@@ -452,14 +439,14 @@ function Login() {
               size="large"
               type="primary"
             >
-              {mode === "signIn" ? "Sign in" : "Create account"}
+              {mode === "signIn" ? t("signIn") : t("createAccount")}
               <ArrowRightOutlined />
             </Button>
           </Form>
 
           <p className="auth-privacy-note">
             <LockOutlined aria-hidden="true" />
-            Your reports, saved players, and search history stay private.
+            {t("privacy")}
           </p>
         </section>
       </section>
