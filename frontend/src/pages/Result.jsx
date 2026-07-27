@@ -222,12 +222,13 @@ function getPlayerInitials(name) {
 function ShortlistButton({ disabled, isSaved, onClick, size = "middle" }) {
   return (
     <Button
-      className="shortlist-button"
+      aria-pressed={isSaved}
+      className={`shortlist-button${isSaved ? " is-saved" : ""}`}
       disabled={disabled}
       icon={isSaved ? <StarFilled /> : <StarOutlined />}
       onClick={onClick}
       size={size}
-      type={isSaved ? "default" : "primary"}
+      type="default"
     >
       {isSaved ? "Saved" : "Save"}
     </Button>

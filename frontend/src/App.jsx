@@ -1,15 +1,18 @@
+import { useMemo } from "react";
 import { BrowserRouter } from "react-router-dom";
-import { App as AntApp, ConfigProvider } from "antd";
+import { App as AntApp, ConfigProvider, theme as antdTheme } from "antd";
 
 import { AuthProvider } from "./auth/AuthProvider";
+import { InterfaceSettingsProvider } from "./interface/InterfaceSettingsProvider";
+import { useInterfaceSettings } from "./interface/useInterfaceSettings";
 import AppRoutes from "./routes/AppRoutes";
 
-const scoutTheme = {
+const lightTheme = {
   token: {
     borderRadius: 8,
     colorBgLayout: "#f4f7fb",
-    colorInfo: "#0ea5e9",
-    colorPrimary: "#1677ff",
+    colorInfo: "#246c4f",
+    colorPrimary: "#246c4f",
     colorSuccess: "#16a34a",
     colorText: "#172033",
     colorTextSecondary: "#627089",
@@ -45,7 +48,51 @@ const scoutTheme = {
   },
 };
 
-function App() {
+function ThemedApp() {
+  const { darkMode } = useInterfaceSettings();
+  const scoutTheme = useMemo(
+    () => ({
+      ...lightTheme,
+      algorithm: darkMode
+        ? antdTheme.darkAlgorithm
+        : antdTheme.defaultAlgorithm,
+      token: {
+        ...lightTheme.token,
+        ...(darkMode
+          ? {
+              colorBgContainer: "#151d19",
+              colorBgElevated: "#1b2520",
+              colorBgLayout: "#0d1310",
+              colorBorder: "#314039",
+              colorInfo: "#75c7a0",
+              colorPrimary: "#75c7a0",
+              colorSuccess: "#65c58f",
+              colorText: "#e8f1ec",
+              colorTextSecondary: "#9daea5",
+            }
+          : {}),
+      },
+      components: {
+        ...lightTheme.components,
+        Card: {
+          ...lightTheme.components.Card,
+          headerBg: darkMode ? "#151d19" : "#ffffff",
+        },
+        Layout: {
+          ...lightTheme.components.Layout,
+          bodyBg: darkMode ? "#0d1310" : "#f4f7fb",
+          headerBg: darkMode ? "#111915" : "#ffffff",
+        },
+        Table: {
+          ...lightTheme.components.Table,
+          headerBg: darkMode ? "#1b2520" : "#eef3f8",
+          rowHoverBg: darkMode ? "#202d27" : "#f8fbff",
+        },
+      },
+    }),
+    [darkMode]
+  );
+
   return (
     <ConfigProvider theme={scoutTheme}>
       <AntApp>
@@ -56,6 +103,14 @@ function App() {
         </BrowserRouter>
       </AntApp>
     </ConfigProvider>
+  );
+}
+
+function App() {
+  return (
+    <InterfaceSettingsProvider>
+      <ThemedApp />
+    </InterfaceSettingsProvider>
   );
 }
 

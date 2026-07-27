@@ -7,6 +7,8 @@ const api = axios.create({
   timeout: 130000,
 });
 
+const PLAYER_SEARCH_TIMEOUT_MS = 15000;
+
 api.interceptors.request.use(async (config) => {
   if (!supabase) return config;
 
@@ -46,7 +48,7 @@ export function getRecommendations(playerName) {
   return recommendationCache.get(cacheKey);
 }
 
-export function searchPlayers(filters = {}) {
+export function searchPlayers(filters = {}, options = {}) {
   const params = Object.fromEntries(
     Object.entries(filters).filter(([, value]) => {
       return value !== undefined && value !== null && value !== "";
@@ -56,6 +58,8 @@ export function searchPlayers(filters = {}) {
   return api
     .get("/api/players/search", {
       params,
+      signal: options.signal,
+      timeout: PLAYER_SEARCH_TIMEOUT_MS,
     })
     .then((response) => response.data);
 }

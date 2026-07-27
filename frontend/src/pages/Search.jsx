@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -21,6 +21,7 @@ import {
   DeleteOutlined,
   FilterOutlined,
   HistoryOutlined,
+  LoadingOutlined,
   RadarChartOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -382,7 +383,14 @@ function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
 
 function PlayerDatabasePanel({ onAnalyze }) {
   const [browserForm] = Form.useForm();
+  const browserRequestController = useRef(null);
+  const browserRequestId = useRef(0);
   const [nameSearch, setNameSearch] = useState("");
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
+  const [filterFeedback, setFilterFeedback] = useState({
+    status: "",
+    text: "",
+  });
   const [browserState, setBrowserState] = useState({
     loading: false,
     error: "",
@@ -395,6 +403,11 @@ function PlayerDatabasePanel({ onAnalyze }) {
     let isActive = true;
 
     async function loadInitialPlayers() {
+      const requestId = ++browserRequestId.current;
+      const controller = new AbortController();
+      browserRequestController.current?.abort();
+      browserRequestController.current = controller;
+
       setBrowserState((state) => ({
         ...state,
         loading: true,
@@ -403,9 +416,10 @@ function PlayerDatabasePanel({ onAnalyze }) {
 
       try {
         const result = await searchPlayers(
-          buildBrowserParams(playerBrowserDefaults, PLAYER_PAGE_SIZE)
+          buildBrowserParams(playerBrowserDefaults, PLAYER_PAGE_SIZE),
+          { signal: controller.signal }
         );
-        if (!isActive) return;
+        if (!isActive || requestId !== browserRequestId.current) return;
         setBrowserState({
           loading: false,
           error: "",
@@ -414,7 +428,8 @@ function PlayerDatabasePanel({ onAnalyze }) {
           limit: PLAYER_PAGE_SIZE,
         });
       } catch (loadError) {
-        if (!isActive) return;
+        if (controller.signal.aborted) return;
+        if (!isActive || requestId !== browserRequestId.current) return;
         setBrowserState({
           loading: false,
           error:
@@ -432,10 +447,32 @@ function PlayerDatabasePanel({ onAnalyze }) {
 
     return () => {
       isActive = false;
+      browserRequestController.current?.abort();
+      browserRequestId.current += 1;
     };
   }, []);
 
-  async function applyFilters(values, limit = PLAYER_PAGE_SIZE) {
+  async function applyFilters(
+    values,
+    limit = PLAYER_PAGE_SIZE,
+    successMessage = ""
+  ) {
+    const requestId = ++browserRequestId.current;
+    const controller = new AbortController();
+    browserRequestController.current?.abort();
+    browserRequestController.current = controller;
+
+    if (successMessage) {
+      setIsApplyingFilters(true);
+      setFilterFeedback({
+        status: "loading",
+        text:
+          successMessage === "Filters reset"
+            ? "Resetting filters..."
+            : "Applying filters...",
+      });
+    }
+
     setBrowserState((state) => ({
       ...state,
       loading: true,
@@ -443,7 +480,11 @@ function PlayerDatabasePanel({ onAnalyze }) {
     }));
 
     try {
-      const result = await searchPlayers(buildBrowserParams(values, limit));
+      const result = await searchPlayers(buildBrowserParams(values, limit), {
+        signal: controller.signal,
+      });
+      if (requestId !== browserRequestId.current) return;
+
       setBrowserState({
         loading: false,
         error: "",
@@ -451,7 +492,17 @@ function PlayerDatabasePanel({ onAnalyze }) {
         count: result.count || 0,
         limit,
       });
+
+      if (successMessage) {
+        setFilterFeedback({
+          status: "success",
+          text: `${successMessage}. ${result.count || 0} players shown.`,
+        });
+      }
     } catch (filterError) {
+      if (controller.signal.aborted) return;
+      if (requestId !== browserRequestId.current) return;
+
       setBrowserState((state) => ({
         ...state,
         loading: false,
@@ -460,13 +511,24 @@ function PlayerDatabasePanel({ onAnalyze }) {
           filterError?.message ||
           "Could not filter the player database.",
       }));
+
+      if (successMessage) {
+        setFilterFeedback({
+          status: "error",
+          text: "Could not apply the player filters.",
+        });
+      }
+    } finally {
+      if (requestId === browserRequestId.current && successMessage) {
+        setIsApplyingFilters(false);
+      }
     }
   }
 
   function resetFilters() {
     setNameSearch("");
     browserForm.resetFields();
-    applyFilters(playerBrowserDefaults, PLAYER_PAGE_SIZE);
+    applyFilters(playerBrowserDefaults, PLAYER_PAGE_SIZE, "Filters reset");
   }
 
   function searchByName(value) {
@@ -644,7 +706,8 @@ function PlayerDatabasePanel({ onAnalyze }) {
                   ...values,
                   name: nameSearch,
                 },
-                PLAYER_PAGE_SIZE
+                PLAYER_PAGE_SIZE,
+                "Filters applied"
               )
             }
             requiredMark={false}
@@ -664,7 +727,20 @@ function PlayerDatabasePanel({ onAnalyze }) {
                 </Form.Item>
 
                 <Form.Item label="Preset" name="preset">
-                  <Select options={presetOptions} />
+                  <Select
+                    onChange={(preset) =>
+                      applyFilters(
+                        {
+                          ...browserForm.getFieldsValue(),
+                          name: nameSearch,
+                          preset,
+                        },
+                        PLAYER_PAGE_SIZE,
+                        "Preset applied"
+                      )
+                    }
+                    options={presetOptions}
+                  />
                 </Form.Item>
 
                 <Form.Item label="Min age" name="minAge">
@@ -710,12 +786,29 @@ function PlayerDatabasePanel({ onAnalyze }) {
             </div>
 
             <div className="player-filter-actions">
-              <Button htmlType="submit" icon={<FilterOutlined />} type="primary">
-                Apply filters
+              <Button
+                htmlType="submit"
+                icon={
+                  isApplyingFilters ? (
+                    <LoadingOutlined spin />
+                  ) : (
+                    <FilterOutlined />
+                  )
+                }
+                type="primary"
+              >
+                {isApplyingFilters ? "Applying filters" : "Apply filters"}
               </Button>
               <Button icon={<ReloadOutlined />} onClick={resetFilters}>
                 Reset filters
               </Button>
+              <span
+                aria-live="polite"
+                className={`player-filter-feedback is-${filterFeedback.status}`}
+                role="status"
+              >
+                {filterFeedback.text}
+              </span>
             </div>
           </Form>
         </div>

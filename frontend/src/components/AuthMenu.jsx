@@ -1,69 +1,26 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Avatar, Button, Popover, Switch, Typography } from "antd";
+import { Avatar, Button, Popover, Typography } from "antd";
 import {
-  ColumnHeightOutlined,
   LogoutOutlined,
+  MoonOutlined,
   SettingOutlined,
-  ThunderboltOutlined,
+  SunOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 
 import { useAuth } from "../auth/useAuth";
+import { useInterfaceSettings } from "../interface/useInterfaceSettings";
 
 const PLAYER_DRAFT_STORAGE_KEY = "scoutai.playerSearchDraft";
 const LAST_PLAYER_RESULT_STORAGE_KEY = "scoutai.lastPlayerResult";
 const PLAYER_SESSION_CHANGE_EVENT = "scoutai-player-session-change";
-const INTERFACE_SETTINGS_STORAGE_KEY = "scoutai.interfaceSettings";
-
-const DEFAULT_INTERFACE_SETTINGS = {
-  compact: false,
-  reduceMotion: false,
-};
-
-function readInterfaceSettings() {
-  try {
-    return {
-      ...DEFAULT_INTERFACE_SETTINGS,
-      ...JSON.parse(
-        window.localStorage.getItem(INTERFACE_SETTINGS_STORAGE_KEY) || "{}",
-      ),
-    };
-  } catch {
-    return DEFAULT_INTERFACE_SETTINGS;
-  }
-}
-
 function AuthMenu() {
   const { signOut, user } = useAuth();
+  const { darkMode, toggleDarkMode } = useInterfaceSettings();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [interfaceSettings, setInterfaceSettings] = useState(
-    readInterfaceSettings,
-  );
-
-  useEffect(() => {
-    document.documentElement.dataset.density = interfaceSettings.compact
-      ? "compact"
-      : "comfortable";
-    document.documentElement.dataset.reduceMotion = interfaceSettings.reduceMotion
-      ? "true"
-      : "false";
-
-    try {
-      window.localStorage.setItem(
-        INTERFACE_SETTINGS_STORAGE_KEY,
-        JSON.stringify(interfaceSettings),
-      );
-    } catch {
-      // Interface preferences still work for the current page.
-    }
-  }, [interfaceSettings]);
-
-  function updateInterfaceSetting(name, value) {
-    setInterfaceSettings((current) => ({ ...current, [name]: value }));
-  }
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -94,35 +51,15 @@ function AuthMenu() {
         </span>
       </div>
 
-      <label className="interface-setting-row">
-        <span className="interface-setting-copy">
-          <ColumnHeightOutlined />
-          <span>
-            <strong>Compact workspace</strong>
-            <small>Show more scouting data at once</small>
-          </span>
-        </span>
-        <Switch
-          checked={interfaceSettings.compact}
-          onChange={(checked) => updateInterfaceSetting("compact", checked)}
-          size="small"
-        />
-      </label>
-
-      <label className="interface-setting-row">
-        <span className="interface-setting-copy">
-          <ThunderboltOutlined />
-          <span>
-            <strong>Reduce motion</strong>
-            <small>Minimize interface animations</small>
-          </span>
-        </span>
-        <Switch
-          checked={interfaceSettings.reduceMotion}
-          onChange={(checked) => updateInterfaceSetting("reduceMotion", checked)}
-          size="small"
-        />
-      </label>
+      <Button
+        aria-pressed={darkMode}
+        block
+        className={`dark-mode-button${darkMode ? " is-active" : ""}`}
+        icon={darkMode ? <SunOutlined /> : <MoonOutlined />}
+        onClick={toggleDarkMode}
+      >
+        {darkMode ? "Use light mode" : "Use dark mode"}
+      </Button>
     </div>
   );
 
@@ -140,6 +77,7 @@ function AuthMenu() {
       <Popover
         arrow={false}
         content={settingsContent}
+        destroyOnHidden
         onOpenChange={setSettingsOpen}
         open={settingsOpen}
         placement="bottomRight"
