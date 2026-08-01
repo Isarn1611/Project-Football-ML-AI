@@ -123,6 +123,18 @@ function Admin() {
               {t("actions.back")}
             </Button>
             <Button
+              icon={<DatabaseOutlined />}
+              onClick={() => navigate("/admin/players")}
+            >
+              {t("actions.managePlayers")}
+            </Button>
+            <Button
+              icon={<TeamOutlined />}
+              onClick={() => navigate("/admin/users")}
+            >
+              {t("actions.manageUsers")}
+            </Button>
+            <Button
               icon={<ReloadOutlined />}
               loading={loading}
               onClick={loadDashboard}

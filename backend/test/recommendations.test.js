@@ -20,6 +20,10 @@ let originalGeminiApiUrl;
 let originalGeminiApiKey;
 let originalGeminiModel;
 let lastGeminiRequest;
+let lastAdminUserQuery;
+let lastRoleUpdate;
+let lastAdminPlayerQuery;
+let lastPlayerUpdate;
 
 const mockAnalysis = {
   title: "Kevin De Bruyne scouting analysis",
@@ -100,6 +104,69 @@ before(async () => {
     },
     generatedAt: "2026-08-01T00:00:00.000Z",
   });
+  app.locals.listAdminUsers = async (query) => {
+    lastAdminUserQuery = query;
+    return {
+      users: [
+        {
+          id: "target-user-id",
+          email: "member@example.com",
+          displayName: "Team Member",
+          provider: "email",
+          role: "user",
+          createdAt: "2026-07-01T00:00:00.000Z",
+          lastSignInAt: null,
+          emailConfirmedAt: "2026-07-01T00:00:00.000Z",
+          bannedUntil: null,
+        },
+      ],
+      pagination: {
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+      },
+      query: String(query.q || ""),
+    };
+  };
+  app.locals.updateAdminUserRole = async (actorUserId, targetUserId, role) => {
+    lastRoleUpdate = { actorUserId, targetUserId, role };
+    return {
+      id: targetUserId,
+      email: "member@example.com",
+      role,
+    };
+  };
+  app.locals.listAdminPlayers = async (query) => {
+    lastAdminPlayerQuery = query;
+    return {
+      players: [
+        {
+          uid: "18004457",
+          name: "Kevin De Bruyne",
+          club: "Manchester City",
+          age: 31,
+          nationality: "Belgium",
+          position: "M/AM RLC",
+          currentAbility: 189,
+          potentialAbility: 189,
+          marketValue: 347975206,
+          salary: 394372,
+        },
+      ],
+      pagination: {
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+      },
+      query: String(query.q || ""),
+    };
+  };
+  app.locals.updateAdminPlayer = async (actorUserId, playerUid, input) => {
+    lastPlayerUpdate = { actorUserId, playerUid, input };
+    return { uid: playerUid, ...input };
+  };
 
   mlServer = http.createServer((request, response) => {
     if (request.method === "GET" && request.url === "/health") {
@@ -248,6 +315,10 @@ after(async () => {
   delete app.locals.verifySupabaseUser;
   delete app.locals.getUserRole;
   delete app.locals.getAdminDashboard;
+  delete app.locals.listAdminUsers;
+  delete app.locals.updateAdminUserRole;
+  delete app.locals.listAdminPlayers;
+  delete app.locals.updateAdminPlayer;
 
   if (originalMlApiUrl === undefined) {
     delete process.env.ML_API_URL;
@@ -421,6 +492,141 @@ test("GET /api/admin/dashboard returns aggregate counts to administrators", asyn
 test("GET /api/admin/dashboard rejects non-admin users", async () => {
   const response = await fetch(`${backendUrl}/api/admin/dashboard`, {
     headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("GET /api/admin/users returns a filtered user page to administrators", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/users?q=member&page=1&pageSize=20`,
+    { headers: ADMIN_AUTH_HEADER }
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.users[0].email, "member@example.com");
+  assert.equal(payload.pagination.total, 1);
+  assert.deepEqual({ ...lastAdminUserQuery }, {
+    q: "member",
+    page: "1",
+    pageSize: "20",
+  });
+});
+
+test("GET /api/admin/users rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/users`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("PATCH /api/admin/users/:id/role changes roles through the admin service", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/users/target-user-id/role`,
+    {
+      method: "PATCH",
+      headers: {
+        ...ADMIN_AUTH_HEADER,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ role: "admin" }),
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).user.role, "admin");
+  assert.deepEqual(lastRoleUpdate, {
+    actorUserId: "admin-user-id",
+    targetUserId: "target-user-id",
+    role: "admin",
+  });
+});
+
+test("PATCH /api/admin/users/:id/role rejects non-admin users", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/users/target-user-id/role`,
+    {
+      method: "PATCH",
+      headers: {
+        ...AUTH_HEADER,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ role: "admin" }),
+    }
+  );
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("GET /api/admin/players returns a filtered player page to administrators", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/players?q=Kevin&page=1&pageSize=20`,
+    { headers: ADMIN_AUTH_HEADER }
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.players[0].uid, "18004457");
+  assert.equal(payload.players[0].name, "Kevin De Bruyne");
+  assert.deepEqual({ ...lastAdminPlayerQuery }, {
+    q: "Kevin",
+    page: "1",
+    pageSize: "20",
+  });
+});
+
+test("GET /api/admin/players rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/players`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("PATCH /api/admin/players/:uid updates players through the admin service", async () => {
+  const player = {
+    name: "Kevin De Bruyne",
+    club: "Manchester City",
+    age: 32,
+    nationality: "Belgium",
+    position: "M/AM RLC",
+    currentAbility: 188,
+    potentialAbility: 189,
+    marketValue: 300000000,
+    salary: 394372,
+  };
+  const response = await fetch(`${backendUrl}/api/admin/players/18004457`, {
+    method: "PATCH",
+    headers: {
+      ...ADMIN_AUTH_HEADER,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(player),
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).player.age, 32);
+  assert.deepEqual(lastPlayerUpdate, {
+    actorUserId: "admin-user-id",
+    playerUid: "18004457",
+    input: player,
+  });
+});
+
+test("PATCH /api/admin/players/:uid rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/players/18004457`, {
+    method: "PATCH",
+    headers: {
+      ...AUTH_HEADER,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name: "Changed" }),
   });
 
   assert.equal(response.status, 403);

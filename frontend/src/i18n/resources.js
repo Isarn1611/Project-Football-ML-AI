@@ -25,6 +25,8 @@ export const resources = {
     admin: {
       actions: {
         back: "Back to scouting",
+        managePlayers: "Manage players",
+        manageUsers: "Manage users",
         refresh: "Refresh data",
         refreshing: "Refreshing",
         retry: "Try again",
@@ -40,6 +42,121 @@ export const resources = {
         searchHistory: "Recorded searches",
         shortlist: "Shortlist entries",
         users: "Registered users",
+      },
+      players: {
+        actions: {
+          back: "Back to dashboard",
+          edit: "Edit",
+        },
+        columns: {
+          actions: "Action",
+          age: "Age",
+          ability: "Ability",
+          club: "Club",
+          player: "Player",
+          position: "Position",
+          value: "Value",
+        },
+        editor: {
+          cancel: "Cancel",
+          save: "Save changes",
+          title: "Edit player",
+        },
+        empty: "No players match this search.",
+        errors: {
+          load: "Refresh the page and confirm that the latest player management migration has been applied.",
+          title: "Could not complete the player operation",
+        },
+        feedback: {
+          updated: "Player updated and audit log recorded",
+        },
+        fields: {
+          age: "Age",
+          club: "Club",
+          currentAbility: "Current ability (CA)",
+          marketValue: "Market value (GBP)",
+          name: "Player name",
+          nationality: "Nationality",
+          position: "Position",
+          potentialAbility: "Potential ability (PA)",
+          salary: "Weekly salary (GBP)",
+        },
+        kicker: "Database management",
+        search: {
+          action: "Search",
+          label: "Search players",
+          placeholder: "Search by name, club, nationality, or UID",
+        },
+        subtitle:
+          "Review and safely update core player data without changing the model attribute set.",
+        sync: {
+          description:
+            "Changes here update the web database only. The ML service still reads fm_dataset.csv, so player names and UIDs are locked until dataset synchronization is implemented.",
+          title: "Web database and ML dataset are separate",
+        },
+        tableTitle: "Football Manager player records",
+        title: "Player management",
+        total: "{{count}} players",
+      },
+      users: {
+        actions: {
+          admin: "Promote to admin",
+          back: "Back to dashboard",
+          user: "Remove admin",
+        },
+        columns: {
+          actions: "Action",
+          lastSignIn: "Last sign in",
+          provider: "Provider",
+          role: "Role",
+          status: "Status",
+          user: "User",
+        },
+        confirm: {
+          admin: {
+            confirm: "Promote",
+            description: "{{email}} will be able to access all Admin APIs.",
+            title: "Promote this user to Admin?",
+          },
+          cancel: "Cancel",
+          user: {
+            confirm: "Remove access",
+            description: "{{email}} will immediately lose Admin access.",
+            title: "Remove Admin access?",
+          },
+        },
+        currentAccount: "Current account",
+        empty: "No users match this search.",
+        errors: {
+          load: "Refresh the page and confirm that the latest Admin migration has been applied.",
+          title: "Could not complete the user operation",
+        },
+        feedback: {
+          roleUpdated: "User role updated",
+        },
+        kicker: "Access management",
+        neverSignedIn: "Never",
+        roles: {
+          admin: "Admin",
+          user: "User",
+        },
+        search: {
+          action: "Search",
+          label: "Search users",
+          placeholder: "Search by email or name",
+        },
+        status: {
+          active: "Active",
+          banned: "Suspended",
+          pending: "Pending",
+        },
+        subtitle:
+          "Review registered accounts and control who can access protected administration tools.",
+        tableTitle: "Registered accounts",
+        title: "User management",
+        total: "{{count}} users",
+        unknownEmail: "No email",
+        unknownName: "Unnamed user",
       },
       status: {
         access: {
@@ -446,6 +563,8 @@ export const resources = {
     admin: {
       actions: {
         back: "กลับหน้าค้นหานักเตะ",
+        managePlayers: "จัดการนักเตะ",
+        manageUsers: "จัดการผู้ใช้",
         refresh: "รีเฟรชข้อมูล",
         refreshing: "กำลังรีเฟรช",
         retry: "ลองอีกครั้ง",
@@ -461,6 +580,121 @@ export const resources = {
         searchHistory: "ประวัติการค้นหา",
         shortlist: "รายการนักเตะที่บันทึก",
         users: "ผู้ใช้ที่ลงทะเบียน",
+      },
+      players: {
+        actions: {
+          back: "กลับหน้า Dashboard",
+          edit: "แก้ไข",
+        },
+        columns: {
+          actions: "การจัดการ",
+          age: "อายุ",
+          ability: "ความสามารถ",
+          club: "สโมสร",
+          player: "นักเตะ",
+          position: "ตำแหน่ง",
+          value: "มูลค่า",
+        },
+        editor: {
+          cancel: "ยกเลิก",
+          save: "บันทึกการแก้ไข",
+          title: "แก้ไขข้อมูลนักเตะ",
+        },
+        empty: "ไม่พบนักเตะที่ตรงกับการค้นหา",
+        errors: {
+          load: "ลองรีเฟรชหน้าและตรวจสอบว่าได้รัน Player management migration ล่าสุดแล้ว",
+          title: "ไม่สามารถดำเนินการกับข้อมูลนักเตะได้",
+        },
+        feedback: {
+          updated: "อัปเดตนักเตะและบันทึก Audit log แล้ว",
+        },
+        fields: {
+          age: "อายุ",
+          club: "สโมสร",
+          currentAbility: "ความสามารถปัจจุบัน (CA)",
+          marketValue: "มูลค่าตลาด (GBP)",
+          name: "ชื่อนักเตะ",
+          nationality: "สัญชาติ",
+          position: "ตำแหน่ง",
+          potentialAbility: "ศักยภาพ (PA)",
+          salary: "ค่าเหนื่อยต่อสัปดาห์ (GBP)",
+        },
+        kicker: "การจัดการฐานข้อมูล",
+        search: {
+          action: "ค้นหา",
+          label: "ค้นหานักเตะ",
+          placeholder: "ค้นหาด้วยชื่อ สโมสร สัญชาติ หรือ UID",
+        },
+        subtitle:
+          "ตรวจสอบและแก้ไขข้อมูลหลักของนักเตะโดยไม่กระทบชุด Attribute ของโมเดล",
+        sync: {
+          description:
+            "ค่าที่แก้ในหน้านี้จะอัปเดตฐานข้อมูลเว็บเท่านั้น ส่วน ML ยังอ่าน fm_dataset.csv จึงล็อกชื่อและ UID ไว้จนกว่าจะมีระบบซิงก์ Dataset",
+          title: "ฐานข้อมูลเว็บและ Dataset ของ ML ยังแยกกัน",
+        },
+        tableTitle: "ข้อมูลนักเตะ Football Manager",
+        title: "จัดการนักเตะ",
+        total: "นักเตะ {{count}} คน",
+      },
+      users: {
+        actions: {
+          admin: "เลื่อนเป็น Admin",
+          back: "กลับหน้า Dashboard",
+          user: "นำสิทธิ์ Admin ออก",
+        },
+        columns: {
+          actions: "การจัดการ",
+          lastSignIn: "เข้าสู่ระบบล่าสุด",
+          provider: "ช่องทาง",
+          role: "สิทธิ์",
+          status: "สถานะ",
+          user: "ผู้ใช้",
+        },
+        confirm: {
+          admin: {
+            confirm: "ยืนยันการเลื่อนสิทธิ์",
+            description: "{{email}} จะสามารถเข้าถึง Admin API ทั้งหมดได้",
+            title: "เลื่อนผู้ใช้นี้เป็น Admin?",
+          },
+          cancel: "ยกเลิก",
+          user: {
+            confirm: "นำสิทธิ์ออก",
+            description: "{{email}} จะเสียสิทธิ์เข้าใช้งาน Admin ทันที",
+            title: "นำสิทธิ์ Admin ออก?",
+          },
+        },
+        currentAccount: "บัญชีปัจจุบัน",
+        empty: "ไม่พบผู้ใช้ที่ตรงกับการค้นหา",
+        errors: {
+          load: "ลองรีเฟรชหน้าและตรวจสอบว่าได้รัน Admin migration ล่าสุดแล้ว",
+          title: "ไม่สามารถดำเนินการกับผู้ใช้ได้",
+        },
+        feedback: {
+          roleUpdated: "อัปเดตสิทธิ์ผู้ใช้แล้ว",
+        },
+        kicker: "การจัดการสิทธิ์",
+        neverSignedIn: "ยังไม่เคย",
+        roles: {
+          admin: "ผู้ดูแลระบบ",
+          user: "ผู้ใช้",
+        },
+        search: {
+          action: "ค้นหา",
+          label: "ค้นหาผู้ใช้",
+          placeholder: "ค้นหาด้วยอีเมลหรือชื่อ",
+        },
+        status: {
+          active: "ใช้งานได้",
+          banned: "ระงับการใช้งาน",
+          pending: "รอยืนยัน",
+        },
+        subtitle:
+          "ตรวจสอบบัญชีที่ลงทะเบียนและควบคุมผู้ที่สามารถเข้าถึงเครื่องมือผู้ดูแลระบบ",
+        tableTitle: "บัญชีที่ลงทะเบียน",
+        title: "จัดการผู้ใช้",
+        total: "ผู้ใช้ {{count}} คน",
+        unknownEmail: "ไม่มีอีเมล",
+        unknownName: "ไม่ระบุชื่อ",
       },
       status: {
         access: {

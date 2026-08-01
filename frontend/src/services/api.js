@@ -72,6 +72,30 @@ export function getAdminDashboard() {
   return api.get("/api/admin/dashboard").then((response) => response.data);
 }
 
+export function getAdminUsers(params = {}) {
+  return api
+    .get("/api/admin/users", { params })
+    .then((response) => response.data);
+}
+
+export function updateAdminUserRole(userId, role) {
+  return api
+    .patch(`/api/admin/users/${encodeURIComponent(userId)}/role`, { role })
+    .then((response) => response.data);
+}
+
+export function getAdminPlayers(params = {}) {
+  return api
+    .get("/api/admin/players", { params })
+    .then((response) => response.data);
+}
+
+export function updateAdminPlayer(playerUid, player) {
+  return api
+    .patch(`/api/admin/players/${encodeURIComponent(playerUid)}`, player)
+    .then((response) => response.data);
+}
+
 export function clearRecommendationCache(playerName) {
   const cacheKey = String(playerName || "").trim().toLocaleLowerCase();
   recommendationCache.delete(cacheKey);
