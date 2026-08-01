@@ -7,6 +7,9 @@ const app = require("../src/app");
 const AUTH_HEADER = {
   Authorization: "Bearer valid-test-token",
 };
+const ADMIN_AUTH_HEADER = {
+  Authorization: "Bearer admin-test-token",
+};
 
 let backendServer;
 let backendUrl;
@@ -75,10 +78,28 @@ before(async () => {
   originalGeminiApiUrl = process.env.GEMINI_API_URL;
   originalGeminiApiKey = process.env.GEMINI_API_KEY;
   originalGeminiModel = process.env.GEMINI_MODEL;
-  app.locals.verifySupabaseUser = async (token) =>
-    token === "valid-test-token"
-      ? { id: "test-user-id", email: "scout@example.com" }
-      : null;
+  app.locals.verifySupabaseUser = async (token) => {
+    if (token === "valid-test-token") {
+      return { id: "test-user-id", email: "scout@example.com" };
+    }
+
+    if (token === "admin-test-token") {
+      return { id: "admin-user-id", email: "admin@example.com" };
+    }
+
+    return null;
+  };
+  app.locals.getUserRole = async (userId) =>
+    userId === "admin-user-id" ? "admin" : "user";
+  app.locals.getAdminDashboard = async () => ({
+    counts: {
+      users: 4,
+      players: 8452,
+      shortlistItems: 12,
+      searchHistoryItems: 27,
+    },
+    generatedAt: "2026-08-01T00:00:00.000Z",
+  });
 
   mlServer = http.createServer((request, response) => {
     if (request.method === "GET" && request.url === "/health") {
@@ -225,6 +246,8 @@ after(async () => {
   await close(mlServer);
   await close(geminiServer);
   delete app.locals.verifySupabaseUser;
+  delete app.locals.getUserRole;
+  delete app.locals.getAdminDashboard;
 
   if (originalMlApiUrl === undefined) {
     delete process.env.ML_API_URL;
@@ -331,6 +354,77 @@ test("POST /api/recommendations rejects missing sessions", async () => {
 
   assert.equal(response.status, 401);
   assert.equal((await response.json()).code, "UNAUTHENTICATED");
+});
+
+test("GET /api/admin/health allows administrators", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/health`, {
+    headers: ADMIN_AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    status: "ok",
+    role: "admin",
+    userId: "admin-user-id",
+  });
+});
+
+test("GET /api/admin/health rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/health`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("GET /api/admin/health rejects missing sessions", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/health`);
+
+  assert.equal(response.status, 401);
+  assert.equal((await response.json()).code, "UNAUTHENTICATED");
+});
+
+test("GET /api/auth/me returns the authenticated user's role", async () => {
+  const response = await fetch(`${backendUrl}/api/auth/me`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    user: {
+      id: "test-user-id",
+      email: "scout@example.com",
+    },
+    role: "user",
+    isAdmin: false,
+  });
+});
+
+test("GET /api/admin/dashboard returns aggregate counts to administrators", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/dashboard`, {
+    headers: ADMIN_AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    counts: {
+      users: 4,
+      players: 8452,
+      shortlistItems: 12,
+      searchHistoryItems: 27,
+    },
+    generatedAt: "2026-08-01T00:00:00.000Z",
+  });
+});
+
+test("GET /api/admin/dashboard rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/dashboard`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
 });
 
 test("GET /api/ai/health reports Gemini configuration", async () => {

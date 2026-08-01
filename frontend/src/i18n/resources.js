@@ -14,12 +14,53 @@ export const resources = {
         title: "Interface settings",
       },
       shell: {
+        admin: "Admin",
         opening: "Opening workspace",
         product: "Recruitment",
         productSuffix: "intelligence",
         signedIn: "Signed in",
         signOut: "Sign out",
       },
+    },
+    admin: {
+      actions: {
+        back: "Back to scouting",
+        refresh: "Refresh data",
+        refreshing: "Refreshing",
+        retry: "Try again",
+      },
+      badge: "Admin access",
+      errors: {
+        dashboard: "Check the backend connection and try refreshing the data.",
+        title: "Could not load the admin dashboard",
+      },
+      kicker: "Operations overview",
+      metrics: {
+        players: "Players in database",
+        searchHistory: "Recorded searches",
+        shortlist: "Shortlist entries",
+        users: "Registered users",
+      },
+      status: {
+        access: {
+          description: "Every admin endpoint verifies the user role on the server.",
+          title: "Role protection enforced",
+        },
+        audit: {
+          description: "The audit trail is ready for upcoming management actions.",
+          title: "Audit logging ready",
+        },
+        database: {
+          description: "Live aggregate data is available from Supabase.",
+          title: "Database connected",
+        },
+        kicker: "System readiness",
+        title: "Admin foundation is operational",
+        updated: "Updated {{time}}",
+      },
+      subtitle:
+        "Monitor the recruitment platform, user activity, and player data from one protected workspace.",
+      title: "Admin control center",
     },
     auth: {
       accountCreated: "Account created. Check your email to confirm it.",
@@ -394,12 +435,53 @@ export const resources = {
         title: "การตั้งค่าหน้าจอ",
       },
       shell: {
+        admin: "ผู้ดูแลระบบ",
         opening: "กำลังเปิดพื้นที่ทำงาน",
         product: "ระบบสรรหา",
         productSuffix: "อัจฉริยะ",
         signedIn: "เข้าสู่ระบบแล้ว",
         signOut: "ออกจากระบบ",
       },
+    },
+    admin: {
+      actions: {
+        back: "กลับหน้าค้นหานักเตะ",
+        refresh: "รีเฟรชข้อมูล",
+        refreshing: "กำลังรีเฟรช",
+        retry: "ลองอีกครั้ง",
+      },
+      badge: "สิทธิ์ผู้ดูแลระบบ",
+      errors: {
+        dashboard: "ตรวจสอบการเชื่อมต่อ Backend แล้วลองรีเฟรชข้อมูลอีกครั้ง",
+        title: "ไม่สามารถโหลดแดชบอร์ดผู้ดูแลระบบได้",
+      },
+      kicker: "ภาพรวมการดำเนินงาน",
+      metrics: {
+        players: "นักเตะในฐานข้อมูล",
+        searchHistory: "ประวัติการค้นหา",
+        shortlist: "รายการนักเตะที่บันทึก",
+        users: "ผู้ใช้ที่ลงทะเบียน",
+      },
+      status: {
+        access: {
+          description: "Admin API ทุกตัวตรวจสอบ role ของผู้ใช้ที่ฝั่ง Server",
+          title: "เปิดใช้การป้องกันด้วย Role แล้ว",
+        },
+        audit: {
+          description: "ระบบพร้อมบันทึกการจัดการข้อมูลของ Admin ในขั้นถัดไป",
+          title: "Audit log พร้อมใช้งาน",
+        },
+        database: {
+          description: "ระบบอ่านข้อมูลสรุปแบบสดจาก Supabase ได้แล้ว",
+          title: "เชื่อมต่อฐานข้อมูลแล้ว",
+        },
+        kicker: "ความพร้อมของระบบ",
+        title: "ระบบพื้นฐาน Admin ทำงานสมบูรณ์",
+        updated: "อัปเดตเมื่อ {{time}}",
+      },
+      subtitle:
+        "ติดตามแพลตฟอร์มสรรหานักเตะ ผู้ใช้งาน และข้อมูลนักเตะจากพื้นที่ทำงานที่ป้องกันด้วยสิทธิ์ Admin",
+      title: "ศูนย์ควบคุมผู้ดูแลระบบ",
     },
     auth: {
       accountCreated: "สร้างบัญชีแล้ว โปรดยืนยันผ่านอีเมลของคุณ",

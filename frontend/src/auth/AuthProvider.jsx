@@ -6,10 +6,12 @@ import {
 } from "react";
 
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
+import { getCurrentUser } from "../services/api";
 import { AuthContext } from "./useAuth";
 
 const signedOutState = {
   claims: null,
+  role: null,
   session: null,
   user: null,
   loading: false,
@@ -36,9 +38,17 @@ async function readAuthState() {
     }
 
     const claimsResult = await supabase.auth.getClaims().catch(() => null);
+    const claims = claimsResult?.data?.claims || null;
+    let role = claims?.user_role || null;
+
+    if (!role) {
+      const currentUser = await getCurrentUser().catch(() => null);
+      role = currentUser?.role || "user";
+    }
 
     return {
-      claims: claimsResult?.data?.claims || null,
+      claims,
+      role,
       session,
       user: userResult.data.user,
       loading: false,
@@ -105,6 +115,7 @@ export function AuthProvider({ children }) {
   const value = useMemo(
     () => ({
       ...authState,
+      isAdmin: authState.role === "admin",
       isAuthenticated: Boolean(authState.user?.id),
       isConfigured: isSupabaseConfigured,
       refresh,

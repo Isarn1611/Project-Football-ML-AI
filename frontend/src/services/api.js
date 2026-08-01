@@ -64,6 +64,14 @@ export function searchPlayers(filters = {}, options = {}) {
     .then((response) => response.data);
 }
 
+export function getCurrentUser() {
+  return api.get("/api/auth/me").then((response) => response.data);
+}
+
+export function getAdminDashboard() {
+  return api.get("/api/admin/dashboard").then((response) => response.data);
+}
+
 export function clearRecommendationCache(playerName) {
   const cacheKey = String(playerName || "").trim().toLocaleLowerCase();
   recommendationCache.delete(cacheKey);

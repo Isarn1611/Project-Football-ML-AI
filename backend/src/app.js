@@ -1,6 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 const { requireAuth } = require("./middleware/requireAuth");
+const {
+    getUserRole,
+    requireAdmin,
+} = require("./middleware/requireAdmin");
+const { getAdminDashboard } = require("./services/adminService");
 const { searchPlayers } = require("./services/playerService");
 const {
     getMlHealth,
@@ -27,6 +32,44 @@ app.get("/api/players/search", requireAuth, async (req, res, next) => {
         const result = await searchPlayers(req.query);
 
         res.json(result);
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get("/api/auth/me", requireAuth, async (req, res, next) => {
+    try {
+        const readUserRole = req.app.locals.getUserRole || getUserRole;
+        const role = await readUserRole(req.user.id);
+
+        res.json({
+            user: {
+                id: req.user.id,
+                email: req.user.email || null,
+            },
+            role,
+            isAdmin: role === "admin",
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get("/api/admin/health", requireAuth, requireAdmin, (req, res) => {
+    res.json({
+        status: "ok",
+        role: req.userRole,
+        userId: req.user.id,
+    });
+});
+
+app.get("/api/admin/dashboard", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+        const loadDashboard =
+            req.app.locals.getAdminDashboard || getAdminDashboard;
+        const dashboard = await loadDashboard();
+
+        res.json(dashboard);
     } catch (error) {
         next(error);
     }

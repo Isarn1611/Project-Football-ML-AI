@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, Button, Popover, Segmented, Typography } from "antd";
 import {
+  DashboardOutlined,
   LogoutOutlined,
   MoonOutlined,
   SettingOutlined,
@@ -19,7 +20,7 @@ const LAST_PLAYER_RESULT_STORAGE_KEY = "scoutai.lastPlayerResult";
 const PLAYER_SESSION_CHANGE_EVENT = "scoutai-player-session-change";
 function AuthMenu() {
   const { t } = useTranslation("common");
-  const { signOut, user } = useAuth();
+  const { isAdmin, signOut, user } = useAuth();
   const { darkMode, language, setLanguage, toggleDarkMode } =
     useInterfaceSettings();
   const navigate = useNavigate();
@@ -97,6 +98,16 @@ function AuthMenu() {
           </Typography.Text>
         </span>
       </div>
+      {isAdmin && (
+        <Button
+          className="auth-admin-button"
+          icon={<DashboardOutlined />}
+          onClick={() => navigate("/admin")}
+          size="middle"
+        >
+          {t("shell.admin")}
+        </Button>
+      )}
       <Popover
         arrow={false}
         content={settingsContent}
