@@ -3910,6 +3910,93 @@ input {
   white-space: nowrap;
 }
 
+.admin-usage-drawer {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-usage-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e0e9e4;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: #f8fbf9;
+}
+
+.admin-usage-profile > span {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.admin-usage-profile strong,
+.admin-usage-profile small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-usage-profile strong {
+  color: #203b30;
+  font-size: 14px;
+}
+
+.admin-usage-profile small {
+  color: #75847c;
+  font-size: 12px;
+}
+
+.admin-usage-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-usage-metric-grid .ant-card {
+  border-color: #e0e9e4;
+}
+
+.admin-usage-metric-grid .ant-card-body,
+.admin-usage-section .ant-card-body {
+  padding: 16px;
+}
+
+.admin-usage-metric-grid .ant-statistic-content {
+  color: #173f2f;
+  font-size: 24px;
+}
+
+.admin-usage-section {
+  border-color: #e0e9e4;
+}
+
+.admin-usage-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-usage-summary-row > span {
+  display: grid;
+  gap: 4px;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f4f8f6;
+}
+
+.admin-usage-summary-row small {
+  color: #718178;
+  font-size: 11px;
+}
+
+.admin-usage-summary-row strong {
+  color: #203b30;
+  font-size: 16px;
+}
+
 .admin-player-identity {
   display: flex;
   min-width: 220px;
@@ -4216,6 +4303,14 @@ input {
     align-items: flex-start;
     flex-direction: column;
     gap: 10px;
+  }
+
+  .admin-usage-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-usage-summary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .admin-player-form-grid {
@@ -4785,6 +4880,34 @@ html[data-color-mode="dark"] .admin-user-identity strong {
 
 html[data-color-mode="dark"] .admin-user-identity small {
   color: #96a79e;
+}
+
+html[data-color-mode="dark"] .admin-usage-profile,
+html[data-color-mode="dark"] .admin-usage-summary-row > span {
+  border-color: #2d4036;
+  background: #111a15;
+}
+
+html[data-color-mode="dark"] .admin-usage-profile strong,
+html[data-color-mode="dark"] .admin-usage-summary-row strong {
+  color: #e1eee7;
+}
+
+html[data-color-mode="dark"] .admin-usage-profile small,
+html[data-color-mode="dark"] .admin-usage-summary-row small {
+  color: #96a79e;
+}
+
+html[data-color-mode="dark"] .admin-usage-metric-grid .ant-card,
+html[data-color-mode="dark"] .admin-usage-section {
+  border-color: #2d4036;
+  background: #151f1a;
+}
+
+html[data-color-mode="dark"]
+  .admin-usage-metric-grid
+  .ant-statistic-content {
+  color: #e1eee7;
 }
 
 html[data-color-mode="dark"] .admin-player-avatar {

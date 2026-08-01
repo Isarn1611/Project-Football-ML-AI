@@ -39,7 +39,10 @@ function isUuid(value) {
   );
 }
 
-function formatAdminUser(user, role = "user") {
+function formatAdminUser(user, access = {}) {
+  const normalizedAccess =
+    typeof access === "string" ? { role: access } : access || {};
+
   return {
     id: user.id,
     email: user.email || null,
@@ -47,7 +50,13 @@ function formatAdminUser(user, role = "user") {
       user.user_metadata?.full_name || user.user_metadata?.name || null,
     provider:
       user.app_metadata?.provider || user.identities?.[0]?.provider || "email",
-    role,
+    role: normalizedAccess.role || "user",
+    suspendedAt:
+      normalizedAccess.suspended_at || normalizedAccess.suspendedAt || null,
+    suspensionReason:
+      normalizedAccess.suspension_reason ||
+      normalizedAccess.suspensionReason ||
+      null,
     createdAt: user.created_at || null,
     lastSignInAt: user.last_sign_in_at || null,
     emailConfirmedAt: user.email_confirmed_at || null,
@@ -88,7 +97,7 @@ async function loadUserRoles(client, userIds) {
     const batch = userIds.slice(index, index + 200);
     const { data, error } = await client
       .from("user_roles")
-      .select("user_id,role")
+      .select("user_id,role,suspended_at,suspension_reason")
       .in("user_id", batch);
 
     if (error) {
@@ -101,7 +110,7 @@ async function loadUserRoles(client, userIds) {
     }
 
     for (const row of data || []) {
-      roles.set(row.user_id, row.role);
+      roles.set(row.user_id, row);
     }
   }
 
@@ -118,7 +127,7 @@ async function listAdminUsers(input = {}) {
   );
   const query = options.query.toLocaleLowerCase();
   const matchingUsers = authUsers
-    .map((user) => formatAdminUser(user, roles.get(user.id) || "user"))
+    .map((user) => formatAdminUser(user, roles.get(user.id) || { role: "user" }))
     .filter((user) => {
       if (!query) return true;
       return [user.email, user.displayName]
@@ -211,7 +220,134 @@ async function updateAdminUserRole(actorUserId, targetUserId, nextRole) {
     );
   }
 
-  return formatAdminUser(authData.user, data?.role || role);
+  return formatAdminUser(authData.user, data || { role });
+}
+
+async function updateAdminUserSuspension(
+  actorUserId,
+  targetUserId,
+  suspended,
+  reason
+) {
+  if (!isUuid(actorUserId) || !isUuid(targetUserId)) {
+    throw createAdminError(
+      "A valid user id is required",
+      "INVALID_USER_ID",
+      400
+    );
+  }
+
+  if (typeof suspended !== "boolean") {
+    throw createAdminError(
+      "Suspended must be true or false",
+      "INVALID_SUSPENSION",
+      400
+    );
+  }
+
+  if (actorUserId === targetUserId && suspended) {
+    throw createAdminError(
+      "Administrators cannot suspend their own account",
+      "CANNOT_SUSPEND_SELF",
+      400
+    );
+  }
+
+  const cleanedReason = String(reason || "").trim().slice(0, 500);
+  const client = getSupabaseAdminClient();
+  const { data: authData, error: authError } =
+    await client.auth.admin.getUserById(targetUserId);
+
+  if (authError || !authData?.user) {
+    throw createAdminError(
+      "User was not found",
+      "ADMIN_USER_NOT_FOUND",
+      404
+    );
+  }
+
+  const { data, error } = await client.rpc("admin_set_user_suspension", {
+    p_actor_user_id: actorUserId,
+    p_target_user_id: targetUserId,
+    p_suspended: suspended,
+    p_reason: cleanedReason || null,
+  });
+
+  if (error) {
+    const knownErrors = {
+      ACTOR_NOT_ADMIN: ["Administrator access is required", "FORBIDDEN", 403],
+      CANNOT_SUSPEND_SELF: [
+        "Administrators cannot suspend their own account",
+        "CANNOT_SUSPEND_SELF",
+        400,
+      ],
+      INVALID_SUSPENSION_REASON: [
+        "Suspension reason is too long",
+        "INVALID_SUSPENSION",
+        400,
+      ],
+      USER_ROLE_NOT_FOUND: ["User role was not found", "ADMIN_USER_NOT_FOUND", 404],
+    };
+    const knownError = knownErrors[error.message];
+
+    if (knownError) throw createAdminError(...knownError);
+
+    throw createAdminError(
+      "Could not update account suspension",
+      "ADMIN_SUSPENSION_UPDATE_FAILED",
+      503,
+      { message: error.message }
+    );
+  }
+
+  return formatAdminUser(authData.user, data);
+}
+
+async function getAdminUserUsage(actorUserId, targetUserId, days = 30) {
+  if (!isUuid(actorUserId) || !isUuid(targetUserId)) {
+    throw createAdminError(
+      "A valid user id is required",
+      "INVALID_USER_ID",
+      400
+    );
+  }
+
+  const periodDays = clampInteger(days, 1, 365, 30);
+  const { data, error } = await getSupabaseAdminClient().rpc(
+    "admin_get_user_usage",
+    {
+      p_actor_user_id: actorUserId,
+      p_target_user_id: targetUserId,
+      p_days: periodDays,
+    }
+  );
+
+  if (error) {
+    if (error.message === "ACTOR_NOT_ADMIN") {
+      throw createAdminError(
+        "Administrator access is required",
+        "FORBIDDEN",
+        403
+      );
+    }
+
+    if (error.message === "USER_ROLE_NOT_FOUND") {
+      throw createAdminError(
+        "User was not found",
+        "ADMIN_USER_NOT_FOUND",
+        404
+      );
+    }
+
+    throw createAdminError(
+      "Could not load user usage",
+      "ADMIN_USAGE_UNAVAILABLE",
+      503,
+      { message: error.message }
+    );
+  }
+
+  return data;
 }
 
 async function countTableRows(client, table) {
@@ -258,8 +394,10 @@ async function getAdminDashboard() {
 
 module.exports = {
   countTableRows,
+  getAdminUserUsage,
   getAdminDashboard,
   listAdminUsers,
   normalizeUserListOptions,
   updateAdminUserRole,
+  updateAdminUserSuspension,
 };

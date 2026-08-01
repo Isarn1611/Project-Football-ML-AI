@@ -7,10 +7,10 @@ function sendForbidden(res, message = "Administrator access is required") {
   });
 }
 
-async function getUserRole(userId) {
+async function getUserAccess(userId) {
   const { data, error } = await getSupabaseAdminClient()
     .from("user_roles")
-    .select("role")
+    .select("role,suspended_at,suspension_reason")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -22,7 +22,15 @@ async function getUserRole(userId) {
     throw roleError;
   }
 
-  return data?.role || "user";
+  return {
+    role: data?.role || "user",
+    suspendedAt: data?.suspended_at || null,
+    suspensionReason: data?.suspension_reason || null,
+  };
+}
+
+async function getUserRole(userId) {
+  return (await getUserAccess(userId)).role;
 }
 
 async function requireAdmin(req, res, next) {
@@ -34,8 +42,18 @@ async function requireAdmin(req, res, next) {
       });
     }
 
-    const readUserRole = req.app.locals.getUserRole || getUserRole;
-    const role = await readUserRole(req.user.id);
+    let access = req.userAccess;
+
+    if (!access && req.app.locals.getUserAccess) {
+      access = await req.app.locals.getUserAccess(req.user.id);
+    }
+
+    if (!access && req.app.locals.getUserRole) {
+      access = { role: await req.app.locals.getUserRole(req.user.id) };
+    }
+
+    access = access || (await getUserAccess(req.user.id));
+    const role = access.role;
 
     if (role !== "admin") {
       return sendForbidden(res);
@@ -49,6 +67,7 @@ async function requireAdmin(req, res, next) {
 }
 
 module.exports = {
+  getUserAccess,
   getUserRole,
   requireAdmin,
   sendForbidden,

@@ -84,6 +84,23 @@ export function updateAdminUserRole(userId, role) {
     .then((response) => response.data);
 }
 
+export function updateAdminUserSuspension(userId, suspended, reason = "") {
+  return api
+    .patch(`/api/admin/users/${encodeURIComponent(userId)}/suspension`, {
+      suspended,
+      reason,
+    })
+    .then((response) => response.data);
+}
+
+export function getAdminUserUsage(userId, days = 30) {
+  return api
+    .get(`/api/admin/users/${encodeURIComponent(userId)}/usage`, {
+      params: { days },
+    })
+    .then((response) => response.data);
+}
+
 export function getAdminPlayers(params = {}) {
   return api
     .get("/api/admin/players", { params })

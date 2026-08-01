@@ -4,6 +4,7 @@ const { test } = require("node:test");
 const {
   normalizeUserListOptions,
   updateAdminUserRole,
+  updateAdminUserSuspension,
 } = require("../src/services/adminService");
 
 test("normalizeUserListOptions clamps pagination and cleans search input", () => {
@@ -39,4 +40,16 @@ test("updateAdminUserRole prevents administrators from demoting themselves", asy
     code: "CANNOT_CHANGE_OWN_ROLE",
     status: 400,
   });
+});
+
+test("updateAdminUserSuspension prevents administrators from suspending themselves", async () => {
+  const adminId = "11111111-1111-4111-8111-111111111111";
+
+  await assert.rejects(
+    updateAdminUserSuspension(adminId, adminId, true, "Testing"),
+    {
+      code: "CANNOT_SUSPEND_SELF",
+      status: 400,
+    }
+  );
 });

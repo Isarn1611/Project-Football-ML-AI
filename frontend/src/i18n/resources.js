@@ -102,6 +102,9 @@ export const resources = {
         actions: {
           admin: "Promote to admin",
           back: "Back to dashboard",
+          details: "Usage",
+          reactivate: "Reactivate",
+          suspend: "Suspend",
           user: "Remove admin",
         },
         columns: {
@@ -132,7 +135,9 @@ export const resources = {
           title: "Could not complete the user operation",
         },
         feedback: {
+          reactivated: "User access restored",
           roleUpdated: "User role updated",
+          suspended: "User suspended immediately",
         },
         kicker: "Access management",
         neverSignedIn: "Never",
@@ -149,6 +154,20 @@ export const resources = {
           active: "Active",
           banned: "Suspended",
           pending: "Pending",
+          suspended: "Suspended",
+        },
+        suspension: {
+          cancel: "Cancel",
+          reactivate: "Reactivate",
+          reactivateDescription:
+            "{{email}} will regain access to protected APIs immediately.",
+          reactivateTitle: "Reactivate this account?",
+          reasonPlaceholder: "Reason for suspension",
+          reasonRequired: "Enter a reason before suspending this user.",
+          suspend: "Suspend user",
+          suspendDescription:
+            "{{email}} will be blocked from every protected API immediately.",
+          suspendTitle: "Suspend this account?",
         },
         subtitle:
           "Review registered accounts and control who can access protected administration tools.",
@@ -157,6 +176,27 @@ export const resources = {
         total: "{{count}} users",
         unknownEmail: "No email",
         unknownName: "Unnamed user",
+        usage: {
+          aiRequests: "AI requests",
+          averageDuration: "Average response",
+          byEndpoint: "Usage by endpoint",
+          days7: "Last 7 days",
+          days30: "Last 30 days",
+          days90: "Last 90 days",
+          endpoint: "Endpoint",
+          lastActive: "Last activity",
+          lifetimeRequests: "Lifetime requests",
+          outputTokens: "Output tokens",
+          periodSummary: "Last {{days}} days",
+          promptTokens: "Prompt tokens",
+          recent: "Recent requests",
+          requests: "Requests",
+          status: "Status",
+          time: "Time",
+          title: "Usage · {{email}}",
+          tokens: "Tokens",
+          totalTokens: "Lifetime tokens",
+        },
       },
       status: {
         access: {
@@ -640,6 +680,9 @@ export const resources = {
         actions: {
           admin: "เลื่อนเป็น Admin",
           back: "กลับหน้า Dashboard",
+          details: "การใช้งาน",
+          reactivate: "คืนสถานะ",
+          suspend: "ระงับ",
           user: "นำสิทธิ์ Admin ออก",
         },
         columns: {
@@ -670,7 +713,9 @@ export const resources = {
           title: "ไม่สามารถดำเนินการกับผู้ใช้ได้",
         },
         feedback: {
+          reactivated: "คืนสิทธิ์การใช้งานแล้ว",
           roleUpdated: "อัปเดตสิทธิ์ผู้ใช้แล้ว",
+          suspended: "ระงับผู้ใช้ทันทีแล้ว",
         },
         kicker: "การจัดการสิทธิ์",
         neverSignedIn: "ยังไม่เคย",
@@ -687,6 +732,20 @@ export const resources = {
           active: "ใช้งานได้",
           banned: "ระงับการใช้งาน",
           pending: "รอยืนยัน",
+          suspended: "ถูกระงับ",
+        },
+        suspension: {
+          cancel: "ยกเลิก",
+          reactivate: "คืนสถานะ",
+          reactivateDescription:
+            "{{email}} จะกลับมาเรียก Protected API ได้ทันที",
+          reactivateTitle: "คืนสถานะบัญชีนี้?",
+          reasonPlaceholder: "เหตุผลที่ระงับบัญชี",
+          reasonRequired: "กรุณาระบุเหตุผลก่อนระงับผู้ใช้",
+          suspend: "ระงับผู้ใช้",
+          suspendDescription:
+            "{{email}} จะถูกบล็อกจาก Protected API ทุกตัวทันที",
+          suspendTitle: "ระงับบัญชีนี้?",
         },
         subtitle:
           "ตรวจสอบบัญชีที่ลงทะเบียนและควบคุมผู้ที่สามารถเข้าถึงเครื่องมือผู้ดูแลระบบ",
@@ -695,6 +754,27 @@ export const resources = {
         total: "ผู้ใช้ {{count}} คน",
         unknownEmail: "ไม่มีอีเมล",
         unknownName: "ไม่ระบุชื่อ",
+        usage: {
+          aiRequests: "รีเควส AI",
+          averageDuration: "เวลาตอบสนองเฉลี่ย",
+          byEndpoint: "การใช้งานแยกตาม Endpoint",
+          days7: "7 วันล่าสุด",
+          days30: "30 วันล่าสุด",
+          days90: "90 วันล่าสุด",
+          endpoint: "Endpoint",
+          lastActive: "ใช้งานล่าสุด",
+          lifetimeRequests: "รีเควสสะสม",
+          outputTokens: "Output tokens",
+          periodSummary: "สรุป {{days}} วันล่าสุด",
+          promptTokens: "Prompt tokens",
+          recent: "รีเควสล่าสุด",
+          requests: "รีเควส",
+          status: "สถานะ",
+          time: "เวลา",
+          title: "การใช้งาน · {{email}}",
+          tokens: "โทเคน",
+          totalTokens: "โทเคนสะสม",
+        },
       },
       status: {
         access: {
