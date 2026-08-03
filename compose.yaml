@@ -1,0 +1,100 @@
+services:
+  ml-api:
+    build:
+      context: .
+      dockerfile: ScoutAI/Dockerfile
+    command:
+      - python
+      - -m
+      - uvicorn
+      - ScoutAI.api:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./ScoutAI/api.py
+          target: /app/ScoutAI/api.py
+        - action: sync+restart
+          path: ./ScoutAI/scout_engine.py
+          target: /app/ScoutAI/scout_engine.py
+        - action: rebuild
+          path: ./ScoutAI/requirements.txt
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: npm run dev
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: "5000"
+      ML_API_URL: http://ml-api:8000
+    ports:
+      - "5000:5000"
+    depends_on:
+      ml-api:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/src
+          target: /app/src
+          initial_sync: true
+        - action: rebuild
+          path: ./backend/package.json
+        - action: rebuild
+          path: ./backend/package-lock.json
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command:
+      - npm
+      - run
+      - dev
+      - --
+      - --host
+      - 0.0.0.0
+    env_file:
+      - ./frontend/.env
+    environment:
+      VITE_API_URL: http://localhost:5000
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_started
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+          initial_sync: true
+        - action: sync
+          path: ./frontend/public
+          target: /app/public
+          initial_sync: true
+        - action: sync+restart
+          path: ./frontend/vite.config.js
+          target: /app/vite.config.js
+        - action: rebuild
+          path: ./frontend/package.json
+        - action: rebuild
+          path: ./frontend/package-lock.json
