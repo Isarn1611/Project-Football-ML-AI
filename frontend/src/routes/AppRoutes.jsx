@@ -2,8 +2,12 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import AuthCallback from "../pages/AuthCallback";
 import Login from "../pages/Login";
+import Admin from "../pages/Admin";
+import AdminPlayers from "../pages/AdminPlayers";
+import AdminUsers from "../pages/AdminUsers";
 import Result from "../pages/Result";
 import Search from "../pages/Search";
+import AdminRoute from "./AdminRoute";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -14,6 +18,11 @@ function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Search />} />
         <Route path="/result" element={<Result />} />
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/players" element={<AdminPlayers />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

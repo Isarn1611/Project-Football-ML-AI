@@ -52,6 +52,7 @@ import {
   removeShortlistPlayer,
   upsertShortlistPlayer,
 } from "../services/scoutingData";
+import PlayerAvatar from "../services/playerImages.jsx";
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -168,14 +169,14 @@ function readShortlistError(error, t) {
     message.includes("player_search_history") ||
     message.includes("row-level security policy")
   ) {
-    return "Search history policy needs to be updated in Supabase. Run the latest search history RLS SQL migration.";
+    return t("errors.historyPolicyMigration");
   }
 
   if (
     message.includes("player_shortlist") ||
     message.includes("Could not find the table")
   ) {
-    return "Run the Supabase shortlist/history SQL migration before using shortlist.";
+    return t("errors.workspaceMigration");
   }
 
   return message;
@@ -826,7 +827,10 @@ function AiAnalysisResult({
                       disabled={shortlistActionKey === playerKey}
                       isSaved={isSaved}
                       onClick={() =>
-                        onToggleShortlist(recommendationPlayer, "AI shortlist")
+                        onToggleShortlist(
+                          recommendationPlayer,
+                          t("sources.aiShortlist")
+                        )
                       }
                       size="small"
                     />
@@ -1017,12 +1021,21 @@ function ModelTable({
         const isOutlier = String(name).includes("OUTLIER");
         return (
           <div className="model-player-cell">
-            <Text strong type={isOutlier ? "danger" : undefined}>
-              {name}
-            </Text>
-            <Text type="secondary">
-              {getPlayerSummary(player) || t("models.clubUnavailable")}
-            </Text>
+            <div className="model-player-identity">
+              <PlayerAvatar
+                className="model-row-avatar"
+                name={name}
+                uid={player.UID}
+              />
+              <span className="model-player-copy">
+                <Text strong type={isOutlier ? "danger" : undefined}>
+                  {name}
+                </Text>
+                <Text type="secondary">
+                  {getPlayerSummary(player) || t("models.clubUnavailable")}
+                </Text>
+              </span>
+            </div>
           </div>
         );
       },
@@ -1089,7 +1102,12 @@ function ModelTable({
           <ShortlistButton
             disabled={shortlistActionKey === playerKey}
             isSaved={isSaved}
-            onClick={() => onToggleShortlist(player, `${modelName} candidate`)}
+            onClick={() =>
+              onToggleShortlist(
+                player,
+                t("sources.modelCandidate", { model: modelBadge || modelName })
+              )
+            }
             size="small"
           />
         );
@@ -1463,10 +1481,12 @@ function Result() {
           <ReportBreadcrumb playerName={currentState.result.target.Name} />
 
           <section className="report-hero">
-            <div className="report-player-avatar" aria-hidden="true">
-              {getPlayerInitials(currentState.result.target.Name)}
-              <span />
-            </div>
+            <PlayerAvatar
+              className="report-player-avatar"
+              name={currentState.result.target.Name}
+              uid={currentState.result.target.UID}
+              showStatus
+            />
 
             <div className="report-player-identity">
               <span className="section-kicker">{t("report.kicker")}</span>
@@ -1489,7 +1509,10 @@ function Result() {
                 }
                 isSaved={isTargetSaved}
                 onClick={() =>
-                  toggleShortlist(currentState.result.target, "Target player")
+                  toggleShortlist(
+                    currentState.result.target,
+                    t("sources.targetPlayer")
+                  )
                 }
               />
             </div>

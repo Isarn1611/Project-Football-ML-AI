@@ -220,7 +220,7 @@ function Login() {
 
   return (
     <main className="login-shell">
-      <section className="login-container" aria-label="ScoutAI authentication">
+      <section className="login-container" aria-label={t("authenticationLabel")}>
         <aside
           aria-label={t("carousel.label", {
             current: activeSlide + 1,

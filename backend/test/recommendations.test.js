@@ -7,6 +7,12 @@ const app = require("../src/app");
 const AUTH_HEADER = {
   Authorization: "Bearer valid-test-token",
 };
+const ADMIN_AUTH_HEADER = {
+  Authorization: "Bearer admin-test-token",
+};
+const SUSPENDED_AUTH_HEADER = {
+  Authorization: "Bearer suspended-test-token",
+};
 
 let backendServer;
 let backendUrl;
@@ -17,6 +23,13 @@ let originalGeminiApiUrl;
 let originalGeminiApiKey;
 let originalGeminiModel;
 let lastGeminiRequest;
+let lastAdminUserQuery;
+let lastRoleUpdate;
+let lastAdminPlayerQuery;
+let lastPlayerUpdate;
+let lastSuspensionUpdate;
+let lastUsageQuery;
+const usageEvents = [];
 
 const mockAnalysis = {
   title: "Kevin De Bruyne scouting analysis",
@@ -75,10 +88,144 @@ before(async () => {
   originalGeminiApiUrl = process.env.GEMINI_API_URL;
   originalGeminiApiKey = process.env.GEMINI_API_KEY;
   originalGeminiModel = process.env.GEMINI_MODEL;
-  app.locals.verifySupabaseUser = async (token) =>
-    token === "valid-test-token"
-      ? { id: "test-user-id", email: "scout@example.com" }
-      : null;
+  app.locals.verifySupabaseUser = async (token) => {
+    if (token === "valid-test-token") {
+      return { id: "test-user-id", email: "scout@example.com" };
+    }
+
+    if (token === "admin-test-token") {
+      return { id: "admin-user-id", email: "admin@example.com" };
+    }
+
+    if (token === "suspended-test-token") {
+      return { id: "suspended-user-id", email: "blocked@example.com" };
+    }
+
+    return null;
+  };
+  app.locals.getUserRole = async (userId) =>
+    userId === "admin-user-id" ? "admin" : "user";
+  app.locals.getUserAccess = async (userId) => ({
+    role: userId === "admin-user-id" ? "admin" : "user",
+    suspendedAt:
+      userId === "suspended-user-id" ? "2026-08-01T00:00:00.000Z" : null,
+    suspensionReason:
+      userId === "suspended-user-id" ? "Policy review" : null,
+  });
+  app.locals.recordApiUsage = async (event) => {
+    usageEvents.push(event);
+  };
+  app.locals.getAdminDashboard = async () => ({
+    counts: {
+      users: 4,
+      players: 8452,
+      shortlistItems: 12,
+      searchHistoryItems: 27,
+    },
+    generatedAt: "2026-08-01T00:00:00.000Z",
+  });
+  app.locals.listAdminUsers = async (query) => {
+    lastAdminUserQuery = query;
+    return {
+      users: [
+        {
+          id: "target-user-id",
+          email: "member@example.com",
+          displayName: "Team Member",
+          provider: "email",
+          role: "user",
+          createdAt: "2026-07-01T00:00:00.000Z",
+          lastSignInAt: null,
+          emailConfirmedAt: "2026-07-01T00:00:00.000Z",
+          bannedUntil: null,
+        },
+      ],
+      pagination: {
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+      },
+      query: String(query.q || ""),
+    };
+  };
+  app.locals.updateAdminUserRole = async (actorUserId, targetUserId, role) => {
+    lastRoleUpdate = { actorUserId, targetUserId, role };
+    return {
+      id: targetUserId,
+      email: "member@example.com",
+      role,
+    };
+  };
+  app.locals.listAdminPlayers = async (query) => {
+    lastAdminPlayerQuery = query;
+    return {
+      players: [
+        {
+          uid: "18004457",
+          name: "Kevin De Bruyne",
+          club: "Manchester City",
+          age: 31,
+          nationality: "Belgium",
+          position: "M/AM RLC",
+          currentAbility: 189,
+          potentialAbility: 189,
+          marketValue: 347975206,
+          salary: 394372,
+        },
+      ],
+      pagination: {
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+      },
+      query: String(query.q || ""),
+    };
+  };
+  app.locals.updateAdminPlayer = async (actorUserId, playerUid, input) => {
+    lastPlayerUpdate = { actorUserId, playerUid, input };
+    return { uid: playerUid, ...input };
+  };
+  app.locals.updateAdminUserSuspension = async (
+    actorUserId,
+    targetUserId,
+    suspended,
+    reason
+  ) => {
+    lastSuspensionUpdate = {
+      actorUserId,
+      targetUserId,
+      suspended,
+      reason,
+    };
+    return {
+      id: targetUserId,
+      email: "member@example.com",
+      role: "user",
+      suspendedAt: suspended ? "2026-08-01T00:00:00.000Z" : null,
+      suspensionReason: suspended ? reason : null,
+    };
+  };
+  app.locals.getAdminUserUsage = async (actorUserId, targetUserId, days) => {
+    lastUsageQuery = { actorUserId, targetUserId, days };
+    return {
+      userId: targetUserId,
+      periodDays: Number(days || 30),
+      lifetime: {
+        requests: 42,
+        aiRequests: 3,
+        promptTokens: 1000,
+        outputTokens: 500,
+        totalTokens: 1500,
+        lastActiveAt: "2026-08-01T00:00:00.000Z",
+      },
+      period: { requests: 12, totalTokens: 700 },
+      endpoints: [],
+      daily: [],
+      recent: [],
+    };
+  };
 
   mlServer = http.createServer((request, response) => {
     if (request.method === "GET" && request.url === "/health") {
@@ -225,6 +372,16 @@ after(async () => {
   await close(mlServer);
   await close(geminiServer);
   delete app.locals.verifySupabaseUser;
+  delete app.locals.getUserRole;
+  delete app.locals.getUserAccess;
+  delete app.locals.recordApiUsage;
+  delete app.locals.getAdminDashboard;
+  delete app.locals.listAdminUsers;
+  delete app.locals.updateAdminUserRole;
+  delete app.locals.listAdminPlayers;
+  delete app.locals.updateAdminPlayer;
+  delete app.locals.updateAdminUserSuspension;
+  delete app.locals.getAdminUserUsage;
 
   if (originalMlApiUrl === undefined) {
     delete process.env.ML_API_URL;
@@ -333,6 +490,267 @@ test("POST /api/recommendations rejects missing sessions", async () => {
   assert.equal((await response.json()).code, "UNAUTHENTICATED");
 });
 
+test("GET /api/admin/health allows administrators", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/health`, {
+    headers: ADMIN_AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    status: "ok",
+    role: "admin",
+    userId: "admin-user-id",
+  });
+});
+
+test("GET /api/admin/health rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/health`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("GET /api/admin/health rejects missing sessions", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/health`);
+
+  assert.equal(response.status, 401);
+  assert.equal((await response.json()).code, "UNAUTHENTICATED");
+});
+
+test("GET /api/auth/me returns the authenticated user's role", async () => {
+  const response = await fetch(`${backendUrl}/api/auth/me`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    user: {
+      id: "test-user-id",
+      email: "scout@example.com",
+    },
+    role: "user",
+    isAdmin: false,
+    suspended: false,
+  });
+});
+
+test("protected APIs reject suspended accounts immediately", async () => {
+  const response = await fetch(`${backendUrl}/api/auth/me`, {
+    headers: SUSPENDED_AUTH_HEADER,
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 403);
+  assert.equal(payload.code, "ACCOUNT_SUSPENDED");
+  assert.equal(payload.details.reason, "Policy review");
+});
+
+test("GET /api/admin/dashboard returns aggregate counts to administrators", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/dashboard`, {
+    headers: ADMIN_AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    counts: {
+      users: 4,
+      players: 8452,
+      shortlistItems: 12,
+      searchHistoryItems: 27,
+    },
+    generatedAt: "2026-08-01T00:00:00.000Z",
+  });
+});
+
+test("GET /api/admin/dashboard rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/dashboard`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("GET /api/admin/users returns a filtered user page to administrators", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/users?q=member&page=1&pageSize=20`,
+    { headers: ADMIN_AUTH_HEADER }
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.users[0].email, "member@example.com");
+  assert.equal(payload.pagination.total, 1);
+  assert.deepEqual({ ...lastAdminUserQuery }, {
+    q: "member",
+    page: "1",
+    pageSize: "20",
+  });
+});
+
+test("GET /api/admin/users rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/users`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("PATCH /api/admin/users/:id/role changes roles through the admin service", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/users/target-user-id/role`,
+    {
+      method: "PATCH",
+      headers: {
+        ...ADMIN_AUTH_HEADER,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ role: "admin" }),
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).user.role, "admin");
+  assert.deepEqual(lastRoleUpdate, {
+    actorUserId: "admin-user-id",
+    targetUserId: "target-user-id",
+    role: "admin",
+  });
+});
+
+test("PATCH /api/admin/users/:id/role rejects non-admin users", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/users/target-user-id/role`,
+    {
+      method: "PATCH",
+      headers: {
+        ...AUTH_HEADER,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ role: "admin" }),
+    }
+  );
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("PATCH /api/admin/users/:id/suspension suspends users through the admin service", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/users/target-user-id/suspension`,
+    {
+      method: "PATCH",
+      headers: {
+        ...ADMIN_AUTH_HEADER,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        suspended: true,
+        reason: "Policy review",
+      }),
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).user.suspensionReason, "Policy review");
+  assert.deepEqual(lastSuspensionUpdate, {
+    actorUserId: "admin-user-id",
+    targetUserId: "target-user-id",
+    suspended: true,
+    reason: "Policy review",
+  });
+});
+
+test("GET /api/admin/users/:id/usage returns accumulated usage", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/users/target-user-id/usage?days=90`,
+    { headers: ADMIN_AUTH_HEADER }
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.usage.lifetime.requests, 42);
+  assert.equal(payload.usage.lifetime.totalTokens, 1500);
+  assert.deepEqual(lastUsageQuery, {
+    actorUserId: "admin-user-id",
+    targetUserId: "target-user-id",
+    days: "90",
+  });
+});
+
+test("GET /api/admin/players returns a filtered player page to administrators", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/players?q=Kevin&page=1&pageSize=20`,
+    { headers: ADMIN_AUTH_HEADER }
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.players[0].uid, "18004457");
+  assert.equal(payload.players[0].name, "Kevin De Bruyne");
+  assert.deepEqual({ ...lastAdminPlayerQuery }, {
+    q: "Kevin",
+    page: "1",
+    pageSize: "20",
+  });
+});
+
+test("GET /api/admin/players rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/players`, {
+    headers: AUTH_HEADER,
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
+test("PATCH /api/admin/players/:uid updates players through the admin service", async () => {
+  const player = {
+    name: "Kevin De Bruyne",
+    club: "Manchester City",
+    age: 32,
+    nationality: "Belgium",
+    position: "M/AM RLC",
+    currentAbility: 188,
+    potentialAbility: 189,
+    marketValue: 300000000,
+    salary: 394372,
+  };
+  const response = await fetch(`${backendUrl}/api/admin/players/18004457`, {
+    method: "PATCH",
+    headers: {
+      ...ADMIN_AUTH_HEADER,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(player),
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).player.age, 32);
+  assert.deepEqual(lastPlayerUpdate, {
+    actorUserId: "admin-user-id",
+    playerUid: "18004457",
+    input: player,
+  });
+});
+
+test("PATCH /api/admin/players/:uid rejects non-admin users", async () => {
+  const response = await fetch(`${backendUrl}/api/admin/players/18004457`, {
+    method: "PATCH",
+    headers: {
+      ...AUTH_HEADER,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name: "Changed" }),
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "FORBIDDEN");
+});
+
 test("GET /api/ai/health reports Gemini configuration", async () => {
   const response = await fetch(`${backendUrl}/api/ai/health`);
 
@@ -345,6 +763,7 @@ test("GET /api/ai/health reports Gemini configuration", async () => {
 });
 
 test("POST /api/ai/analyze sends trusted ML context to Gemini", async () => {
+  usageEvents.length = 0;
   const response = await fetch(`${backendUrl}/api/ai/analyze`, {
     method: "POST",
     headers: {
@@ -364,6 +783,14 @@ test("POST /api/ai/analyze sends trusted ML context to Gemini", async () => {
   assert.equal(payload.analysis.title, mockAnalysis.title);
   assert.equal(payload.usage.totalTokens, 300);
   assert.equal(lastGeminiRequest.apiKey, "test-gemini-key");
+  await new Promise((resolve) => setImmediate(resolve));
+  const usageEvent = usageEvents.find(
+    (event) => event.endpoint === "/api/ai/analyze"
+  );
+  assert.equal(usageEvent.provider, "gemini");
+  assert.equal(usageEvent.promptTokens, 100);
+  assert.equal(usageEvent.outputTokens, 200);
+  assert.equal(usageEvent.totalTokens, 300);
   assert.equal(
     lastGeminiRequest.body.generationConfig.responseMimeType,
     "application/json"

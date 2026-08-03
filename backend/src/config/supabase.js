@@ -5,8 +5,11 @@ const { createClient } = require("@supabase/supabase-js");
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SECRET_KEY =
+  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 let supabaseAuthClient;
+let supabaseAdminClient;
 
 function ensureSupabaseConfig() {
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
@@ -29,6 +32,30 @@ function getSupabaseAuthClient() {
   }
 
   return supabaseAuthClient;
+}
+
+function ensureSupabaseAdminConfig() {
+  if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+    throw new Error(
+      "Missing SUPABASE_URL and SUPABASE_SECRET_KEY in backend .env"
+    );
+  }
+}
+
+function getSupabaseAdminClient() {
+  ensureSupabaseAdminConfig();
+
+  if (!supabaseAdminClient) {
+    supabaseAdminClient = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        persistSession: false,
+      },
+    });
+  }
+
+  return supabaseAdminClient;
 }
 
 async function supabaseRequest(path, searchParams = {}) {
@@ -66,6 +93,7 @@ async function supabaseRequest(path, searchParams = {}) {
 }
 
 module.exports = {
+  getSupabaseAdminClient,
   getSupabaseAuthClient,
   supabaseRequest,
 };
