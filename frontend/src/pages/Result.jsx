@@ -205,16 +205,6 @@ function getPlayerSummary(player) {
   return [player?.Club, getPlayerPosition(player)].filter(Boolean).join(" / ");
 }
 
-function getPlayerInitials(name) {
-  return String(name || "")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
-
 function ShortlistButton({ disabled, isSaved, onClick, size = "middle" }) {
   const { t } = useTranslation("result");
 
@@ -252,7 +242,7 @@ function ReportBreadcrumb({ playerName }) {
 
   return (
     <nav aria-label={t("breadcrumb.label")} className="report-navigation">
-      <Link className="report-back-link" to="/">
+      <Link className="report-back-link" to="/app">
         <ArrowLeftOutlined />
         <span>{t("breadcrumb.back")}</span>
       </Link>
@@ -304,7 +294,7 @@ function ErrorState({ error, onRetry, onSelectPlayer }) {
         subTitle={hasMatches ? t("errors.chooseExact") : undefined}
         extra={
           error.code === "MISSING_PLAYER" ? (
-            <Link className="app-nav-button" to="/">
+            <Link className="app-nav-button" to="/app">
               <ArrowLeftOutlined />
               {t("actions.choosePlayer")}
             </Link>
@@ -1345,6 +1335,7 @@ function Result() {
 
     recordedHistoryKeys.current.add(historyKey);
     recordSearch(user.id, targetName, {
+      playerUid: currentState.result.target?.UID || null,
       status: "success",
       requestedQuery: playerName,
       resultCount: countModelResults(currentState.result.results),

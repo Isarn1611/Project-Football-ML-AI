@@ -6,7 +6,7 @@ function AdminRoute() {
   const { isAdmin } = useAuth();
 
   if (!isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   return <Outlet />;

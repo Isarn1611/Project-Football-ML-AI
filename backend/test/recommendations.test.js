@@ -27,6 +27,7 @@ let lastAdminUserQuery;
 let lastRoleUpdate;
 let lastAdminPlayerQuery;
 let lastPlayerUpdate;
+let lastPlayerLookupNames;
 let lastSuspensionUpdate;
 let lastUsageQuery;
 const usageEvents = [];
@@ -183,6 +184,15 @@ before(async () => {
       query: String(query.q || ""),
     };
   };
+  app.locals.lookupPlayersByNames = async (names) => {
+    lastPlayerLookupNames = names;
+    return {
+      players: names.map((name, index) => ({
+        name,
+        uid: String(18004457 + index),
+      })),
+    };
+  };
   app.locals.updateAdminPlayer = async (actorUserId, playerUid, input) => {
     lastPlayerUpdate = { actorUserId, playerUid, input };
     return { uid: playerUid, ...input };
@@ -214,6 +224,7 @@ before(async () => {
       periodDays: Number(days || 30),
       lifetime: {
         requests: 42,
+        searches: 9,
         aiRequests: 3,
         promptTokens: 1000,
         outputTokens: 500,
@@ -379,6 +390,7 @@ after(async () => {
   delete app.locals.listAdminUsers;
   delete app.locals.updateAdminUserRole;
   delete app.locals.listAdminPlayers;
+  delete app.locals.lookupPlayersByNames;
   delete app.locals.updateAdminPlayer;
   delete app.locals.updateAdminUserSuspension;
   delete app.locals.getAdminUserUsage;
@@ -673,12 +685,30 @@ test("GET /api/admin/users/:id/usage returns accumulated usage", async () => {
 
   assert.equal(response.status, 200);
   assert.equal(payload.usage.lifetime.requests, 42);
+  assert.equal(payload.usage.lifetime.searches, 9);
   assert.equal(payload.usage.lifetime.totalTokens, 1500);
   assert.deepEqual(lastUsageQuery, {
     actorUserId: "admin-user-id",
     targetUserId: "target-user-id",
     days: "90",
   });
+});
+
+test("POST /api/players/lookup resolves player UIDs for search history", async () => {
+  const names = ["Kevin De Bruyne", "Erling Haaland"];
+  const response = await fetch(`${backendUrl}/api/players/lookup`, {
+    method: "POST",
+    headers: {
+      ...AUTH_HEADER,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ names }),
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.players[0].uid, "18004457");
+  assert.deepEqual(lastPlayerLookupNames, names);
 });
 
 test("GET /api/admin/players returns a filtered player page to administrators", async () => {

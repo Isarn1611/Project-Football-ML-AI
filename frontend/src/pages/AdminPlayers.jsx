@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   App as AntApp,
-  Avatar,
   Button,
   Card,
   Form,
@@ -22,22 +21,15 @@ import {
   EditOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 
 import AppShell from "../components/AppShell";
 import { getAdminPlayers, updateAdminPlayer } from "../services/api";
+import PlayerAvatar from "../services/playerImages.jsx";
 
 const { Paragraph, Text, Title } = Typography;
 const PAGE_SIZE = 20;
-
-function getInitials(name) {
-  return String(name || "P")
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
 
 function formatMoney(value) {
   if (!Number.isFinite(Number(value)) || Number(value) < 0) return "—";
@@ -62,6 +54,7 @@ function AdminPlayers() {
     total: 0,
   });
   const [query, setQuery] = useState("");
+  const [searchDraft, setSearchDraft] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -151,9 +144,11 @@ function AdminPlayers() {
       title: t("players.columns.player"),
       render: (_, player) => (
         <div className="admin-player-identity">
-          <Avatar className="admin-player-avatar">
-            {getInitials(player.name)}
-          </Avatar>
+          <PlayerAvatar
+            className="admin-player-avatar"
+            name={player.name}
+            uid={player.uid}
+          />
           <span>
             <strong>{player.name}</strong>
             <small>UID {player.uid}</small>
@@ -277,16 +272,44 @@ function AdminPlayers() {
           }
         >
           <div className="admin-users-toolbar">
-            <Input.Search
-              allowClear
-              aria-label={t("players.search.label")}
-              enterButton={t("players.search.action")}
-              onSearch={(value) =>
-                requestPlayers({ page: 1, query: value, reload: true })
-              }
-              placeholder={t("players.search.placeholder")}
-            />
-            <Text type="secondary">
+            <div className="admin-users-search" role="search">
+              <Input
+                allowClear
+                aria-label={t("players.search.label")}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setSearchDraft(value);
+
+                  if (!value && query) {
+                    requestPlayers({ page: 1, query: "", reload: true });
+                  }
+                }}
+                onPressEnter={() =>
+                  requestPlayers({
+                    page: 1,
+                    query: searchDraft,
+                    reload: true,
+                  })
+                }
+                placeholder={t("players.search.placeholder")}
+                value={searchDraft}
+              />
+              <Button
+                aria-label={t("players.search.action")}
+                className="admin-users-search-button"
+                icon={<SearchOutlined />}
+                loading={loading}
+                onClick={() =>
+                  requestPlayers({
+                    page: 1,
+                    query: searchDraft,
+                    reload: true,
+                  })
+                }
+                shape="circle"
+              />
+            </div>
+            <Text className="admin-users-total" type="secondary">
               {t("players.total", { count: pagination.total })}
             </Text>
           </div>
@@ -322,9 +345,11 @@ function AdminPlayers() {
           {editingPlayer && (
             <div className="admin-player-editor">
               <div className="admin-player-editor-summary">
-                <Avatar className="admin-player-avatar" size={42}>
-                  {getInitials(editingPlayer.name)}
-                </Avatar>
+                <PlayerAvatar
+                  className="admin-player-avatar is-editor"
+                  name={editingPlayer.name}
+                  uid={editingPlayer.uid}
+                />
                 <span>
                   <strong>{editingPlayer.name}</strong>
                   <small>UID {editingPlayer.uid}</small>

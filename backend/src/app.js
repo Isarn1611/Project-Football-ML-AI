@@ -15,7 +15,10 @@ const {
     listAdminPlayers,
     updateAdminPlayer,
 } = require("./services/adminPlayerService");
-const { searchPlayers } = require("./services/playerService");
+const {
+    lookupPlayersByNames,
+    searchPlayers,
+} = require("./services/playerService");
 const {
     getMlHealth,
     getPlayerRecommendations,
@@ -40,6 +43,18 @@ app.get("/", (req, res) => {
 app.get("/api/players/search", ...protectedApi, async (req, res, next) => {
     try {
         const result = await searchPlayers(req.query);
+
+        res.json(result);
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post("/api/players/lookup", ...protectedApi, async (req, res, next) => {
+    try {
+        const lookupPlayers =
+            req.app.locals.lookupPlayersByNames || lookupPlayersByNames;
+        const result = await lookupPlayers(req.body?.names);
 
         res.json(result);
     } catch (error) {

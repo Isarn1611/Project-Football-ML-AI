@@ -6,12 +6,17 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/useAuth";
 import { supabase } from "../lib/supabase";
+import {
+  activateAuthProvider,
+  clearPendingAuthProvider,
+  getPendingAuthProvider,
+} from "../utils/userProfile";
 
 const { Paragraph, Text } = Typography;
 
 function getSafeNext(value) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/";
+    return "/app";
   }
 
   return value;
@@ -88,6 +93,7 @@ function AuthCallback() {
 
       const callbackError = getCallbackError(searchParams);
       if (callbackError) {
+        clearPendingAuthProvider();
         setError(readCallbackError(callbackError, t));
         return;
       }
@@ -103,6 +109,14 @@ function AuthCallback() {
           setError(readCallbackError(exchangeError.message, t));
           return;
         }
+      }
+
+      const authProvider = getPendingAuthProvider();
+      if (authProvider) {
+        activateAuthProvider(authProvider);
+        await supabase.auth.updateUser({
+          data: { last_sign_in_provider: authProvider },
+        });
       }
 
       const nextState = await refresh();

@@ -50,7 +50,7 @@ function AppShell({ children, extra }) {
       <Layout.Header className="app-header">
         <div className="app-header-inner">
           <div className="app-header-left">
-            <Link className="brand-link" to="/">
+            <Link className="brand-link" to="/app">
               <img className="brand-logo" src={scoutAiWordmark} alt="ScoutAI" />
               <span className="brand-product">
                 {t("shell.product")}

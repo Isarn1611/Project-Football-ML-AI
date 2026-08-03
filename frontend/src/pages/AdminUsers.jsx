@@ -20,13 +20,13 @@ import {
 } from "antd";
 import {
   ArrowLeftOutlined,
-  ApiOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CrownOutlined,
   EyeOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  SearchOutlined,
   StopOutlined,
   TeamOutlined,
   ThunderboltOutlined,
@@ -41,6 +41,7 @@ import {
   updateAdminUserRole,
   updateAdminUserSuspension,
 } from "../services/api";
+import { getUserAvatarUrl } from "../utils/userProfile";
 
 const { Paragraph, Text, Title } = Typography;
 const PAGE_SIZE = 20;
@@ -80,6 +81,7 @@ function AdminUsers() {
     total: 0,
   });
   const [query, setQuery] = useState("");
+  const [searchDraft, setSearchDraft] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -226,7 +228,12 @@ function AdminUsers() {
         title: t("users.columns.user"),
         render: (_, user) => (
           <div className="admin-user-identity">
-            <Avatar className="admin-user-avatar">{getInitials(user)}</Avatar>
+            <Avatar
+              className="admin-user-avatar"
+              src={getUserAvatarUrl(user) || undefined}
+            >
+              {getInitials(user)}
+            </Avatar>
             <span>
               <strong>{user.displayName || t("users.unknownName")}</strong>
               <small>{user.email || t("users.unknownEmail")}</small>
@@ -402,16 +409,44 @@ function AdminUsers() {
           }
         >
           <div className="admin-users-toolbar">
-            <Input.Search
-              allowClear
-              aria-label={t("users.search.label")}
-              enterButton={t("users.search.action")}
-              onSearch={(value) =>
-                requestUsers({ page: 1, query: value, reload: true })
-              }
-              placeholder={t("users.search.placeholder")}
-            />
-            <Text type="secondary">
+            <div className="admin-users-search" role="search">
+              <Input
+                allowClear
+                aria-label={t("users.search.label")}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setSearchDraft(value);
+
+                  if (!value && query) {
+                    requestUsers({ page: 1, query: "", reload: true });
+                  }
+                }}
+                onPressEnter={() =>
+                  requestUsers({
+                    page: 1,
+                    query: searchDraft,
+                    reload: true,
+                  })
+                }
+                placeholder={t("users.search.placeholder")}
+                value={searchDraft}
+              />
+              <Button
+                aria-label={t("users.search.action")}
+                className="admin-users-search-button"
+                icon={<SearchOutlined />}
+                loading={loading}
+                onClick={() =>
+                  requestUsers({
+                    page: 1,
+                    query: searchDraft,
+                    reload: true,
+                  })
+                }
+                shape="circle"
+              />
+            </div>
+            <Text className="admin-users-total" type="secondary">
               {t("users.total", { count: pagination.total })}
             </Text>
           </div>
@@ -460,10 +495,14 @@ function AdminUsers() {
         >
           <div className="admin-usage-drawer">
             <div className="admin-usage-profile">
-              <Avatar className="admin-user-avatar" size={46}>
+              <Avatar
+                className="admin-user-avatar"
+                size={46}
+                src={getUserAvatarUrl(selectedUser) || undefined}
+              >
                 {selectedUser ? getInitials(selectedUser) : "U"}
               </Avatar>
-              <span>
+              <span className="admin-usage-profile-copy">
                 <strong>
                   {selectedUser?.displayName || t("users.unknownName")}
                 </strong>
@@ -477,9 +516,9 @@ function AdminUsers() {
             <div className="admin-usage-metric-grid">
               <Card loading={usageLoading}>
                 <Statistic
-                  prefix={<ApiOutlined />}
-                  title={t("users.usage.lifetimeRequests")}
-                  value={usage?.lifetime?.requests || 0}
+                  prefix={<SearchOutlined />}
+                  title={t("users.usage.searches")}
+                  value={usage?.lifetime?.searches || 0}
                 />
               </Card>
               <Card loading={usageLoading}>
@@ -517,10 +556,6 @@ function AdminUsers() {
             >
               <div className="admin-usage-summary-row">
                 <span>
-                  <small>{t("users.usage.requests")}</small>
-                  <strong>{formatNumber(usage?.period?.requests)}</strong>
-                </span>
-                <span>
                   <small>{t("users.usage.promptTokens")}</small>
                   <strong>{formatNumber(usage?.period?.promptTokens)}</strong>
                 </span>
@@ -537,85 +572,6 @@ function AdminUsers() {
               </div>
             </Card>
 
-            <Card
-              className="admin-usage-section"
-              loading={usageLoading}
-              title={t("users.usage.byEndpoint")}
-            >
-              <Table
-                columns={[
-                  {
-                    dataIndex: "endpoint",
-                    key: "endpoint",
-                    title: t("users.usage.endpoint"),
-                  },
-                  {
-                    dataIndex: "requests",
-                    key: "requests",
-                    title: t("users.usage.requests"),
-                    width: 100,
-                  },
-                  {
-                    dataIndex: "totalTokens",
-                    key: "totalTokens",
-                    render: formatNumber,
-                    title: t("users.usage.tokens"),
-                    width: 110,
-                  },
-                ]}
-                dataSource={usage?.endpoints || []}
-                pagination={false}
-                rowKey="endpoint"
-                size="small"
-              />
-            </Card>
-
-            <Card
-              className="admin-usage-section"
-              loading={usageLoading}
-              title={t("users.usage.recent")}
-            >
-              <Table
-                columns={[
-                  {
-                    dataIndex: "endpoint",
-                    key: "endpoint",
-                    title: t("users.usage.endpoint"),
-                  },
-                  {
-                    dataIndex: "statusCode",
-                    key: "statusCode",
-                    render: (status) => (
-                      <Tag color={status < 400 ? "green" : "red"}>{status}</Tag>
-                    ),
-                    title: t("users.usage.status"),
-                    width: 90,
-                  },
-                  {
-                    dataIndex: "totalTokens",
-                    key: "totalTokens",
-                    render: formatNumber,
-                    title: t("users.usage.tokens"),
-                    width: 100,
-                  },
-                  {
-                    dataIndex: "createdAt",
-                    key: "createdAt",
-                    render: (value) =>
-                      formatDateTime(value, i18n.language, "—"),
-                    title: t("users.usage.time"),
-                    width: 175,
-                  },
-                ]}
-                dataSource={usage?.recent || []}
-                pagination={false}
-                rowKey={(event) =>
-                  `${event.createdAt}-${event.endpoint}-${event.statusCode}`
-                }
-                scroll={{ x: 650 }}
-                size="small"
-              />
-            </Card>
           </div>
         </Drawer>
 
