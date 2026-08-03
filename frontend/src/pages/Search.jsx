@@ -40,6 +40,7 @@ import {
   removeShortlistItem,
 } from "../services/scoutingData";
 import { searchPlayers } from "../services/api";
+import PlayerAvatar, { getPlayerInitials } from "../services/playerImages.jsx";
 
 const { Text } = Typography;
 
@@ -88,16 +89,6 @@ function formatMoney(value, t) {
     notation: "compact",
     style: "currency",
   }).format(value);
-}
-
-function getPlayerInitials(name) {
-  return String(name || "")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 }
 
 function buildBrowserParams(values, limit = PLAYER_PAGE_SIZE) {
@@ -152,6 +143,66 @@ function writeLastPlayerResult(playerName) {
   window.dispatchEvent(new Event(PLAYER_SESSION_CHANGE_EVENT));
 }
 
+function formatSavedSource(source, t) {
+  const cleanedSource = String(source || "").trim();
+  const normalizedSource = cleanedSource.toLocaleLowerCase();
+
+  if (
+    !cleanedSource ||
+    normalizedSource === "manual" ||
+    normalizedSource === "โน้ตแมวมอง" ||
+    normalizedSource === "บันทึกเอง"
+  ) {
+    return t("sources.manual");
+  }
+
+  if (
+    normalizedSource === "ai shortlist" ||
+    normalizedSource === "ai scout shortlist" ||
+    normalizedSource === "รายชื่อ ai แมวมอง" ||
+    normalizedSource === "แนะนำโดย ai"
+  ) {
+    return t("sources.aiShortlist");
+  }
+
+  if (
+    normalizedSource === "target player" ||
+    normalizedSource === "นักเตะเป้าหมาย"
+  ) {
+    return t("sources.targetPlayer");
+  }
+
+  const thaiModelCandidateMatch = cleanedSource.match(
+    /^ตัวเลือกแมวมองจาก\s+(.+)$/i
+  );
+
+  if (thaiModelCandidateMatch) {
+    return t("sources.modelCandidate", {
+      model: thaiModelCandidateMatch[1].trim(),
+    });
+  }
+
+  const recommendedByMatch = cleanedSource.match(/^แนะนำโดย\s+(.+)$/i);
+
+  if (recommendedByMatch) {
+    return t("sources.modelCandidate", {
+      model: recommendedByMatch[1].trim(),
+    });
+  }
+
+  const modelCandidateMatch = cleanedSource.match(
+    /^(.*?)(?:\s+scouting)?\s+candidate$/i
+  );
+
+  if (modelCandidateMatch) {
+    return t("sources.modelCandidate", {
+      model: modelCandidateMatch[1].trim(),
+    });
+  }
+
+  return cleanedSource;
+}
+
 function ShortlistPanel({ items, onAnalyze, onRemove }) {
   const { i18n, t } = useTranslation("search");
   const columns = [
@@ -161,9 +212,11 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
       title: t("players.player"),
       render: (_, item) => (
         <div className="workspace-player">
-          <span className="workspace-row-avatar" aria-hidden="true">
-            {getPlayerInitials(item.player_name)}
-          </span>
+          <PlayerAvatar
+            className="workspace-row-avatar"
+            name={item.player_name}
+            uid={item.player_uid}
+          />
           <span className="workspace-player-copy">
             <Text strong>{item.player_name}</Text>
             <Text type="secondary">
@@ -181,7 +234,7 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
       title: t("players.source"),
       render: (source) => (
         <span className="workspace-source-pill">
-          {source || t("players.manual")}
+          {formatSavedSource(source, t)}
         </span>
       ),
     },
@@ -594,9 +647,11 @@ function PlayerDatabasePanel({ onAnalyze }) {
       title: t("players.player"),
       render: (_, player) => (
         <div className="database-player">
-          <span className="database-player-avatar" aria-hidden="true">
-            {getPlayerInitials(player.name)}
-          </span>
+          <PlayerAvatar
+            className="database-player-avatar"
+            name={player.name}
+            uid={player.uid}
+          />
           <div className="database-player-cell">
             <Text strong>{player.name}</Text>
             <Text type="secondary">
