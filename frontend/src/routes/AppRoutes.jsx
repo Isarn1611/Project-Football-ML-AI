@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import AuthCallback from "../pages/AuthCallback";
 import Login from "../pages/Login";
+import ResetPassword from "../pages/ResetPassword";
 import Admin from "../pages/Admin";
 import AdminPlayers from "../pages/AdminPlayers";
 import AdminUsers from "../pages/AdminUsers";
@@ -15,6 +16,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Search />} />
         <Route path="/result" element={<Result />} />

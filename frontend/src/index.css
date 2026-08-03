@@ -427,6 +427,22 @@ input {
   background: #e8f4ee;
 }
 
+.account-password-button.ant-btn {
+  min-height: 44px;
+  margin-top: 8px;
+  border-color: #d9e5df;
+  border-radius: 11px;
+  color: #315d49;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.account-password-button.ant-btn:hover {
+  border-color: #9fc9b5;
+  color: #1d694b;
+  background: #eef7f2;
+}
+
 .login-shell {
   min-height: 100vh;
   display: grid;
@@ -728,7 +744,7 @@ input {
 
 .auth-social-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -803,6 +819,28 @@ input {
   color: #8b958f;
 }
 
+.auth-forgot-link {
+  display: block;
+  margin: -7px 0 15px auto;
+  border: 0;
+  padding: 0;
+  color: #1d694b;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.auth-social-button:only-child {
+  grid-column: 1 / -1;
+}
+
+.auth-forgot-link:hover {
+  color: #0e4f38;
+  text-decoration: underline;
+}
+
 .auth-submit-button.ant-btn {
   display: inline-flex;
   min-height: 52px;
@@ -842,6 +880,16 @@ input {
 .auth-privacy-note .anticon {
   flex: 0 0 auto;
   font-size: 11px;
+}
+
+.reset-password-card {
+  width: min(100% - 32px, 480px);
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(20, 36, 28, 0.12);
+}
+
+.reset-password-card .ant-alert {
+  margin-bottom: 18px;
 }
 
 .section-kicker {

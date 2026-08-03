@@ -7,9 +7,22 @@ export const resources = {
         thai: "ไทย",
       },
       settings: {
+        changePassword: "Change password",
+        confirmPassword: "Confirm password",
+        confirmPasswordRequired: "Confirm your new password.",
         darkMode: "Use dark mode",
         lightMode: "Use light mode",
+        newPassword: "New password",
         open: "Open interface settings",
+        passwordDescription:
+          "Set a password so you can sign in with your email as well as Google.",
+        passwordMin: "Use at least 6 characters.",
+        passwordRequired: "Enter a new password.",
+        passwordSaved:
+          "Password saved. You can now sign in with your email and password.",
+        passwordsDoNotMatch: "The passwords do not match.",
+        savePassword: "Save password",
+        setPassword: "Set email password",
         subtitle: "Adjust the screen for your scouting work",
         title: "Interface settings",
       },
@@ -229,7 +242,7 @@ export const resources = {
         errors: {
           cancelled: "Sign in was cancelled before access was granted.",
           exchange:
-            "Google sign in failed. Check the OAuth redirect settings, then try again.",
+            "Social sign in failed. Check the provider credentials and OAuth redirect settings, then try again.",
           noSession:
             "Sign in finished, but no session was found. Try signing in again.",
           notConfigured: "Sign in is not configured for this app.",
@@ -246,20 +259,34 @@ export const resources = {
         platformCoverage: "Player data in the system",
         showSlide: "Show slide {{number}}: {{title}}",
       },
+      chooseNewPassword: "Choose a new password",
+      chooseNewPasswordDescription:
+        "Use at least 6 characters. You can use this password for email sign in.",
+      confirmPassword: "Confirm password",
+      confirmPasswordRequired: "Confirm your new password.",
       continueEmail: "or continue with email",
       createAccount: "Create account",
       createYourAccount: "Create your account",
       email: "Email",
       emailInvalid: "Enter a valid email.",
       emailRequired: "Enter your email.",
+      emailSignupHint:
+        "Use an inbox you can open. A confirmation link will be sent there.",
       errors: {
+        emailDeliveryFailed:
+          "Could not send the authentication email. Check the Custom SMTP sender, username, Gmail App Password, host, and port in Supabase.",
+        emailNotAuthorized:
+          "This project cannot send confirmation email to that address yet. Configure custom SMTP or use Google sign in.",
         emailUnconfirmed: "Confirm your email before signing in.",
         generic: "Could not complete sign in.",
+        invalidEmailAddress:
+          "Use a real, reachable email address. Supabase does not accept test or example addresses.",
         invalidCredentials: "Email or password is incorrect.",
         providerDisabled: "This sign-in method is not enabled yet.",
         rateLimit: "Too many requests. Wait a few minutes, then try again.",
         supabase: "Supabase is not configured for this frontend.",
       },
+      forgotPassword: "Forgot password?",
       hero: {
         brand: "AI-assisted football scouting",
         slides: [
@@ -299,14 +326,21 @@ export const resources = {
         ],
       },
       newMember: "Don't have a ScoutAI account?",
+      newPassword: "New password",
       password: "Password",
       passwordCreatePlaceholder: "At least 6 characters",
       passwordMin: "Use at least 6 characters.",
       passwordPlaceholder: "Enter your password",
       passwordRequired: "Enter your password.",
+      passwordResetSent:
+        "Check your email for a secure link to choose a new password.",
+      passwordsDoNotMatch: "The passwords do not match.",
       privacy:
         "Your scouting reports, saved players, and search history stay private.",
+      resetYourPassword: "Reset your password",
+      saveNewPassword: "Save new password",
       secureWorkspace: "Secure scouting workspace",
+      sendResetLink: "Send reset link",
       signIn: "Sign in",
       welcomeBack: "Welcome back",
     },
@@ -602,9 +636,22 @@ export const resources = {
         thai: "ไทย",
       },
       settings: {
+        changePassword: "เปลี่ยนรหัสผ่าน",
+        confirmPassword: "ยืนยันรหัสผ่าน",
+        confirmPasswordRequired: "กรุณายืนยันรหัสผ่านใหม่",
         darkMode: "ใช้โหมดมืด",
         lightMode: "ใช้โหมดสว่าง",
+        newPassword: "รหัสผ่านใหม่",
         open: "เปิดการตั้งค่าการใช้งาน",
+        passwordDescription:
+          "ตั้งรหัสผ่านเพื่อให้คุณเข้าสู่ระบบด้วยอีเมลได้ นอกเหนือจาก Google",
+        passwordMin: "ใช้รหัสผ่านอย่างน้อย 6 ตัวอักษร",
+        passwordRequired: "กรุณากรอกรหัสผ่านใหม่",
+        passwordSaved:
+          "บันทึกรหัสผ่านแล้ว คุณสามารถเข้าสู่ระบบด้วยอีเมลและรหัสผ่านได้",
+        passwordsDoNotMatch: "รหัสผ่านทั้งสองช่องไม่ตรงกัน",
+        savePassword: "บันทึกรหัสผ่าน",
+        setPassword: "ตั้งรหัสผ่านสำหรับอีเมล",
         subtitle: "ปรับหน้าจอสำหรับงานสเกาต์ของคุณ",
         title: "การตั้งค่าการใช้งาน",
       },
@@ -824,7 +871,7 @@ export const resources = {
         errors: {
           cancelled: "การเข้าสู่ระบบถูกยกเลิกก่อนอนุญาตให้เข้าถึง",
           exchange:
-            "เข้าสู่ระบบด้วย Google ไม่สำเร็จ โปรดตรวจสอบการตั้งค่า OAuth redirect แล้วลองอีกครั้ง",
+            "เข้าสู่ระบบด้วย Social provider ไม่สำเร็จ โปรดตรวจ credentials และ OAuth redirect แล้วลองอีกครั้ง",
           noSession:
             "เข้าสู่ระบบสำเร็จแล้ว แต่ไม่พบเซสชัน โปรดลองเข้าสู่ระบบอีกครั้ง",
           notConfigured: "แอปนี้ยังไม่ได้ตั้งค่าระบบเข้าสู่ระบบ",
@@ -841,20 +888,34 @@ export const resources = {
         platformCoverage: "ข้อมูลนักเตะในระบบ",
         showSlide: "แสดงสไลด์ {{number}}: {{title}}",
       },
+      chooseNewPassword: "ตั้งรหัสผ่านใหม่",
+      chooseNewPasswordDescription:
+        "ใช้รหัสผ่านอย่างน้อย 6 ตัวอักษร และใช้รหัสนี้เข้าสู่ระบบด้วยอีเมลได้",
+      confirmPassword: "ยืนยันรหัสผ่าน",
+      confirmPasswordRequired: "กรุณายืนยันรหัสผ่านใหม่",
       continueEmail: "หรือเข้าสู่ระบบด้วยอีเมล",
       createAccount: "สร้างบัญชี",
       createYourAccount: "สร้างบัญชีของคุณ",
       email: "อีเมล",
       emailInvalid: "กรุณากรอกอีเมลให้ถูกต้อง",
       emailRequired: "กรุณากรอกอีเมล",
+      emailSignupHint:
+        "ใช้อีเมลจริงที่คุณเปิดอ่านได้ ระบบจะส่งลิงก์ยืนยันไปยังอีเมลนี้",
       errors: {
+        emailDeliveryFailed:
+          "ส่งอีเมลยืนยันไม่สำเร็จ โปรดตรวจ Sender, Username, Gmail App Password, Host และ Port ใน Custom SMTP ของ Supabase",
+        emailNotAuthorized:
+          "โปรเจกต์นี้ยังส่งอีเมลยืนยันไปยังอีเมลนี้ไม่ได้ โปรดตั้งค่า Custom SMTP หรือเข้าสู่ระบบด้วย Google",
         emailUnconfirmed: "โปรดยืนยันอีเมลก่อนเข้าสู่ระบบ",
         generic: "ไม่สามารถเข้าสู่ระบบได้",
+        invalidEmailAddress:
+          "กรุณาใช้อีเมลจริงที่รับอีเมลได้ Supabase ไม่รองรับอีเมลสำหรับทดสอบหรือตัวอย่าง",
         invalidCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
         providerDisabled: "ช่องทางเข้าสู่ระบบนี้ยังไม่เปิดใช้งาน",
         rateLimit: "มีคำขอมากเกินไป โปรดรอสักครู่แล้วลองอีกครั้ง",
         supabase: "ยังไม่ได้ตั้งค่า Supabase สำหรับหน้าเว็บนี้",
       },
+      forgotPassword: "ลืมรหัสผ่าน?",
       hero: {
         brand: "AI ช่วยสเกาต์นักฟุตบอล",
         slides: [
@@ -894,14 +955,21 @@ export const resources = {
         ],
       },
       newMember: "ยังไม่มีบัญชี ScoutAI?",
+      newPassword: "รหัสผ่านใหม่",
       password: "รหัสผ่าน",
       passwordCreatePlaceholder: "อย่างน้อย 6 ตัวอักษร",
       passwordMin: "ใช้รหัสผ่านอย่างน้อย 6 ตัวอักษร",
       passwordPlaceholder: "กรอกรหัสผ่าน",
       passwordRequired: "กรุณากรอกรหัสผ่าน",
+      passwordResetSent:
+        "ตรวจสอบอีเมลของคุณ แล้วเปิดลิงก์ที่ปลอดภัยเพื่อตั้งรหัสผ่านใหม่",
+      passwordsDoNotMatch: "รหัสผ่านทั้งสองช่องไม่ตรงกัน",
       privacy:
         "รายงานสเกาต์ นักเตะที่บันทึก และประวัติการค้นหาจะเป็นข้อมูลส่วนตัวของคุณ",
+      resetYourPassword: "รีเซ็ตรหัสผ่าน",
+      saveNewPassword: "บันทึกรหัสผ่านใหม่",
       secureWorkspace: "พื้นที่สเกาต์ที่ปลอดภัย",
+      sendResetLink: "ส่งลิงก์รีเซ็ต",
       signIn: "เข้าสู่ระบบ",
       welcomeBack: "ยินดีต้อนรับกลับ",
     },

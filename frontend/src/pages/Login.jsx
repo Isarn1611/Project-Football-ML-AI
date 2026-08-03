@@ -4,6 +4,7 @@ import { Alert, Button, Divider, Form, Input } from "antd";
 import { useTranslation } from "react-i18next";
 import {
   ArrowRightOutlined,
+  DiscordOutlined,
   GithubOutlined,
   GoogleOutlined,
   LockOutlined,
@@ -16,11 +17,12 @@ import authHero from "../assets/scoutai-auth-hero.png";
 import authHeroAnalysis from "../assets/scoutai-auth-hero-analysis.png";
 import authHeroPath from "../assets/scoutai-auth-hero-path.png";
 import scoutAiWordmark from "../assets/scoutai-wordmark.png";
-import { supabase } from "../lib/supabase";
+import { getEnabledOAuthProviders, supabase } from "../lib/supabase";
 
 const socialProviders = [
   { icon: <GoogleOutlined />, label: "Google", provider: "google" },
   { icon: <GithubOutlined />, label: "GitHub", provider: "github" },
+  { icon: <DiscordOutlined />, label: "Discord", provider: "discord" },
 ];
 
 const POST_LOGIN_PATH = "/";
@@ -28,10 +30,68 @@ const AUTO_SLIDE_DELAY = 6500;
 
 const heroImages = [authHero, authHeroAnalysis, authHeroPath];
 
-function readAuthError(error, t) {
-  const message = error?.message || t("errors.generic");
+function readErrorMessage(value) {
+  if (!value) {
+    return "";
+  }
 
-  if (/rate limit/i.test(message)) {
+  if (typeof value === "string") {
+    const message = value.trim();
+    if (!message || message === "{}" || message === "[object Object]") {
+      return "";
+    }
+
+    if (message.startsWith("{")) {
+      try {
+        return readErrorMessage(JSON.parse(message));
+      } catch {
+        // Keep a non-JSON server message as-is.
+      }
+    }
+
+    return message;
+  }
+
+  if (typeof value === "object") {
+    const fields = [
+      value.message,
+      value.msg,
+      value.error_description,
+      value.error,
+      value.details,
+    ];
+
+    for (const field of fields) {
+      const message = readErrorMessage(field);
+      if (message) {
+        return message;
+      }
+    }
+  }
+
+  return "";
+}
+
+function readAuthError(error, t, operation = "auth") {
+  const message = readErrorMessage(error);
+  const code = error?.code;
+
+  if (
+    code === "email_address_invalid" ||
+    /email address.+is invalid/i.test(message)
+  ) {
+    return t("errors.invalidEmailAddress");
+  }
+
+  if (code === "email_address_not_authorized") {
+    return t("errors.emailNotAuthorized");
+  }
+
+  if (
+    code === "over_email_send_rate_limit" ||
+    code === "over_request_rate_limit" ||
+    /rate limit|too many requests/i.test(message)
+  ) {
     return t("errors.rateLimit");
   }
 
@@ -47,7 +107,14 @@ function readAuthError(error, t) {
     return t("errors.providerDisabled");
   }
 
-  return message;
+  if (
+    operation === "email" &&
+    (!message || code === "unexpected_failure" || error?.status >= 500)
+  ) {
+    return t("errors.emailDeliveryFailed");
+  }
+
+  return message || t("errors.generic");
 }
 
 function getAuthCallbackUrl(returnPath) {
@@ -56,12 +123,19 @@ function getAuthCallbackUrl(returnPath) {
   return url.toString();
 }
 
+function getPasswordResetUrl() {
+  return getAuthCallbackUrl("/reset-password");
+}
+
 function Login() {
   const { t } = useTranslation("auth");
   const { isAuthenticated, isConfigured, loading, refresh } = useAuth();
   const navigate = useNavigate();
   const returnPath = POST_LOGIN_PATH;
   const [mode, setMode] = useState("signIn");
+  const [enabledOAuthProviders, setEnabledOAuthProviders] = useState([
+    "google",
+  ]);
   const [formState, setFormState] = useState({
     loading: false,
     error: "",
@@ -79,6 +153,24 @@ function Login() {
     [t]
   );
   const currentSlide = heroSlides[activeSlide];
+
+  useEffect(() => {
+    let isActive = true;
+
+    getEnabledOAuthProviders()
+      .then((providers) => {
+        if (isActive) {
+          setEnabledOAuthProviders(providers);
+        }
+      })
+      .catch(() => {
+        // Keep the known-safe Google fallback if provider discovery is offline.
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (
@@ -152,17 +244,31 @@ function Login() {
 
     setFormState({ loading: true, error: "", message: "" });
 
+    if (mode === "forgotPassword") {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        values.email.trim(),
+        { redirectTo: getPasswordResetUrl() },
+      );
+
+      setFormState({
+        loading: false,
+        error: error ? readAuthError(error, t, "email") : "",
+        message: error ? "" : t("passwordResetSent"),
+      });
+      return;
+    }
+
     const authRequest =
       mode === "signUp"
         ? supabase.auth.signUp({
-            email: values.email,
+            email: values.email.trim(),
             password: values.password,
             options: {
               emailRedirectTo: getAuthCallbackUrl(returnPath),
             },
           })
         : supabase.auth.signInWithPassword({
-            email: values.email,
+            email: values.email.trim(),
             password: values.password,
           });
 
@@ -171,7 +277,7 @@ function Login() {
     if (error) {
       setFormState({
         loading: false,
-        error: readAuthError(error, t),
+        error: readAuthError(error, t, "email"),
         message: "",
       });
       return;
@@ -321,12 +427,14 @@ function Login() {
               {t("secureWorkspace")}
             </span>
             <h2>
-              {mode === "signIn" ? t("welcomeBack") : t("createYourAccount")}
+              {mode === "signIn"
+                ? t("welcomeBack")
+                : mode === "signUp"
+                  ? t("createYourAccount")
+                  : t("resetYourPassword")}
             </h2>
             <p>
-              {mode === "signIn"
-                ? t("newMember")
-                : t("alreadyMember")}{" "}
+              {mode === "signIn" ? t("newMember") : t("alreadyMember")}{" "}
               <button
                 className="auth-mode-link"
                 onClick={() =>
@@ -347,32 +455,45 @@ function Login() {
             />
           )}
 
-          <div className="auth-social-grid">
-            {socialProviders.map(({ icon, label, provider }) => (
-              <Button
-                block
-                className="auth-social-button"
-                disabled={formState.loading || !isConfigured}
-                icon={icon}
-                key={provider}
-                onClick={() => signInWithProvider(provider)}
-                size="large"
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
-
-          <Divider plain>{t("continueEmail")}</Divider>
+          {mode !== "forgotPassword" && enabledOAuthProviders.length > 0 && (
+            <>
+              <div className="auth-social-grid">
+                {socialProviders
+                  .filter(({ provider }) =>
+                    enabledOAuthProviders.includes(provider),
+                  )
+                  .map(({ icon, label, provider }) => (
+                    <Button
+                      block
+                      className="auth-social-button"
+                      disabled={formState.loading || !isConfigured}
+                      icon={icon}
+                      key={provider}
+                      onClick={() => signInWithProvider(provider)}
+                      size="large"
+                    >
+                      {label}
+                    </Button>
+                  ))}
+              </div>
+              <Divider plain>{t("continueEmail")}</Divider>
+            </>
+          )}
 
           <Form
             className="auth-form"
             disabled={formState.loading || !isConfigured}
             layout="vertical"
             onFinish={handleSubmit}
+            onValuesChange={() => {
+              if (formState.error) {
+                setFormState((current) => ({ ...current, error: "" }));
+              }
+            }}
             requiredMark={false}
           >
             <Form.Item
+              extra={mode === "signUp" ? t("emailSignupHint") : null}
               label={t("email")}
               name="email"
               rules={[
@@ -390,28 +511,40 @@ function Login() {
               />
             </Form.Item>
 
-            <Form.Item
-              label={t("password")}
-              name="password"
-              rules={[
-                { required: true, message: t("passwordRequired") },
-                { min: 6, message: t("passwordMin") },
-              ]}
-            >
-              <Input.Password
-                autoComplete={
-                  mode === "signIn" ? "current-password" : "new-password"
-                }
-                className="auth-input"
-                prefix={<LockOutlined aria-hidden="true" />}
-                size="large"
-                placeholder={
-                  mode === "signIn"
-                    ? t("passwordPlaceholder")
-                    : t("passwordCreatePlaceholder")
-                }
-              />
-            </Form.Item>
+            {mode !== "forgotPassword" && (
+              <Form.Item
+                label={t("password")}
+                name="password"
+                rules={[
+                  { required: true, message: t("passwordRequired") },
+                  { min: 6, message: t("passwordMin") },
+                ]}
+              >
+                <Input.Password
+                  autoComplete={
+                    mode === "signIn" ? "current-password" : "new-password"
+                  }
+                  className="auth-input"
+                  prefix={<LockOutlined aria-hidden="true" />}
+                  size="large"
+                  placeholder={
+                    mode === "signIn"
+                      ? t("passwordPlaceholder")
+                      : t("passwordCreatePlaceholder")
+                  }
+                />
+              </Form.Item>
+            )}
+
+            {mode === "signIn" && (
+              <button
+                className="auth-forgot-link"
+                onClick={() => changeMode("forgotPassword")}
+                type="button"
+              >
+                {t("forgotPassword")}
+              </button>
+            )}
 
             {formState.error && (
               <Alert
@@ -439,7 +572,11 @@ function Login() {
               size="large"
               type="primary"
             >
-              {mode === "signIn" ? t("signIn") : t("createAccount")}
+              {mode === "signIn"
+                ? t("signIn")
+                : mode === "signUp"
+                  ? t("createAccount")
+                  : t("sendResetLink")}
               <ArrowRightOutlined />
             </Button>
           </Form>
