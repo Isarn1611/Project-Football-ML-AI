@@ -64,6 +64,12 @@ export function searchPlayers(filters = {}, options = {}) {
     .then((response) => response.data);
 }
 
+export function lookupPlayersByNames(names = []) {
+  return api
+    .post("/api/players/lookup", { names })
+    .then((response) => response.data);
+}
+
 export function getCurrentUser() {
   return api.get("/api/auth/me").then((response) => response.data);
 }

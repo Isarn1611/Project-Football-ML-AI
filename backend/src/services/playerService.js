@@ -66,6 +66,21 @@ function cleanSearchTerm(name) {
   return String(name || "").trim();
 }
 
+function normalizePlayerNames(names) {
+  if (!Array.isArray(names)) {
+    const error = new Error("Player names must be provided as an array.");
+    error.status = 400;
+    throw error;
+  }
+
+  return [...new Set(names.map(cleanSearchTerm).filter((name) => name.length >= 2))]
+    .slice(0, 25);
+}
+
+function quotePostgrestValue(value) {
+  return `"${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
 function cleanTextFilter(value) {
   return String(value || "")
     .trim()
@@ -329,7 +344,42 @@ async function searchPlayersByName(name, limit = 10) {
   throw error;
 }
 
+async function lookupPlayersByNames(names) {
+  const normalizedNames = normalizePlayerNames(names);
+
+  if (!normalizedNames.length) {
+    return { players: [] };
+  }
+
+  const nameFilter = `in.(${normalizedNames.map(quotePostgrestValue).join(",")})`;
+  let lastError = null;
+
+  for (const column of NAME_COLUMNS) {
+    try {
+      const rows = await supabaseRequest(PLAYER_TABLE, {
+        select: "*",
+        [column]: nameFilter,
+        limit: normalizedNames.length,
+      });
+
+      return { players: rows.map(formatPlayer) };
+    } catch (error) {
+      lastError = error;
+      if (error.status !== 400 && error.status !== 404) {
+        throw error;
+      }
+    }
+  }
+
+  const error = new Error(`Could not look up players in table "${PLAYER_TABLE}".`);
+  error.status = lastError?.status || 500;
+  error.details = lastError?.details;
+  throw error;
+}
+
 module.exports = {
+  lookupPlayersByNames,
+  normalizePlayerNames,
   searchPlayers,
   searchPlayersByName,
 };

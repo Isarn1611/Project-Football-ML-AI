@@ -1,20 +1,15 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
-  Alert,
   Avatar,
   Button,
-  Form,
-  Input,
-  Modal,
   Popover,
   Segmented,
   Typography,
 } from "antd";
 import {
   DashboardOutlined,
-  KeyOutlined,
-  LockOutlined,
+  HistoryOutlined,
   LogoutOutlined,
   MoonOutlined,
   SettingOutlined,
@@ -26,7 +21,12 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/useAuth";
 import { useInterfaceSettings } from "../interface/useInterfaceSettings";
-import { supabase } from "../lib/supabase";
+import {
+  clearActiveAuthProvider,
+  getActiveAuthProvider,
+  getUserAvatarUrl,
+} from "../utils/userProfile";
+import SearchHistoryOverlay from "./SearchHistoryOverlay";
 
 const PLAYER_DRAFT_STORAGE_KEY = "scoutai.playerSearchDraft";
 const LAST_PLAYER_RESULT_STORAGE_KEY = "scoutai.lastPlayerResult";
@@ -36,17 +36,13 @@ function AuthMenu() {
   const { isAdmin, signOut, user } = useAuth();
   const { darkMode, language, setLanguage, toggleDarkMode } =
     useInterfaceSettings();
+  const location = useLocation();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [passwordOpen, setPasswordOpen] = useState(false);
-  const [passwordState, setPasswordState] = useState({
-    loading: false,
-    error: "",
-    success: false,
-  });
-  const [passwordForm] = Form.useForm();
-  const hasPassword = user?.app_metadata?.providers?.includes("email");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const avatarUrl = getUserAvatarUrl(user, getActiveAuthProvider());
+  const isAdminPage = location.pathname.startsWith("/admin");
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -55,6 +51,7 @@ function AuthMenu() {
 
     if (!error) {
       try {
+        clearActiveAuthProvider();
         window.sessionStorage.removeItem(PLAYER_DRAFT_STORAGE_KEY);
         window.sessionStorage.removeItem(LAST_PLAYER_RESULT_STORAGE_KEY);
       } catch {
@@ -65,26 +62,9 @@ function AuthMenu() {
     }
   }
 
-  async function handlePasswordSubmit(values) {
-    setPasswordState({ loading: true, error: "", success: false });
-    const { error } = await supabase.auth.updateUser({
-      password: values.password,
-    });
-
-    setPasswordState({
-      loading: false,
-      error: error?.message || "",
-      success: !error,
-    });
-    if (!error) {
-      passwordForm.resetFields();
-    }
-  }
-
-  function openPasswordSettings() {
+  function openSearchHistory() {
     setSettingsOpen(false);
-    setPasswordState({ loading: false, error: "", success: false });
-    setPasswordOpen(true);
+    setHistoryOpen(true);
   }
 
   const settingsContent = (
@@ -128,13 +108,11 @@ function AuthMenu() {
 
       <Button
         block
-        className="account-password-button"
-        icon={<KeyOutlined />}
-        onClick={openPasswordSettings}
+        className="settings-history-button"
+        icon={<HistoryOutlined />}
+        onClick={openSearchHistory}
       >
-        {hasPassword
-          ? t("settings.changePassword")
-          : t("settings.setPassword")}
+        {t("settings.searchHistory")}
       </Button>
     </div>
   );
@@ -143,7 +121,12 @@ function AuthMenu() {
     <>
       <div className="auth-menu">
         <div className="auth-identity">
-          <Avatar className="auth-avatar" icon={<UserOutlined />} size={34} />
+          <Avatar
+            className="auth-avatar"
+            icon={<UserOutlined />}
+            size={34}
+            src={avatarUrl || undefined}
+          />
           <span className="auth-user-copy">
             <Typography.Text className="auth-label">
               {t("shell.signedIn")}
@@ -155,12 +138,12 @@ function AuthMenu() {
         </div>
         {isAdmin && (
           <Button
-            className="auth-admin-button"
-            icon={<DashboardOutlined />}
-            onClick={() => navigate("/admin")}
+            className={`auth-admin-button${isAdminPage ? " is-search-link" : ""}`}
+            icon={isAdminPage ? undefined : <DashboardOutlined />}
+            onClick={() => navigate(isAdminPage ? "/app" : "/admin")}
             size="middle"
           >
-            {t("shell.admin")}
+            {isAdminPage ? t("shell.search") : t("shell.admin")}
           </Button>
         )}
         <Popover
@@ -191,96 +174,10 @@ function AuthMenu() {
           {t("shell.signOut")}
         </Button>
       </div>
-
-      <Modal
-        destroyOnHidden
-        footer={null}
-        onCancel={() => setPasswordOpen(false)}
-        open={passwordOpen}
-        title={
-          hasPassword
-            ? t("settings.changePassword")
-            : t("settings.setPassword")
-        }
-      >
-        <Typography.Paragraph type="secondary">
-          {t("settings.passwordDescription")}
-        </Typography.Paragraph>
-
-        {passwordState.error && (
-          <Alert
-            message={passwordState.error}
-            showIcon
-            style={{ marginBottom: 16 }}
-            type="error"
-          />
-        )}
-        {passwordState.success && (
-          <Alert
-            message={t("settings.passwordSaved")}
-            showIcon
-            style={{ marginBottom: 16 }}
-            type="success"
-          />
-        )}
-
-        <Form
-          form={passwordForm}
-          layout="vertical"
-          onFinish={handlePasswordSubmit}
-          requiredMark={false}
-        >
-          <Form.Item
-            label={t("settings.newPassword")}
-            name="password"
-            rules={[
-              { required: true, message: t("settings.passwordRequired") },
-              { min: 6, message: t("settings.passwordMin") },
-            ]}
-          >
-            <Input.Password
-              autoComplete="new-password"
-              prefix={<LockOutlined />}
-              size="large"
-            />
-          </Form.Item>
-          <Form.Item
-            dependencies={["password"]}
-            label={t("settings.confirmPassword")}
-            name="confirmPassword"
-            rules={[
-              {
-                required: true,
-                message: t("settings.confirmPasswordRequired"),
-              },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  return !value || getFieldValue("password") === value
-                    ? Promise.resolve()
-                    : Promise.reject(
-                        new Error(t("settings.passwordsDoNotMatch")),
-                      );
-                },
-              }),
-            ]}
-          >
-            <Input.Password
-              autoComplete="new-password"
-              prefix={<LockOutlined />}
-              size="large"
-            />
-          </Form.Item>
-          <Button
-            block
-            htmlType="submit"
-            loading={passwordState.loading}
-            size="large"
-            type="primary"
-          >
-            {t("settings.savePassword")}
-          </Button>
-        </Form>
-      </Modal>
+      <SearchHistoryOverlay
+        onClose={() => setHistoryOpen(false)}
+        open={historyOpen}
+      />
     </>
   );
 }

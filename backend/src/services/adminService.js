@@ -39,17 +39,51 @@ function isUuid(value) {
   );
 }
 
+function getLatestIdentity(user) {
+  return [...(user.identities || [])].sort((left, right) => {
+    const leftTime = new Date(
+      left.last_sign_in_at || left.updated_at || left.created_at || 0
+    ).getTime();
+    const rightTime = new Date(
+      right.last_sign_in_at || right.updated_at || right.created_at || 0
+    ).getTime();
+    return rightTime - leftTime;
+  })[0];
+}
+
 function formatAdminUser(user, access = {}) {
   const normalizedAccess =
     typeof access === "string" ? { role: access } : access || {};
+  const userMetadata = user.user_metadata || {};
+  const recordedProvider = userMetadata.last_sign_in_provider || "";
+  const providerIdentity = recordedProvider
+    ? user.identities?.find((identity) => identity.provider === recordedProvider)
+    : null;
+  const latestIdentity = providerIdentity || getLatestIdentity(user);
+  const identityData = latestIdentity?.identity_data || {};
+  const provider =
+    recordedProvider || latestIdentity?.provider || user.app_metadata?.provider || "email";
 
   return {
     id: user.id,
     email: user.email || null,
     displayName:
-      user.user_metadata?.full_name || user.user_metadata?.name || null,
-    provider:
-      user.app_metadata?.provider || user.identities?.[0]?.provider || "email",
+      identityData.full_name ||
+      identityData.name ||
+      identityData.user_name ||
+      userMetadata.full_name ||
+      userMetadata.name ||
+      userMetadata.user_name ||
+      null,
+    avatarUrl:
+      provider === "email"
+        ? null
+        : identityData.avatar_url ||
+          identityData.picture ||
+          userMetadata.avatar_url ||
+          userMetadata.picture ||
+          null,
+    provider,
     role: normalizedAccess.role || "user",
     suspendedAt:
       normalizedAccess.suspended_at || normalizedAccess.suspendedAt || null,
@@ -394,6 +428,7 @@ async function getAdminDashboard() {
 
 module.exports = {
   countTableRows,
+  formatAdminUser,
   getAdminUserUsage,
   getAdminDashboard,
   listAdminUsers,

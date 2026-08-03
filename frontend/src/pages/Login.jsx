@@ -18,6 +18,11 @@ import authHeroAnalysis from "../assets/scoutai-auth-hero-analysis.png";
 import authHeroPath from "../assets/scoutai-auth-hero-path.png";
 import scoutAiWordmark from "../assets/scoutai-wordmark.png";
 import { getEnabledOAuthProviders, supabase } from "../lib/supabase";
+import {
+  activateAuthProvider,
+  clearPendingAuthProvider,
+  setPendingAuthProvider,
+} from "../utils/userProfile";
 
 const socialProviders = [
   { icon: <GoogleOutlined />, label: "Google", provider: "google" },
@@ -25,7 +30,7 @@ const socialProviders = [
   { icon: <DiscordOutlined />, label: "Discord", provider: "discord" },
 ];
 
-const POST_LOGIN_PATH = "/";
+const POST_LOGIN_PATH = "/app";
 const AUTO_SLIDE_DELAY = 6500;
 
 const heroImages = [authHero, authHeroAnalysis, authHeroPath];
@@ -292,6 +297,10 @@ function Login() {
       return;
     }
 
+    activateAuthProvider("email");
+    await supabase.auth.updateUser({
+      data: { last_sign_in_provider: "email" },
+    });
     await refresh();
     navigate(returnPath, { replace: true });
   }
@@ -307,6 +316,7 @@ function Login() {
     }
 
     setFormState({ loading: true, error: "", message: "" });
+    setPendingAuthProvider(provider);
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -316,6 +326,7 @@ function Login() {
     });
 
     if (error) {
+      clearPendingAuthProvider();
       setFormState({
         loading: false,
         error: readAuthError(error, t),

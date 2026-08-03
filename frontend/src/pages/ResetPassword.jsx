@@ -39,7 +39,7 @@ function ResetPassword() {
     }
 
     await refresh();
-    navigate("/", { replace: true });
+    navigate("/app", { replace: true });
   }
 
   return (

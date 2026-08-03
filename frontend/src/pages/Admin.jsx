@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Alert, Button, Card, Spin, Statistic, Tag, Typography } from "antd";
 import {
   ArrowLeftOutlined,
+  ArrowRightOutlined,
   CheckCircleFilled,
   DatabaseOutlined,
   HistoryOutlined,
@@ -65,12 +66,16 @@ function Admin() {
 
   const metrics = [
     {
+      actionLabel: t("actions.manageUsers"),
+      actionRoute: "/admin/users",
       key: "users",
       icon: <TeamOutlined />,
       label: t("metrics.users"),
       value: dashboard?.counts?.users,
     },
     {
+      actionLabel: t("actions.managePlayers"),
+      actionRoute: "/admin/players",
       key: "players",
       icon: <DatabaseOutlined />,
       label: t("metrics.players"),
@@ -118,21 +123,9 @@ function Admin() {
           <div className="admin-hero-actions">
             <Button
               icon={<ArrowLeftOutlined />}
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/app")}
             >
               {t("actions.back")}
-            </Button>
-            <Button
-              icon={<DatabaseOutlined />}
-              onClick={() => navigate("/admin/players")}
-            >
-              {t("actions.managePlayers")}
-            </Button>
-            <Button
-              icon={<TeamOutlined />}
-              onClick={() => navigate("/admin/users")}
-            >
-              {t("actions.manageUsers")}
             </Button>
             <Button
               icon={<ReloadOutlined />}
@@ -161,7 +154,10 @@ function Admin() {
 
         <section className="admin-metric-grid" aria-busy={loading}>
           {metrics.map((metric) => (
-            <Card className="admin-metric-card" key={metric.key}>
+            <Card
+              className={`admin-metric-card${metric.actionRoute ? " has-action" : ""}`}
+              key={metric.key}
+            >
               <span className="admin-metric-icon">{metric.icon}</span>
               {loading && !dashboard ? (
                 <Spin size="small" />
@@ -171,6 +167,15 @@ function Admin() {
                   title={metric.label}
                   value={metric.value ?? 0}
                 />
+              )}
+              {metric.actionRoute && (
+                <Button
+                  className="admin-metric-action"
+                  onClick={() => navigate(metric.actionRoute)}
+                >
+                  <span>{metric.actionLabel}</span>
+                  <ArrowRightOutlined />
+                </Button>
               )}
             </Card>
           ))}

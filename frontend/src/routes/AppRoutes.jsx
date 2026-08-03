@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import AuthCallback from "../pages/AuthCallback";
+import Home from "../pages/Home";
 import Login from "../pages/Login";
 import ResetPassword from "../pages/ResetPassword";
 import Admin from "../pages/Admin";
@@ -14,11 +15,12 @@ import ProtectedRoute from "./ProtectedRoute";
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<Search />} />
+        <Route path="/app" element={<Search />} />
         <Route path="/result" element={<Result />} />
         <Route element={<AdminRoute />}>
           <Route path="/admin" element={<Admin />} />

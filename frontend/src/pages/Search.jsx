@@ -17,30 +17,24 @@ import {
 } from "antd";
 import {
   ArrowRightOutlined,
-  ClearOutlined,
   DatabaseOutlined,
   DeleteOutlined,
   FilterOutlined,
-  HistoryOutlined,
   LoadingOutlined,
   RadarChartOutlined,
   ReloadOutlined,
   SearchOutlined,
   StarOutlined,
-  TeamOutlined,
 } from "@ant-design/icons";
 
 import { useAuth } from "../auth/useAuth";
 import AppShell from "../components/AppShell";
 import {
-  clearSearchHistory,
-  loadSearchHistory,
   loadShortlist,
-  removeSearchHistoryItem,
   removeShortlistItem,
 } from "../services/scoutingData";
 import { searchPlayers } from "../services/api";
-import PlayerAvatar, { getPlayerInitials } from "../services/playerImages.jsx";
+import PlayerAvatar from "../services/playerImages.jsx";
 
 const { Text } = Typography;
 
@@ -210,6 +204,7 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
       dataIndex: "player_name",
       key: "player",
       title: t("players.player"),
+      width: "42%",
       render: (_, item) => (
         <div className="workspace-player">
           <PlayerAvatar
@@ -232,6 +227,7 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
       key: "source",
       responsive: ["md"],
       title: t("players.source"),
+      width: "24%",
       render: (source) => (
         <span className="workspace-source-pill">
           {formatSavedSource(source, t)}
@@ -243,6 +239,7 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
       key: "updated_at",
       responsive: ["lg"],
       title: t("shortlist.saved"),
+      width: "20%",
       render: (value) => (
         <span className="workspace-date">
           {formatDateTime(value, t, i18n.language)}
@@ -252,7 +249,7 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
     {
       key: "actions",
       title: "",
-      width: 128,
+      width: 148,
       render: (_, item) => (
         <Space>
           <Button
@@ -303,117 +300,6 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
           emptyText: (
             <Empty
               description={t("shortlist.empty")}
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          ),
-        }}
-        pagination={items.length > 5 ? { pageSize: 5 } : false}
-        rowKey="id"
-        scroll={{ x: 560 }}
-        size="middle"
-      />
-    </Card>
-  );
-}
-
-function HistoryPanel({ items, onAnalyze, onClear, onRemove }) {
-  const { i18n, t } = useTranslation("search");
-  const columns = [
-    {
-      dataIndex: "query",
-      key: "query",
-      title: t("history.search"),
-      render: (query) => (
-        <div className="workspace-player">
-          <span className="workspace-row-avatar is-history" aria-hidden="true">
-            {getPlayerInitials(query)}
-          </span>
-          <span className="workspace-player-copy">
-            <Text strong>{query}</Text>
-            <Text type="secondary">{t("history.playerReport")}</Text>
-          </span>
-        </div>
-      ),
-    },
-    {
-      dataIndex: "result_count",
-      key: "result_count",
-      responsive: ["md"],
-      title: t("history.results"),
-      render: (value) => (
-        <span className="workspace-result-pill">
-          {value === null || value === undefined ? "-" : value}
-        </span>
-      ),
-    },
-    {
-      dataIndex: "created_at",
-      key: "created_at",
-      responsive: ["lg"],
-      title: t("history.date"),
-      render: (value) => (
-        <span className="workspace-date">
-          {formatDateTime(value, t, i18n.language)}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      title: "",
-      width: 128,
-      render: (_, item) => (
-        <Space>
-          <Button
-            className="workspace-open-button"
-            icon={<HistoryOutlined />}
-            onClick={() => onAnalyze(item.query)}
-          >
-            {t("actions.open")}
-          </Button>
-          <Button
-            aria-label={t("history.deleteAria", { name: item.query })}
-            className="workspace-remove-button"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => onRemove(item.id)}
-            title={t("history.deleteAria", { name: item.query })}
-            type="text"
-          />
-        </Space>
-      ),
-    },
-  ];
-
-  return (
-    <Card
-      className="workspace-card history-card"
-      extra={
-        items.length > 0 ? (
-          <Button danger icon={<ClearOutlined />} onClick={onClear} type="text">
-            {t("actions.clear")}
-          </Button>
-        ) : null
-      }
-      title={
-        <div className="workspace-card-heading">
-          <span className="workspace-card-icon">
-            <HistoryOutlined />
-          </span>
-          <span className="workspace-card-title">
-            <strong>{t("history.title")}</strong>
-            <small>{t("history.subtitle")}</small>
-          </span>
-          <span className="workspace-card-count">{items.length}</span>
-        </div>
-      }
-    >
-      <Table
-        columns={columns}
-        dataSource={items}
-        locale={{
-          emptyText: (
-            <Empty
-              description={t("history.empty")}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ),
@@ -973,7 +859,6 @@ function Search() {
     loading: true,
     error: "",
     shortlist: [],
-    history: [],
   });
 
   useEffect(() => {
@@ -984,7 +869,6 @@ function Search() {
         loading: false,
         error: "",
         shortlist: [],
-        history: [],
       });
       return () => {
         isActive = false;
@@ -997,14 +881,13 @@ function Search() {
       error: "",
     }));
 
-    Promise.all([loadShortlist(user.id), loadSearchHistory(user.id)])
-      .then(([shortlist, history]) => {
+    loadShortlist(user.id)
+      .then((shortlist) => {
         if (!isActive) return;
         setWorkspaceState({
           loading: false,
           error: "",
           shortlist,
-          history,
         });
       })
       .catch((workspaceError) => {
@@ -1013,7 +896,6 @@ function Search() {
           loading: false,
           error: readDataError(workspaceError, t),
           shortlist: [],
-          history: [],
         });
       });
 
@@ -1051,94 +933,9 @@ function Search() {
     }
   }
 
-  async function removeHistory(id) {
-    if (!user?.id) return;
-
-    try {
-      await removeSearchHistoryItem(user.id, id);
-      setWorkspaceState((state) => ({
-        ...state,
-        history: state.history.filter((item) => item.id !== id),
-      }));
-    } catch (removeError) {
-      setWorkspaceState((state) => ({
-        ...state,
-        error: readDataError(removeError, t),
-      }));
-    }
-  }
-
-  async function clearHistory() {
-    if (!user?.id) return;
-
-    try {
-      await clearSearchHistory(user.id);
-      setWorkspaceState((state) => ({
-        ...state,
-        history: [],
-      }));
-    } catch (clearError) {
-      setWorkspaceState((state) => ({
-        ...state,
-        error: readDataError(clearError, t),
-      }));
-    }
-  }
-
   return (
     <AppShell>
       <div className="search-workspace">
-        <section className="page-intro search-hero">
-          <div className="search-hero-copy">
-            <span className="search-hero-badge">
-              <i />
-              {t("hero.badge")}
-            </span>
-            <span className="section-kicker">{t("hero.kicker")}</span>
-            <h1 className="page-title search-page-title">
-              {t("hero.title")}
-            </h1>
-            <p className="page-subtitle">{t("hero.description")}</p>
-          </div>
-
-          <div
-            className="search-hero-summary"
-            aria-label={t("hero.summary")}
-          >
-            <div className="search-summary-item">
-              <span className="search-summary-icon">
-                <TeamOutlined />
-              </span>
-              <span>
-                <strong>8,452</strong>
-                <small>{t("shortlist.playerProfiles")}</small>
-              </span>
-            </div>
-            <div className="search-summary-item">
-              <span className="search-summary-icon">
-                <StarOutlined />
-              </span>
-              <span>
-                <strong>
-                  {workspaceState.loading ? "-" : workspaceState.shortlist.length}
-                </strong>
-                <small>{t("shortlist.savedPlayers")}</small>
-              </span>
-            </div>
-            <div className="search-summary-item">
-              <span className="search-summary-icon">
-                <HistoryOutlined />
-              </span>
-              <span>
-                <strong>
-                  {workspaceState.loading ? "-" : workspaceState.history.length}
-                </strong>
-                <small>{t("history.recentSearches")}</small>
-              </span>
-            </div>
-          </div>
-        </section>
-
         {workspaceState.error && (
           <Alert
             message={workspaceState.error}
@@ -1166,12 +963,6 @@ function Search() {
                 items={workspaceState.shortlist}
                 onAnalyze={startAnalysis}
                 onRemove={removeShortlist}
-              />
-              <HistoryPanel
-                items={workspaceState.history}
-                onAnalyze={startAnalysis}
-                onClear={clearHistory}
-                onRemove={removeHistory}
               />
             </div>
           )}
