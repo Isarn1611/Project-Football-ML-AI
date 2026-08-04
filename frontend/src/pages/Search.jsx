@@ -5,10 +5,13 @@ import {
   Alert,
   Button,
   Card,
+  Dropdown,
   Empty,
   Form,
   Input,
   InputNumber,
+  Modal,
+  Segmented,
   Select,
   Space,
   Spin,
@@ -16,14 +19,13 @@ import {
   Typography,
 } from "antd";
 import {
-  ArrowRightOutlined,
-  DatabaseOutlined,
   DeleteOutlined,
   FilterOutlined,
   LoadingOutlined,
   RadarChartOutlined,
   ReloadOutlined,
   SearchOutlined,
+  SortAscendingOutlined,
   StarOutlined,
 } from "@ant-design/icons";
 
@@ -197,7 +199,13 @@ function formatSavedSource(source, t) {
   return cleanedSource;
 }
 
-function ShortlistPanel({ items, onAnalyze, onRemove }) {
+function ShortlistPanel({
+  embedded = false,
+  emptyDescription,
+  items,
+  onAnalyze,
+  onRemove,
+}) {
   const { i18n, t } = useTranslation("search");
   const columns = [
     {
@@ -277,6 +285,29 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
     },
   ];
 
+  const table = (
+    <Table
+      columns={columns}
+      dataSource={items}
+      locale={{
+        emptyText: (
+          <Empty
+            description={emptyDescription || t("shortlist.empty")}
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        ),
+      }}
+      pagination={items.length > 5 ? { pageSize: 5 } : false}
+      rowKey="id"
+      scroll={{ x: 560 }}
+      size="middle"
+    />
+  );
+
+  if (embedded) {
+    return <div className="embedded-shortlist">{table}</div>;
+  }
+
   return (
     <Card
       className="workspace-card shortlist-card"
@@ -293,32 +324,35 @@ function ShortlistPanel({ items, onAnalyze, onRemove }) {
         </div>
       }
     >
-      <Table
-        columns={columns}
-        dataSource={items}
-        locale={{
-          emptyText: (
-            <Empty
-              description={t("shortlist.empty")}
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          ),
-        }}
-        pagination={items.length > 5 ? { pageSize: 5 } : false}
-        rowKey="id"
-        scroll={{ x: 560 }}
-        size="middle"
-      />
+      {table}
     </Card>
   );
 }
 
-function PlayerDatabasePanel({ onAnalyze }) {
+function PlayerDatabasePanel({
+  activeView,
+  onAnalyze,
+  onRemoveSaved,
+  onViewChange,
+  savedItems,
+  savedLoading,
+}) {
   const { t } = useTranslation("search");
   const [browserForm] = Form.useForm();
+  const [savedFilterForm] = Form.useForm();
   const browserRequestController = useRef(null);
   const browserRequestId = useRef(0);
   const [nameSearch, setNameSearch] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSavedFilterOpen, setIsSavedFilterOpen] = useState(false);
+  const [savedSearchInput, setSavedSearchInput] = useState("");
+  const [savedSearch, setSavedSearch] = useState("");
+  const [savedSort, setSavedSort] = useState("saved_desc");
+  const [savedFilters, setSavedFilters] = useState({
+    club: "",
+    position: "",
+    source: "",
+  });
   const [isApplyingFilters, setIsApplyingFilters] = useState(false);
   const [filterFeedback, setFilterFeedback] = useState({
     status: "",
@@ -359,6 +393,87 @@ function PlayerDatabasePanel({ onAnalyze }) {
     { label: t("options.sort.age"), value: "age_asc" },
     { label: t("options.sort.name"), value: "name_asc" },
   ];
+  const selectedSort = Form.useWatch("sort", browserForm) || "";
+  const selectedSortLabel =
+    sortOptions.find((option) => option.value === selectedSort)?.label ||
+    t("filters.defaultOrder");
+  const sortMenuItems = [
+    { key: "default", label: t("filters.defaultOrder") },
+    ...sortOptions.map((option) => ({
+      key: option.value,
+      label: option.label,
+    })),
+  ];
+  const savedSortOptions = [
+    { label: t("shortlist.sort.newest"), value: "saved_desc" },
+    { label: t("shortlist.sort.oldest"), value: "saved_asc" },
+    { label: t("shortlist.sort.nameAsc"), value: "name_asc" },
+    { label: t("shortlist.sort.nameDesc"), value: "name_desc" },
+    { label: t("shortlist.sort.clubAsc"), value: "club_asc" },
+  ];
+  const savedSortLabel =
+    savedSortOptions.find((option) => option.value === savedSort)?.label ||
+    savedSortOptions[0].label;
+  const savedSortMenuItems = savedSortOptions.map((option) => ({
+    key: option.value,
+    label: option.label,
+  }));
+  const normalizedSavedItems = savedItems || [];
+
+  function buildSavedOptions(key, labelFormatter = (value) => value) {
+    return [...new Set(normalizedSavedItems.map((item) => item[key]).filter(Boolean))]
+      .sort((left, right) => String(left).localeCompare(String(right)))
+      .map((value) => ({
+        label: labelFormatter(value),
+        value,
+      }));
+  }
+
+  const savedClubOptions = buildSavedOptions("club");
+  const savedPositionOptions = buildSavedOptions("position");
+  const savedSourceOptions = buildSavedOptions("source", (source) =>
+    formatSavedSource(source, t)
+  );
+  const filteredSavedItems = normalizedSavedItems
+    .filter((item) => {
+      const searchableText = [
+        item.player_name,
+        item.club,
+        item.position,
+        item.source,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase();
+      const matchesSearch =
+        !savedSearch || searchableText.includes(savedSearch.toLocaleLowerCase());
+      const matchesClub = !savedFilters.club || item.club === savedFilters.club;
+      const matchesPosition =
+        !savedFilters.position || item.position === savedFilters.position;
+      const matchesSource =
+        !savedFilters.source || item.source === savedFilters.source;
+
+      return matchesSearch && matchesClub && matchesPosition && matchesSource;
+    })
+    .sort((left, right) => {
+      if (savedSort === "saved_asc") {
+        return (Date.parse(left.updated_at) || 0) - (Date.parse(right.updated_at) || 0);
+      }
+      if (savedSort === "name_asc") {
+        return String(left.player_name || "").localeCompare(
+          String(right.player_name || "")
+        );
+      }
+      if (savedSort === "name_desc") {
+        return String(right.player_name || "").localeCompare(
+          String(left.player_name || "")
+        );
+      }
+      if (savedSort === "club_asc") {
+        return String(left.club || "").localeCompare(String(right.club || ""));
+      }
+      return (Date.parse(right.updated_at) || 0) - (Date.parse(left.updated_at) || 0);
+    });
 
   useEffect(() => {
     let isActive = true;
@@ -463,6 +578,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
           }),
         });
       }
+      return true;
     } catch (filterError) {
       if (controller.signal.aborted) return;
       if (requestId !== browserRequestId.current) return;
@@ -482,6 +598,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
           text: t("errors.apply"),
         });
       }
+      return false;
     } finally {
       if (requestId === browserRequestId.current && successMessage) {
         setIsApplyingFilters(false);
@@ -497,6 +614,34 @@ function PlayerDatabasePanel({ onAnalyze }) {
       PLAYER_PAGE_SIZE,
       t("feedback.filtersReset")
     );
+  }
+
+  function changeSort(sortKey) {
+    const sort = sortKey === "default" ? "" : sortKey;
+    browserForm.setFieldValue("sort", sort);
+    applyFilters(
+      {
+        ...browserForm.getFieldsValue(),
+        name: nameSearch,
+        sort,
+      },
+      PLAYER_PAGE_SIZE
+    );
+  }
+
+  function searchSavedByName(value) {
+    const cleanedName = String(value || "").trim();
+    setSavedSearchInput(cleanedName);
+    setSavedSearch(cleanedName);
+  }
+
+  function resetSavedFilters() {
+    savedFilterForm.resetFields();
+    setSavedFilters({
+      club: "",
+      position: "",
+      source: "",
+    });
   }
 
   function searchByName(value) {
@@ -526,144 +671,155 @@ function PlayerDatabasePanel({ onAnalyze }) {
     );
   }
 
-  const columns = [
-    {
-      dataIndex: "name",
-      key: "player",
-      title: t("players.player"),
-      render: (_, player) => (
-        <div className="database-player">
-          <PlayerAvatar
-            className="database-player-avatar"
-            name={player.name}
-            uid={player.uid}
-          />
-          <div className="database-player-cell">
-            <Text strong>{player.name}</Text>
-            <Text type="secondary">
-              {[player.club, player.nationality, player.position]
-                .filter(Boolean)
-                .join(" / ") || t("players.profileUnavailable")}
-            </Text>
-          </div>
-        </div>
-      ),
-    },
-    {
-      dataIndex: "age",
-      key: "age",
-      title: t("players.age"),
-      width: 80,
-      render: (age) => age ?? "-",
-    },
-    {
-      key: "ability",
-      title: "CA / PA",
-      width: 120,
-      render: (_, player) => (
-        <div className="ability-pair">
-          <span className="ability-pill is-current">
-            {player.currentAbility ?? "-"}
-          </span>
-          <ArrowRightOutlined aria-hidden="true" />
-          <span className="ability-pill is-potential">
-            {player.potentialAbility ?? "-"}
-          </span>
-        </div>
-      ),
-    },
-    {
-      dataIndex: "marketValue",
-      key: "marketValue",
-      responsive: ["md"],
-      title: t("players.value"),
-      width: 120,
-      render: (value) => formatMoney(value, t),
-    },
-    {
-      dataIndex: "salary",
-      key: "salary",
-      responsive: ["lg"],
-      title: t("players.wage"),
-      width: 130,
-      render: (value) =>
-        value
-          ? t("players.wagePerWeek", { value: formatMoney(value, t) })
-          : t("players.unknown"),
-    },
-    {
-      key: "actions",
-      title: "",
-      width: 122,
-      render: (_, player) => (
-        <Button
-          className="analyze-player-button"
-          icon={<RadarChartOutlined />}
-          onClick={() => onAnalyze(player.name)}
-        >
-          {t("actions.analyze")}
-        </Button>
-      ),
-    },
-  ];
   const hasMorePlayers =
     browserState.players.length >= browserState.limit &&
     browserState.limit < PLAYER_MAX_RESULTS;
 
   return (
-    <Card
-      className="player-browser-card"
-      extra={
-        <span className="database-result-count">
-          <strong>{browserState.count}</strong> {t("database.shown")}
-        </span>
-      }
-      title={
-        <div className="database-card-header">
-          <div className="database-card-heading">
-            <span className="database-card-icon">
-              <DatabaseOutlined />
-            </span>
-            <span>
-              <strong>{t("database.title")}</strong>
-              <small>{t("database.description")}</small>
-            </span>
+    <>
+      <div className="player-browser-toolbar">
+          <div className="player-view-switch">
+            <Segmented
+              className="player-view-tabs"
+              onChange={onViewChange}
+              options={[
+                {
+                  label: t("database.title"),
+                  value: "database",
+                },
+                {
+                  label: t("shortlist.savedPlayers"),
+                  value: "saved",
+                },
+              ]}
+              value={activeView}
+            />
           </div>
-          <div className="database-name-search" role="search">
-            <Input
-              allowClear
-              aria-label={t("database.searchPlaceholder")}
-              onChange={(event) => {
-                const value = event.target.value;
-                setNameSearch(value);
-                if (!value) searchByName("");
+          {activeView === "database" && (
+            <div className="database-header-controls">
+              <div className="database-name-search" role="search">
+              <Button
+                aria-label={t("database.searchAria")}
+                className="database-name-search-button"
+                icon={<SearchOutlined />}
+                loading={browserState.loading}
+                onClick={() => searchByName(nameSearch)}
+                shape="circle"
+              />
+              <Input
+                allowClear
+                aria-label={t("database.searchPlaceholder")}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setNameSearch(value);
+                  if (!value) searchByName("");
+                }}
+                onPressEnter={() => searchByName(nameSearch)}
+                placeholder={t("database.searchPlaceholder")}
+                value={nameSearch}
+              />
+            </div>
+            <Dropdown
+              menu={{
+                items: sortMenuItems,
+                onClick: ({ key }) => changeSort(key),
+                selectable: true,
+                selectedKeys: [selectedSort || "default"],
               }}
-              onPressEnter={() => searchByName(nameSearch)}
-              placeholder={t("database.searchPlaceholder")}
-              value={nameSearch}
-            />
+              placement="bottomRight"
+              trigger={["click"]}
+            >
+              <Button
+                className="player-sort-trigger"
+                icon={<SortAscendingOutlined />}
+              >
+                {selectedSortLabel}
+              </Button>
+            </Dropdown>
             <Button
-              aria-label={t("database.searchAria")}
-              className="database-name-search-button"
-              icon={<SearchOutlined />}
-              loading={browserState.loading}
-              onClick={() => searchByName(nameSearch)}
-              shape="circle"
-            />
-          </div>
-        </div>
-      }
-    >
-      <div className="player-database-grid">
-        <div className="player-filter-sidebar">
-          <div className="player-filter-sidebar-heading">
-            <span>
-              <FilterOutlined />
+              className="player-filter-trigger"
+              icon={<FilterOutlined />}
+              onClick={() => setIsFilterOpen(true)}
+            >
               {t("filters.title")}
-            </span>
-            <small>{t("filters.count")}</small>
-          </div>
-          <div className="player-browser-intro">
+              </Button>
+            </div>
+          )}
+          {activeView === "saved" && (
+            <div className="database-header-controls saved-header-controls">
+              <div className="database-name-search" role="search">
+                <Button
+                  aria-label={t("shortlist.searchAria")}
+                  className="database-name-search-button"
+                  icon={<SearchOutlined />}
+                  loading={savedLoading}
+                  onClick={() => searchSavedByName(savedSearchInput)}
+                  shape="circle"
+                />
+                <Input
+                  allowClear
+                  aria-label={t("shortlist.searchAria")}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setSavedSearchInput(value);
+                    if (!value) searchSavedByName("");
+                  }}
+                  onPressEnter={() => searchSavedByName(savedSearchInput)}
+                  placeholder={t("shortlist.searchPlaceholder")}
+                  value={savedSearchInput}
+                />
+              </div>
+              <Dropdown
+                menu={{
+                  items: savedSortMenuItems,
+                  onClick: ({ key }) => setSavedSort(key),
+                  selectable: true,
+                  selectedKeys: [savedSort],
+                }}
+                placement="bottomRight"
+                trigger={["click"]}
+              >
+                <Button
+                  className="player-sort-trigger"
+                  icon={<SortAscendingOutlined />}
+                >
+                  {savedSortLabel}
+                </Button>
+              </Dropdown>
+              <Button
+                className="player-filter-trigger"
+                icon={<FilterOutlined />}
+                onClick={() => setIsSavedFilterOpen(true)}
+              >
+                {t("filters.title")}
+              </Button>
+            </div>
+          )}
+      </div>
+      <Card className="player-browser-card player-browser-surface">
+      <div
+        className="player-database-grid"
+        hidden={activeView !== "database"}
+      >
+        <Modal
+          centered
+          className="player-filter-modal"
+          footer={null}
+          onCancel={() => setIsFilterOpen(false)}
+          open={isFilterOpen}
+          rootClassName="player-filter-modal-root"
+          title={
+            <div className="player-filter-modal-heading">
+              <span>
+                <FilterOutlined />
+                {t("filters.title")}
+              </span>
+              <small>{t("filters.count")}</small>
+            </div>
+          }
+          width={720}
+        >
+          <div className="player-filter-modal-intro">
             <Text type="secondary">
               {t("filters.description")}
             </Text>
@@ -673,16 +829,17 @@ function PlayerDatabasePanel({ onAnalyze }) {
             form={browserForm}
             initialValues={playerBrowserDefaults}
             layout="vertical"
-            onFinish={(values) =>
-              applyFilters(
+            onFinish={async (values) => {
+              const didApply = await applyFilters(
                 {
                   ...values,
                   name: nameSearch,
                 },
                 PLAYER_PAGE_SIZE,
                 t("feedback.filtersApplied")
-              )
-            }
+              );
+              if (didApply) setIsFilterOpen(false);
+            }}
             requiredMark={false}
           >
             <div className="player-filter-scroll">
@@ -792,7 +949,7 @@ function PlayerDatabasePanel({ onAnalyze }) {
               </span>
             </div>
           </Form>
-        </div>
+        </Modal>
 
         <div className="player-results-area">
           <div className="player-results-toolbar">
@@ -819,23 +976,87 @@ function PlayerDatabasePanel({ onAnalyze }) {
             />
           )}
 
-          <Table
-            columns={columns}
-            dataSource={browserState.players}
-            loading={browserState.loading}
-            locale={{
-              emptyText: (
-                <Empty
-                  description={t("database.noMatches")}
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              ),
-            }}
-            pagination={false}
-            rowKey={(player) => player.uid || player.id || player.name}
-            scroll={{ x: 780, y: 470 }}
-            size="middle"
-          />
+          {browserState.loading ? (
+            <div className="player-card-loading">
+              <Spin />
+            </div>
+          ) : browserState.players.length ? (
+            <div className="player-card-grid">
+              {browserState.players.map((player) => (
+                <article
+                  aria-label={`${t("actions.analyze")} ${player.name}`}
+                  className="player-profile-card"
+                  key={player.uid || player.id || player.name}
+                  onClick={() => onAnalyze(player.name)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onAnalyze(player.name);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <PlayerAvatar
+                    alt={player.name}
+                    className="player-profile-card-image"
+                    name={player.name}
+                    uid={player.uid}
+                  />
+                  <span className="player-profile-card-overlay" aria-hidden="true" />
+                  <div className="player-profile-card-top">
+                    <div className="player-profile-card-name">
+                      <h3>{player.name}</h3>
+                      <div className="player-profile-card-meta">
+                        <span>{player.nationality || t("players.unknown")}</span>
+                        <i aria-hidden="true" />
+                        <span>{player.club || t("players.unknown")}</span>
+                      </div>
+                    </div>
+                    <div className="player-profile-card-team">
+                      <strong>{player.position || "-"}</strong>
+                    </div>
+                  </div>
+                  <div className="player-profile-card-bottom">
+                    <div className="player-profile-card-metrics">
+                      <span>
+                        <small>CA / PA</small>
+                        <strong>
+                          {player.currentAbility ?? "-"} / {player.potentialAbility ?? "-"}
+                        </strong>
+                      </span>
+                      <span>
+                        <small>{t("players.value")}</small>
+                        <strong>{formatMoney(player.marketValue, t)}</strong>
+                      </span>
+                      <span>
+                        <small>{t("players.wage")}</small>
+                        <strong>
+                          {player.salary
+                            ? formatMoney(player.salary, t)
+                            : t("players.unknown")}
+                        </strong>
+                      </span>
+                      <span>
+                        <small>{t("players.age")}</small>
+                        <strong>{player.age ?? "-"}</strong>
+                      </span>
+                    </div>
+                    <span className="player-profile-card-action">
+                      <RadarChartOutlined />
+                      {t("actions.analyze")}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <Empty
+              className="player-card-empty"
+              description={t("database.noMatches")}
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          )}
           <div className="player-load-more">
             <Button
               disabled={!hasMorePlayers}
@@ -847,7 +1068,97 @@ function PlayerDatabasePanel({ onAnalyze }) {
           </div>
         </div>
       </div>
-    </Card>
+      <div className="saved-player-view" hidden={activeView !== "saved"}>
+        <Modal
+          centered
+          className="player-filter-modal saved-filter-modal"
+          footer={null}
+          onCancel={() => setIsSavedFilterOpen(false)}
+          open={isSavedFilterOpen}
+          rootClassName="player-filter-modal-root"
+          title={
+            <div className="player-filter-modal-heading">
+              <span>
+                <FilterOutlined />
+                {t("shortlist.filtersTitle")}
+              </span>
+              <small>{t("shortlist.filterCount")}</small>
+            </div>
+          }
+          width={640}
+        >
+          <div className="player-filter-modal-intro">
+            <Text type="secondary">
+              {t("shortlist.filtersDescription")}
+            </Text>
+          </div>
+          <Form
+            form={savedFilterForm}
+            initialValues={{ club: "", position: "", source: "" }}
+            layout="vertical"
+            onFinish={(values) => {
+              setSavedFilters(values);
+              setIsSavedFilterOpen(false);
+            }}
+            requiredMark={false}
+          >
+            <div className="player-filter-grid">
+              <Form.Item label={t("filters.club")} name="club">
+                <Select
+                  allowClear
+                  options={savedClubOptions}
+                  placeholder={t("shortlist.anyClub")}
+                  showSearch
+                />
+              </Form.Item>
+              <Form.Item label={t("filters.position")} name="position">
+                <Select
+                  allowClear
+                  options={savedPositionOptions}
+                  placeholder={t("shortlist.anyPosition")}
+                  showSearch
+                />
+              </Form.Item>
+              <Form.Item label={t("players.source")} name="source">
+                <Select
+                  allowClear
+                  options={savedSourceOptions}
+                  placeholder={t("shortlist.anySource")}
+                  showSearch
+                />
+              </Form.Item>
+            </div>
+            <div className="player-filter-actions">
+              <Button htmlType="submit" icon={<FilterOutlined />} type="primary">
+                {t("actions.apply")}
+              </Button>
+              <Button icon={<ReloadOutlined />} onClick={resetSavedFilters}>
+                {t("actions.reset")}
+              </Button>
+            </div>
+          </Form>
+        </Modal>
+        {savedLoading ? (
+          <div className="saved-player-loading">
+            <Spin />
+            <Text type="secondary">{t("hero.loading")}</Text>
+          </div>
+        ) : (
+          <ShortlistPanel
+            embedded
+            emptyDescription={
+              normalizedSavedItems.length
+                ? t("shortlist.noMatches")
+                : t("shortlist.empty")
+            }
+            items={filteredSavedItems}
+            onAnalyze={onAnalyze}
+            onRemove={onRemoveSaved}
+          />
+        )}
+      </div>
+      </Card>
+    </>
   );
 }
 
@@ -855,6 +1166,7 @@ function Search() {
   const { t } = useTranslation("search");
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [activePlayerView, setActivePlayerView] = useState("database");
   const [workspaceState, setWorkspaceState] = useState({
     loading: true,
     error: "",
@@ -945,27 +1257,15 @@ function Search() {
           />
         )}
 
-        <section className="database-section">
-          <PlayerDatabasePanel onAnalyze={startAnalysis} />
-        </section>
-
-        <section className="report-section" id="workspace">
-          {workspaceState.loading ? (
-            <Card className="workspace-loading-card">
-              <Spin />
-              <Text style={{ marginLeft: 12 }} type="secondary">
-                {t("hero.loading")}
-              </Text>
-            </Card>
-          ) : (
-            <div className="workspace-stack">
-              <ShortlistPanel
-                items={workspaceState.shortlist}
-                onAnalyze={startAnalysis}
-                onRemove={removeShortlist}
-              />
-            </div>
-          )}
+        <section className="database-section" id="workspace">
+          <PlayerDatabasePanel
+            activeView={activePlayerView}
+            onAnalyze={startAnalysis}
+            onRemoveSaved={removeShortlist}
+            onViewChange={setActivePlayerView}
+            savedItems={workspaceState.shortlist}
+            savedLoading={workspaceState.loading}
+          />
         </section>
       </div>
     </AppShell>
