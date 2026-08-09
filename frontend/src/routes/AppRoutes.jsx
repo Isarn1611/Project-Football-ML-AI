@@ -1,8 +1,12 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import AuthCallback from "../pages/AuthCallback";
+import About from "../pages/About";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
+import Privacy from "../pages/Privacy";
+import Terms from "../pages/Terms";
+import Pricing from "../pages/Pricing";
 import ResetPassword from "../pages/ResetPassword";
 import Admin from "../pages/Admin";
 import AdminPlayers from "../pages/AdminPlayers";
@@ -16,6 +20,10 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/login" element={<Login />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/reset-password" element={<ResetPassword />} />

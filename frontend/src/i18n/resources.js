@@ -3,13 +3,19 @@ export const resources = {
     landing: {
       nav: {
         ariaLabel: "Main navigation",
+        about: "About",
         changeLanguage: "Change language",
         features: "Features",
         getStarted: "Get started",
+        home: "Home",
         openWorkspace: "Open workspace",
+        policy: "Policy",
+        privacyPolicy: "Privacy Policy",
         product: "Football scouting with AI",
         security: "Security",
         signIn: "Sign in",
+        pricing: "Pricing",
+        termsOfUse: "Terms of Use",
         workflow: "How it works",
       },
       hero: {
@@ -69,7 +75,8 @@ export const resources = {
             title: "Build the case",
           },
           search: {
-            description: "Start with the role, budget, and profile your team needs.",
+            description:
+              "Start with the role, budget, and profile your team needs.",
             title: "Define the search",
           },
         },
@@ -84,7 +91,539 @@ export const resources = {
       },
       footer: {
         copy: "AI-assisted football scouting for clearer recruitment decisions.",
+        legal: "Legal",
+        legalLabel: "Legal links",
         note: "ScoutAI · Football intelligence workspace",
+        product: "Product",
+        productLabel: "Product links",
+        tagline: "Football scouting with AI for clearer recruitment decisions.",
+      },
+    },
+    about: {
+      hero: {
+        kicker: "Why ScoutAI",
+        title: "Built to make player decisions clearer.",
+        description:
+          "ScoutAI is an AI-assisted football scouting workspace. We combine a large player database with five scouting models so recruitment teams can search, compare, and explain the players that fit their club.",
+      },
+      statement: {
+        kicker: "Our mission",
+        title: "Turn the whole market into a confident shortlist.",
+        body: {
+          "1": "Recruitment teams face a huge amount of player data. We built ScoutAI to turn that data into a repeatable workflow, so every recommendation is easier to review, explain, and act on.",
+          "2": "From the first filter to the final call, we keep the evidence together: player profiles, model recommendations, and scouting reports in one private workspace.",
+        },
+      },
+      pillars: {
+        kicker: "How we work",
+        title: "Three things guide every decision we make.",
+        description:
+          "Everything we build for ScoutAI can be traced back to the following principles.",
+        data: {
+          title: "Data you can trust",
+          body: "Every comparison starts from a structured player database with hundreds of attributes, so a recommendation is always grounded in the evidence behind it.",
+        },
+        people: {
+          title: "People stay in the loop",
+          body: "Models recommend, but scouts and analysts decide. Every suggestion comes with the supporting reasons so a team can review and explain its choices.",
+        },
+        privacy: {
+          title: "Private by design",
+          body: "Saved players, reports, and search activity stay inside your authenticated workspace. Your recruitment work is yours.",
+        },
+      },
+      timeline: {
+        kicker: "A look back",
+        title: "How ScoutAI came together.",
+        description:
+          "A short history of the project, from a data experiment to a web platform for recruitment teams.",
+        items: [
+          {
+            year: "2024",
+            title: "The idea",
+            body: "A data exploration project set out to see whether Football Manager data could support real scouting decisions.",
+          },
+          {
+            year: "2025",
+            title: "The ML engine",
+            body: "Five scouting models — K-NN, cosine, radius neighbours, K-Means, and DBSCAN — were trained on thousands of player profiles.",
+          },
+          {
+            year: "2025",
+            title: "Web integration",
+            body: "The engine became a live scouting center: search, compare, and shortlist players from the browser.",
+          },
+          {
+            year: "2025",
+            title: "Built for teams",
+            body: "Shared workspaces, admin controls, and reporting made ScoutAI usable by whole recruitment departments.",
+          },
+        ],
+      },
+      metrics: {
+        attributes: "Player attributes",
+        models: "Scouting models",
+        players: "Player profiles",
+        workflow: "From search to decision",
+      },
+      building: {
+        kicker: "What we're building",
+        title: "Five models that look at each player differently.",
+        description:
+          "No single algorithm does the whole job. Each model approaches the target from a different angle so the strongest targets surface together.",
+        models: {
+          clone: {
+            badge: "Closest overall profile",
+            title: "K-NN · The Clone",
+            description:
+              "Finds the players whose overall attribute profile sits closest to the target player.",
+          },
+          style: {
+            badge: "Closest role & style",
+            title: "Cosine · Style Match",
+            description:
+              "Ranks targets by how closely their playing behaviour matches the target's.",
+          },
+          strict: {
+            badge: "Strict match",
+            title: "Radius NN · Strict Filter",
+            description:
+              "Keeps only players that stay inside a tight distance from the target's profile.",
+          },
+          group: {
+            badge: "Similar statistical group",
+            title: "K-Means · Tactical Group",
+            description:
+              "Groups players by shared statistics and pulls the closest members of the same cluster.",
+          },
+          outlier: {
+            badge: "Outside-the-box check",
+            title: "DBSCAN · Outlier Detector",
+            description:
+              "Flags players with a genuinely different profile — a hidden alternative others might miss.",
+          },
+        },
+      },
+      cta: {
+        kicker: "Ready to scout",
+        title: "Start finding players your team is missing.",
+        description:
+          "Create a workspace and turn player data into decision-ready reports.",
+        action: "Start scouting",
+        openWorkspace: "Open workspace",
+        pricing: "See pricing",
+        contact:
+          "Working at a club or recruitment department? Explore the Team plan or reach out through the platform.",
+      },
+},
+    terms: {
+      hero: {
+        kicker: "Terms of Use",
+        title: "Terms of Use.",
+        description:
+          "The rules that govern your access to and use of the ScoutAI football scouting platform.",
+      },
+      updated: "Last updated: January 2025",
+      note: "These Terms of Use (“Terms”) apply to the ScoutAI football scouting platform (“Services”). By accessing or using the Services you agree to these Terms. If you do not agree, please do not use the Services.",
+      sections: [
+        {
+          id: "accepting",
+          title: "1. Accepting the Terms",
+          body: "By creating an account or using the Services you accept these Terms and any policies we post on this site. Continued use after a posted update means you accept the revised Terms.",
+        },
+        {
+          id: "use",
+          title: "2. Using the Services",
+          body: "The Services let you search player data, compare attributes and potential, and generate AI-assisted scouting reports. You may use them only for lawful recruitment and scouting purposes and may not misuse, disrupt, or scrape them beyond the intended features.",
+        },
+        {
+          id: "account",
+          title: "3. Your Account",
+          body: "You must keep your credentials safe and are responsible for activity on your account. You must be at least 16 years old (or the applicable age of majority in your country) to use the Services.",
+        },
+        {
+          id: "fees",
+          title: "4. Fees and Subscriptions",
+          body: "Some features are free and others require a paid subscription. Fees are charged in advance and are non-refundable except where required by law. Prices may change with reasonable notice.",
+        },
+        {
+          id: "ownership",
+          title: "5. Content and Ownership",
+          body: "You keep ownership of your saved players, shortlists, and reports. ScoutAI owns the Services, software, database structure, and underlying models. You grant us a limited license to store and process your content to provide the Services.",
+        },
+        {
+          id: "ai-output",
+          title: "6. AI-Assisted Output",
+          body: "Reports and recommendations are generated from player data and are provided for information only. They are not professional, legal, or financial advice, and you remain responsible for your decisions.",
+        },
+        {
+          id: "termination",
+          title: "7. Termination",
+          body: "You may stop using the Services at any time. We may suspend or terminate access if you violate these Terms or if required by law. Your data may be deleted after termination under our retention practices.",
+        },
+        {
+          id: "changes",
+          title: "8. Changes and Contact",
+          body: "We may update these Terms and post the changes here. The Services are provided “as is” and, to the maximum extent permitted by law, our liability is limited. Questions can be sent through the support channel in your account.",
+        },
+      ],
+    },
+    privacy: {
+      hero: {
+        kicker: "Privacy Policy",
+        title: "Privacy Policy.",
+        description:
+          "How ScoutAI collects, uses, and protects your personal information when you use the platform.",
+      },
+      updated: "Last updated: January 2025",
+      note: "This Privacy Policy explains how ScoutAI (“we”) collects, uses, and protects your personal information. By using the Services you consent to the practices described here.",
+      sections: [
+        {
+          id: "collect",
+          title: "1. Information We Collect",
+          body: "We collect information you provide directly, such as your name and email when you create an account, and information generated by your use, such as player searches, saved shortlists, scouting reports, and usage analytics.",
+        },
+        {
+          id: "use",
+          title: "2. How We Use Information",
+          body: "We use your information to provide and improve the Services, personalize your workspace, authenticate your account, keep the platform secure, and communicate with you about updates and support.",
+        },
+        {
+          id: "share",
+          title: "3. How We Share Information",
+          body: "We do not sell your personal information. We may share it with service providers who operate the Services, when required by law, or to protect the rights and safety of ScoutAI and its users.",
+        },
+        {
+          id: "retention",
+          title: "4. Data Retention",
+          body: "We keep your information while your account is active or as needed to provide the Services and meet legal obligations. You can delete your data through your account or by contacting support.",
+        },
+        {
+          id: "security",
+          title: "5. Security",
+          body: "We use reasonable technical and organizational measures to protect your information. No method of transmission or storage is completely secure, but we work to keep your workspace private.",
+        },
+        {
+          id: "rights",
+          title: "6. Your Rights",
+          body: "Depending on your jurisdiction you may have the right to access, correct, or delete your personal information and to object to certain processing. You can exercise these rights by contacting us.",
+        },
+        {
+          id: "changes",
+          title: "7. Changes and Contact",
+          body: "We may update this policy and post changes here. Questions about this policy or your personal information can be sent through the support channel in your account.",
+        },
+      ],
+    },
+    policy: {
+      hero: {
+        kicker: "ScoutAI Policies",
+        title: "Terms of Use, Privacy, and Policies.",
+        description:
+          "A clear reference for how ScoutAI works, how your data is handled, and the rules that keep the platform fair and safe.",
+      },
+      nav: {
+        termsOfUse: "Terms of Use",
+        privacyPolicy: "Privacy Policy",
+        otherPolicies: "Other Policies",
+      },
+      updated: "Last updated: January 2025",
+      note: "These policies describe the ScoutAI football scouting platform (the “Services”). By using the Services you agree to the Terms of Use and acknowledge the Privacy Policy.",
+      termsOfUse: {
+        title: "Terms of Use",
+        sections: [
+          {
+            id: "introduction",
+            title: "1. Introduction",
+            body: "These Terms of Use (“Terms”) govern your access to and use of ScoutAI, an AI-assisted football scouting platform. By creating an account or using the Services, you agree to these Terms. If you do not agree, please do not use the Services.",
+          },
+          {
+            id: "scope",
+            title: "2. Scope of Services",
+            body: "ScoutAI provides a cloud-based workspace that lets you search player databases, compare player attributes and potential, and generate AI-assisted scouting reports. The Services are provided for lawful recruitment and scouting purposes only.",
+          },
+          {
+            id: "account",
+            title: "3. Your Account",
+            body: "To use the Services you must create an account with a valid email address. You are responsible for safeguarding your credentials and for all activity that occurs under your account. You must be at least 16 years old (or the applicable age of majority in your country) to use the Services.",
+          },
+          {
+            id: "acceptable-use",
+            title: "4. Acceptable Use",
+            body: "You agree not to misuse the Services. This includes: attempting to access the Services in unauthorized ways, interfering with or disrupting the Services, scraping or mining player data beyond the intended features, and using the Services to violate any applicable law or regulation.",
+          },
+          {
+            id: "fees",
+            title: "5. Fees and Subscriptions",
+            body: "Some parts of the Services are free and others require a paid subscription. Subscription fees are charged in advance and are non-refundable except where required by law. We may change pricing or introduce new fees with reasonable notice.",
+          },
+          {
+            id: "content",
+            title: "6. Content and Ownership",
+            body: "You retain ownership of the content you submit to the Services, including your saved players, target lists, and scouting reports. By submitting content, you grant ScoutAI a limited, non-exclusive license to host, process, and display that content solely to provide the Services to you.",
+          },
+          {
+            id: "ai-output",
+            title: "7. AI-Assisted Output",
+            body: "The Services may generate AI-assisted reports, recommendations, and summaries based on player data. These outputs are provided for informational purposes only and do not constitute professional, legal, or financial advice. You remain responsible for the decisions you make using the Services.",
+          },
+          {
+            id: "intellectual-property",
+            title: "8. Intellectual Property",
+            body: "ScoutAI and its licensors own all rights in the Services, including the software, the player database structure, and the underlying models. You may not copy, modify, distribute, or create derivative works from the Services except as expressly permitted.",
+          },
+          {
+            id: "feedback",
+            title: "9. User Feedback",
+            body: "If you provide suggestions, feedback, or ideas about the Services, you grant us a perpetual, royalty-free license to use them to improve the Services. We are not obligated to keep feedback confidential.",
+          },
+          {
+            id: "third-party",
+            title: "10. Third-Party Services",
+            body: "The Services may rely on third-party providers for hosting, authentication, and data. We are not responsible for the content or practices of third-party services, and your use of them is subject to their own terms.",
+          },
+          {
+            id: "termination",
+            title: "11. Termination",
+            body: "You may stop using the Services at any time. We may suspend or terminate your access if you violate these Terms or if required by law. Upon termination, your right to use the Services ends, and your data may be deleted in accordance with our data retention practices.",
+          },
+          {
+            id: "disclaimers",
+            title: "12. Disclaimers",
+            body: "The Services are provided “as is” and “as available” without warranties of any kind, whether express or implied. We do not warrant that the Services will be uninterrupted, error-free, or that player data is complete or accurate at all times.",
+          },
+          {
+            id: "limitation",
+            title: "13. Limitation of Liability",
+            body: "To the maximum extent permitted by law, ScoutAI shall not be liable for any indirect, incidental, special, or consequential damages, or for any loss of profits, data, or goodwill, arising out of or in connection with the Services.",
+          },
+          {
+            id: "indemnification",
+            title: "14. Indemnification",
+            body: "You agree to indemnify and hold harmless ScoutAI and its affiliates from any claims, damages, or expenses arising out of your use of the Services or your violation of these Terms.",
+          },
+          {
+            id: "governing-law",
+            title: "15. Governing Law",
+            body: "These Terms are governed by the laws of Thailand, without regard to its conflict-of-law principles. Any disputes shall be resolved in the competent courts of Thailand.",
+          },
+          {
+            id: "changes",
+            title: "16. Changes to These Terms",
+            body: "We may update these Terms from time to time. When we do, we will post the updated version on this page. Continued use of the Services after changes constitutes acceptance of the revised Terms.",
+          },
+          {
+            id: "contact",
+            title: "17. Contact",
+            body: "If you have questions about these Terms, please contact us through the ScoutAI support channel linked in your account.",
+          },
+        ],
+      },
+      privacyPolicy: {
+        title: "Privacy Policy",
+        sections: [
+          {
+            id: "introduction",
+            title: "1. Introduction",
+            body: "This Privacy Policy explains how ScoutAI collects, uses, and protects your personal information when you use the Services. By using the Services, you consent to the practices described in this policy.",
+          },
+          {
+            id: "collect",
+            title: "2. Information We Collect",
+            body: "We collect information you provide directly, such as your name and email address when you create an account. We also collect information generated by your use of the Services, including player searches, saved shortlists, scouting reports, and usage analytics such as the pages you visit and the features you use.",
+          },
+          {
+            id: "use",
+            title: "3. How We Use Information",
+            body: "We use your information to provide and improve the Services, personalize your workspace, authenticate your account, respond to your requests, ensure security, and communicate with you about updates and support.",
+          },
+          {
+            id: "share",
+            title: "4. How We Share Information",
+            body: "We do not sell your personal information. We may share your information with service providers who help us operate the Services, when required by law, or to protect the rights and safety of ScoutAI and its users.",
+          },
+          {
+            id: "retention",
+            title: "5. Data Retention",
+            body: "We retain your information for as long as your account is active or as needed to provide the Services, comply with legal obligations, resolve disputes, and enforce our agreements. You may delete your data through your account or by contacting support.",
+          },
+          {
+            id: "security",
+            title: "6. Security",
+            body: "We use reasonable technical and organizational measures to protect your information from unauthorized access, disclosure, alteration, or destruction. However, no method of transmission or storage is completely secure.",
+          },
+          {
+            id: "rights",
+            title: "7. Your Rights and Choices",
+            body: "Depending on your jurisdiction, you may have the right to access, correct, or delete your personal information, and to object to or restrict certain processing. You can exercise these rights by contacting us.",
+          },
+          {
+            id: "cookies",
+            title: "8. Cookies and Tracking",
+            body: "We use cookies and similar technologies to keep you signed in, remember your preferences (such as language and theme), and understand how the Services are used. You can control cookies through your browser settings.",
+          },
+          {
+            id: "children",
+            title: "9. Children's Privacy",
+            body: "The Services are not directed to children under the age of 16. We do not knowingly collect personal information from children. If you believe a child has provided us with personal information, please contact us.",
+          },
+          {
+            id: "international",
+            title: "10. International Transfers",
+            body: "Your information may be stored and processed in countries other than your own. When we transfer information across borders, we take steps to protect it in accordance with this policy and applicable law.",
+          },
+          {
+            id: "changes",
+            title: "11. Changes to This Policy",
+            body: "We may update this Privacy Policy from time to time. We will post the updated version on this page and, where appropriate, notify you. Continued use of the Services after changes constitutes acceptance of the revised policy.",
+          },
+          {
+            id: "contact",
+            title: "12. Contact",
+            body: "If you have questions about this Privacy Policy or your personal information, please contact us through the ScoutAI support channel linked in your account.",
+          },
+        ],
+      },
+      otherPolicies: {
+        title: "Other Policies",
+        sections: [
+          {
+            id: "usage-policies",
+            title: "Usage Policies",
+            body: "Use ScoutAI responsibly. You may not use the Services to generate misleading scouting information, to discriminate unfairly, to violate the rights of others, or to engage in any activity that is unlawful or harmful. AI-assisted outputs are provided for informational purposes and should be reviewed by qualified professionals before any recruitment decision.",
+          },
+          {
+            id: "sharing-publication",
+            title: "Sharing & Publication Policy",
+            body: "When you share scouting reports or AI outputs, you are responsible for the information you share and for ensuring it is accurate and used appropriately. You should not share content that is confidential, misleading, or that infringes on the rights of others.",
+          },
+          {
+            id: "data-security",
+            title: "Data & Security",
+            body: "Your workspace is protected by authentication and access controls. Reports, saved players, and search history are private to your account. We do not sell your data, and we restrict access to authorized personnel only as needed to operate the Services.",
+          },
+          {
+            id: "copyright",
+            title: "Copyright Policy",
+            body: "ScoutAI respects intellectual property rights. If you believe content on the Services infringes your copyright, you may notify us and we will review the matter. We may remove content that we determine to be infringing.",
+          },
+          {
+            id: "business-terms",
+            title: "Business Terms",
+            body: "For recruitment departments, clubs, and enterprise users, additional terms may apply. Contact us to learn about team workspaces, admin controls, onboarding, and dedicated support arrangements.",
+          },
+        ],
+      },
+    },
+    pricing: {
+      badge: "Most popular",
+      hero: {
+        description:
+          "Choose the plan that fits your scouting team. Every plan includes private storage for your reports and target lists.",
+        kicker: "Pricing",
+        title: "Simple plans for every recruitment team.",
+      },
+      billing: {
+        monthly: "Monthly",
+        annual: "Annual",
+        save: "Save 25%",
+      },
+      compare: {
+        title: "Compare plans",
+        subtitle:
+          "Everything you need to decide which plan fits your recruitment workflow.",
+        header: "Feature",
+        rows: [
+          ["Player database access", true, true, true],
+          ["Scouting reports per month", "3", "Unlimited", "Unlimited"],
+          ["AI scout report summaries", false, true, true],
+          ["Active scouting models", "1", "5", "5"],
+          ["Private target list", true, true, true],
+          ["Shared team workspace", false, false, true],
+          ["Admin controls and usage", false, false, true],
+          ["Priority support", false, true, true],
+          ["Dedicated support", false, false, true],
+        ],
+      },
+      faq: {
+        title: "Frequently asked questions",
+        subtitle:
+          "Quick answers about plans, billing, and what's included.",
+        items: [
+          {
+            q: "Can I switch or cancel my plan at any time?",
+            a: "Yes. You can upgrade, downgrade, or cancel your plan whenever you need to. Charges stop at the end of your current billing period.",
+          },
+          {
+            q: "What counts as a scouting report?",
+            a: "A scouting report is generated when you analyze a player and open their full AI-assisted report. Browsing the database and saving targets does not count toward your limit.",
+          },
+          {
+            q: "Is my workspace still private on any plan?",
+            a: "Yes. Your saved players, target lists, reports, and search history stay private to your account on every plan.",
+          },
+          {
+            q: "How does the annual billing work?",
+            a: "Annual billing bills once a year and saves you 25% compared to paying monthly. You get the same access and features.",
+          },
+          {
+            q: "Can I get a plan for my whole scouting department?",
+            a: "Yes. The Team plan adds a shared workspace, admin controls, and dedicated support for recruitment departments and clubs.",
+          },
+        ],
+      },
+      cta: {
+        kicker: "Ready to scout",
+        title: "Start finding players your team is missing.",
+        description:
+          "Create a workspace and turn player data into decision-ready reports.",
+        action: "Get started",
+      },
+      plans: {
+        free: {
+          cta: "Get started",
+          description:
+            "For individual scouts trying ScoutAI.",
+          features: [
+            "Search the full player database",
+            "3 scouting reports per month",
+            "Private target list",
+            "Community support",
+          ],
+          name: "Free",
+          price: "$0",
+          annual: "$0",
+        },
+        pro: {
+          cta: "Start free trial",
+          description:
+            "For active scouts who need more analysis.",
+          features: [
+            "Everything in Free",
+            "Unlimited scouting reports",
+            "AI scout report summaries",
+            "5 active scouting models",
+            "Priority support",
+          ],
+          name: "Pro",
+          price: "$19",
+          annual: "$14",
+        },
+        team: {
+          cta: "Contact us",
+          description:
+            "For recruitment departments and clubs.",
+          features: [
+            "Everything in Pro",
+            "Shared team workspace",
+            "Admin controls and usage",
+            "Custom onboarding",
+            "Dedicated support",
+          ],
+          name: "Team",
+          price: "Custom",
+          annual: "Custom",
+        },
       },
     },
     common: {
@@ -282,7 +821,8 @@ export const resources = {
       },
       status: {
         access: {
-          description: "Every admin endpoint verifies the user role on the server.",
+          description:
+            "Every admin endpoint verifies the user role on the server.",
           title: "Role protection enforced",
         },
         audit: {
@@ -701,13 +1241,19 @@ export const resources = {
     landing: {
       nav: {
         ariaLabel: "เมนูหลัก",
+        about: "เกี่ยวกับเรา",
         changeLanguage: "เปลี่ยนภาษา",
         features: "ความสามารถ",
         getStarted: "เริ่มต้นใช้งาน",
+        home: "หน้าแรก",
         openWorkspace: "เปิดพื้นที่ทำงาน",
+        policy: "นโยบาย",
+        privacyPolicy: "นโยบายความเป็นส่วนตัว",
         product: "ระบบสเกาต์ฟุตบอลด้วย AI",
         security: "ความปลอดภัย",
         signIn: "เข้าสู่ระบบ",
+        pricing: "ราคา",
+        termsOfUse: "ข้อกำหนดการใช้งาน",
         workflow: "ขั้นตอนการใช้งาน",
       },
       hero: {
@@ -782,7 +1328,534 @@ export const resources = {
       },
       footer: {
         copy: "ระบบสเกาต์ฟุตบอลด้วย AI เพื่อการตัดสินใจเสริมทีมที่ชัดเจนขึ้น",
+        legal: "ข้อกฎหมาย",
+        legalLabel: "ลิงก์ข้อกฎหมาย",
         note: "ScoutAI · พื้นที่วิเคราะห์ฟุตบอล",
+        product: "ผลิตภัณฑ์",
+        productLabel: "ลิงก์ผลิตภัณฑ์",
+        tagline: "ระบบสเกาต์ฟุตบอลด้วย AI เพื่อการตัดสินใจเสริมทีมที่ชัดเจนขึ้น",
+      },
+    },
+    about: {
+      hero: {
+        kicker: "ทำไมต้อง ScoutAI",
+        title: "สร้างมาเพื่อช่วยตัดสินใจเรื่องนักเตะให้ชัดเจนขึ้น",
+        description:
+          "ScoutAI คือพื้นที่ทำงานสเกาต์ฟุตบอลด้วย AI เรานำฐานข้อมูลนักเตะขนาดใหญ่มาผนวกกับห้าโมเดลแมวมอง เพื่อให้ทีมสรรหาค้นหา เปรียบเทียบ และอธิบายนักเตะที่เหมาะกับสโมสร",
+      },
+      statement: {
+        kicker: "เป้าหมายของเรา",
+        title: "เปลี่ยนตลาดนักเตะทั้งหมดให้เป็นรายชื่อที่ตัดสินใจได้อย่างมั่นใจ",
+        body: {
+          "1": "ทีมสรรหาต้องเผชิญกับข้อมูลนักเตะจำนวนมหาศาล เราสร้าง ScoutAI ขึ้นเพื่อเปลี่ยนข้อมูลเหล่านี้ให้เป็นขั้นตอนการทำงานที่ทำซ้ำได้ ทำให้ทุกคำแนะนำตรวจสอบ อธิบาย และนำไปปฏิบัติได้ง่ายขึ้น",
+          "2": "ตั้งแต่การกรองครั้งแรกจนถึงการตัดสินใจ เรารวบรวมหลักฐานทั้งหมดไว้ด้วยกัน ทั้งโปรไฟล์นักเตะ คำแนะนำจากโมเดล และรายงานสเกาต์ในพื้นที่ทำงานส่วนตัวเดียว",
+        },
+      },
+      pillars: {
+        kicker: "วิธีที่เราทำงาน",
+        title: "สามหลักการที่คอยชี้นำทุกการตัดสินใจของเรา",
+        description:
+          "ทุกสิ่งที่เราสร้างให้ ScoutAI ย้อนกลับไปได้ถึงหลักการต่อไปนี้",
+        data: {
+          title: "ข้อมูลที่เชื่อถือได้",
+          body: "ทุกการเปรียบเทียบเริ่มจากฐานข้อมูลนักเตะแบบมีโครงสร้างที่มีค่าพลังนับร้อยรายการ คำแนะนำจึงมีหลักฐานรองรับเสมอ",
+        },
+        people: {
+          title: "มนุษย์ยังคงเป็นผู้ตัดสินใจ",
+          body: "โมเดลให้คำแนะนำ แต่แมวมองและนักวิเคราะห์เป็นผู้ตัดสินใจ ทุกข้อเสนอมาพร้อมเหตุผลประกอบ เพื่อให้ทีมตรวจสอบและอธิบายทางเลือกของตนได้",
+        },
+        privacy: {
+          title: "เป็นส่วนตัวตั้งแต่การออกแบบ",
+          body: "นักเตะที่บันทึก รายงาน และกิจกรรมการค้นหาจะอยู่ภายในพื้นที่ทำงานที่ยืนยันตัวตนแล้ว งานสรรหาของคุณเป็นของคุณ",
+        },
+      },
+      timeline: {
+        kicker: "ย้อนกลับไปดูจุดเริ่มต้น",
+        title: "ScoutAI ก่อตัวขึ้นมาได้อย่างไร",
+        description:
+          "ประวัติโดยย่อของโปรเจกต์ จากการทดลองข้อมูลสู่แพลตฟอร์มเว็บสำหรับทีมสรรหา",
+        items: [
+          {
+            year: "2024",
+            title: "จุดเริ่มต้นของแนวคิด",
+            body: "โปรเจกต์สำรวจข้อมูลเริ่มตั้งคำถามว่าข้อมูล Football Manager จะช่วยสนับสนุนการตัดสินใจสเกาต์จริงได้หรือไม่",
+          },
+          {
+            year: "2025",
+            title: "ระบบแมวมอง ML",
+            body: "ห้าโมเดลแมวมอง ได้แก่ K-NN, Cosine, Radius Neighbours, K-Means และ DBSCAN ถูกฝึกบนโปรไฟล์นักเตะหลายพันคน",
+          },
+          {
+            year: "2025",
+            title: "เชื่อมต่อสู่เว็บ",
+            body: "ระบบกลายเป็นศูนย์สเกาต์แบบสด ค้นหา เปรียบเทียบ และบันทึกรายชื่อนักเตะได้จากเบราว์เซอร์",
+          },
+          {
+            year: "2025",
+            title: "สร้างมาเพื่อทีม",
+            body: "พื้นที่ทำงานร่วมกัน สิทธิ์ผู้ดูแล และระบบรายงาน ทำให้ ScoutAI ใช้ได้จริงสำหรับแผนกสรรหาทั้งทีม",
+          },
+        ],
+      },
+      metrics: {
+        attributes: "ค่าพลังนักเตะ",
+        models: "โมเดลแมวมอง",
+        players: "โปรไฟล์นักเตะ",
+        workflow: "ค้นหาสู่การตัดสินใจ",
+      },
+      building: {
+        kicker: "สิ่งที่เรากำลังสร้าง",
+        title: "ห้าโมเดลที่มองนักเตะแต่ละคนไม่เหมือนกัน",
+        description:
+          "ไม่มีอัลกอริทึมเดียวที่ทำงานครบทุกอย่าง แต่ละโมเดลมองเป้าหมายจากมุมต่างกัน ทำให้เป้าหมายที่แข็งแกร่งที่สุดโผล่ขึ้นมาพร้อมกัน",
+        models: {
+          clone: {
+            badge: "โปรไฟล์โดยรวมใกล้เคียงที่สุด",
+            title: "K-NN · เดอะโคลน",
+            description:
+              "ค้นหานักเตะที่มีโปรไฟล์ค่าพลังโดยรวมใกล้เคียงกับนักเตะเป้าหมายมากที่สุด",
+          },
+          style: {
+            badge: "บทบาทและสไตล์ใกล้เคียง",
+            title: "Cosine · สไตล์แมทช์",
+            description:
+              "จัดอันดับเป้าหมายตามความใกล้เคียงของพฤติกรรมการเล่นกับนักเตะเป้าหมาย",
+          },
+          strict: {
+            badge: "จับคู่แบบเข้มงวด",
+            title: "Radius NN · ตัวกรองเข้มข้น",
+            description:
+              "คัดเฉพาะนักเตะที่ยังอยู่ในระยะใกล้จากโปรไฟล์ของนักเตะเป้าหมายเท่านั้น",
+          },
+          group: {
+            badge: "กลุ่มสถิติใกล้เคียงกัน",
+            title: "K-Means · กลุ่มแท็กติก",
+            description:
+              "จัดกลุ่มนักเตะด้วยสถิติร่วมกัน แล้วดึงสมาชิกที่ใกล้ที่สุดภายในกลุ่มเดียวกัน",
+          },
+          outlier: {
+            badge: "เช็กตัวเลือกนอกกรอบ",
+            title: "DBSCAN · เครื่องตรวจจับนอกรูปแบบ",
+            description:
+              "ระบุนักเตะที่มีโปรไฟล์แตกต่างจริง ๆ ทางเลือกซ่อนเร้นที่คนอื่นอาจมองข้าม",
+          },
+        },
+      },
+      cta: {
+        kicker: "พร้อมเริ่มงานสเกาต์",
+        title: "เริ่มค้นหานักเตะที่ทีมของคุณยังขาด",
+        description: "สร้างพื้นที่ทำงานและเปลี่ยนข้อมูลนักเตะให้เป็นรายงานพร้อมตัดสินใจ",
+        action: "เริ่มค้นหานักเตะ",
+        openWorkspace: "เปิดพื้นที่ทำงาน",
+        pricing: "ดูราคา",
+        contact:
+          "ทำงานอยู่ที่สโมสรหรือแผนกสรรหา? ลองดูแพ็กเกจทีมหรือติดต่อผ่านแพลตฟอร์มได้เลย",
+      },
+    },
+    terms: {
+      hero: {
+        kicker: "ข้อกำหนดการใช้งาน",
+        title: "ข้อกำหนดการใช้งาน",
+        description:
+          "ข้อกำหนดที่ควบคุมการเข้าถึงและการใช้แพลตฟอร์มสเกาต์ฟุตบอล ScoutAI",
+      },
+      updated: "อัปเดตล่าสุด: มกราคม 2568",
+      note: "ข้อกำหนดการใช้งานเหล่านี้ (“ข้อกำหนด”) ใช้กับแพลตฟอร์มสเกาต์ฟุตบอล ScoutAI (“บริการ”) โดยการเข้าถึงหรือใช้บริการ ถือว่าคุณยอมรับข้อกำหนดเหล่านี้ หากคุณไม่ยอมรับ โปรดอย่าใช้บริการ",
+      sections: [
+        {
+          id: "accepting",
+          title: "1. การยอมรับข้อกำหนด",
+          body: "โดยการสร้างบัญชีหรือใช้บริการ คุณยอมรับข้อกำหนดเหล่านี้และนโยบายใด ๆ ที่เราเผยแพร่บนเว็บไซต์นี้ การใช้บริการต่อหลังการอัปเดตที่ประกาศแล้วถือว่าคุณยอมรับข้อกำหนดที่แก้ไข",
+        },
+        {
+          id: "use",
+          title: "2. การใช้บริการ",
+          body: "บริการให้คุณค้นหาข้อมูลนักเตะ เปรียบเทียบค่าพลังและศักยภาพ และสร้างรายงานสเกาต์ที่ช่วยด้วย AI คุณสามารถใช้บริการได้เพื่อวัตถุประสงค์ในการสรรหาและสเกาต์ที่ถูกต้องตามกฎหมายเท่านั้น และต้องไม่ใช้ในทางที่ผิด รบกวน หรือขูดข้อมูลเกินขอบเขตฟีเจอร์ที่ตั้งไว้",
+        },
+        {
+          id: "account",
+          title: "3. บัญชีของคุณ",
+          body: "คุณต้องเก็บรักษาข้อมูลประจำตัวของคุณอย่างปลอดภัยและรับผิดชอบต่อกิจกรรมในบัญชีของคุณ คุณต้องมีอายุอย่างน้อย 16 ปี (หรืออายุตามกฎหมายที่บังคับใช้ในประเทศของคุณ) จึงจะใช้บริการได้",
+        },
+        {
+          id: "fees",
+          title: "4. ค่าธรรมเนียมและการสมัครสมาชิก",
+          body: "บางฟีเจอร์ใช้งานฟรีและบางส่วนต้องสมัครสมาชิกแบบชำระเงิน ค่าธรรมเนียมเรียกเก็บล่วงหน้าและไม่สามารถคืนเงินได้ เว้นแต่กฎหมายกำหนด ราคาอาจมีการเปลี่ยนแปลงโดยแจ้งให้ทราบอย่างเหมาะสม",
+        },
+        {
+          id: "ownership",
+          title: "5. เนื้อหาและความเป็นเจ้าของ",
+          body: "คุณยังคงเป็นเจ้าของนักเตะที่บันทึก รายชื่อเป้าหมาย และรายงานของคุณ ScoutAI เป็นเจ้าของบริการ ซอฟต์แวร์ โครงสร้างฐานข้อมูล และโมเดลเบื้องหลัง คุณอนุญาตให้เราใช้สิทธิ์แบบจำกัดในการจัดเก็บและประมวลผลเนื้อหาของคุณเพื่อให้บริการ",
+        },
+        {
+          id: "ai-output",
+          title: "6. ผลลัพธ์ที่ช่วยด้วย AI",
+          body: "รายงานและคำแนะนำถูกสร้างจากข้อมูลนักเตะและจัดให้เพื่อการให้ข้อมูลเท่านั้น ไม่ถือเป็นคำแนะนำทางวิชาชีพ กฎหมาย หรือการเงิน และคุณยังคงรับผิดชอบต่อการตัดสินใจของคุณ",
+        },
+        {
+          id: "termination",
+          title: "7. การยุติการใช้งาน",
+          body: "คุณสามารถหยุดใช้บริการได้ตลอดเวลา เราอาจระงับหรือยุติการเข้าถึงหากคุณละเมิดข้อกำหนดเหล่านี้หรือหากกฎหมายกำหนด ข้อมูลของคุณอาจถูกลบหลังการยุติตามแนวทางปฏิบัติในการเก็บรักษาของเรา",
+        },
+        {
+          id: "changes",
+          title: "8. การเปลี่ยนแปลงและการติดต่อ",
+          body: "เราอาจอัปเดตข้อกำหนดเหล่านี้และแสดงการเปลี่ยนแปลงที่นี่ บริการจัดให้ “ตามที่เป็น” และภายใต้ขอบเขตสูงสุดที่กฎหมายอนุญาต ความรับผิดของเราถูกจำกัด คำถามสามารถส่งผ่านช่องทางสนับสนุนในบัญชีของคุณ",
+        },
+      ],
+    },
+    privacy: {
+      hero: {
+        kicker: "นโยบายความเป็นส่วนตัว",
+        title: "นโยบายความเป็นส่วนตัว",
+        description:
+          "วิธีที่ ScoutAI เก็บรวบรวม ใช้ และปกป้องข้อมูลส่วนบุคคลของคุณเมื่อคุณใช้แพลตฟอร์ม",
+      },
+      updated: "อัปเดตล่าสุด: มกราคม 2568",
+      note: "นโยบายความเป็นส่วนตัวนี้อธิบายวิธีที่ ScoutAI (“เรา”) เก็บรวบรวม ใช้ และปกป้องข้อมูลส่วนบุคคลของคุณ โดยการใช้บริการ ถือว่าคุณยินยอมต่อแนวปฏิบัติที่อธิบายไว้ที่นี่",
+      sections: [
+        {
+          id: "collect",
+          title: "1. ข้อมูลที่เราเก็บรวบรวม",
+          body: "เราเก็บข้อมูลที่คุณให้ไว้โดยตรง เช่น ชื่อและอีเมลเมื่อคุณสร้างบัญชี และข้อมูลที่เกิดจากการใช้งานของคุณ เช่น การค้นหานักเตะ รายชื่อเป้าหมาย รายงานสเกาต์ และการวิเคราะห์การใช้งาน",
+        },
+        {
+          id: "use",
+          title: "2. วิธีที่เราใช้ข้อมูล",
+          body: "เราใช้ข้อมูลของคุณเพื่อให้บริการและพัฒนาบริการ ปรับแต่งพื้นที่ทำงาน ยืนยันตัวตนบัญชี รักษาความปลอดภัยของแพลตฟอร์ม และสื่อสารกับคุณเกี่ยวกับการอัปเดตและการสนับสนุน",
+        },
+        {
+          id: "share",
+          title: "3. วิธีที่เราแบ่งปันข้อมูล",
+          body: "เราไม่ขายข้อมูลส่วนบุคคลของคุณ เราอาจแบ่งปันข้อมูลกับผู้ให้บริการที่ดำเนินงานบริการ เมื่อกฎหมายกำหนด หรือเพื่อปกป้องสิทธิ์และความปลอดภัยของ ScoutAI และผู้ใช้",
+        },
+        {
+          id: "retention",
+          title: "4. การเก็บรักษาข้อมูล",
+          body: "เราเก็บข้อมูลของคุณตราบเท่าที่บัญชีของคุณยังใช้งานอยู่หรือตามความจำเป็นเพื่อให้บริการและปฏิบัติตามข้อผูกพันทางกฎหมาย คุณสามารถลบข้อมูลของคุณผ่านบัญชีของคุณหรือโดยติดต่อฝ่ายสนับสนุน",
+        },
+        {
+          id: "security",
+          title: "5. ความปลอดภัย",
+          body: "เราใช้มาตรการทางเทคนิคและองค์กรที่เหมาะสมเพื่อปกป้องข้อมูลของคุณ ไม่มีวิธีการส่งหรือจัดเก็บข้อมูลใดที่ปลอดภัยอย่างสมบูรณ์ แต่เราทำงานเพื่อให้พื้นที่ทำงานของคุณเป็นส่วนตัว",
+        },
+        {
+          id: "rights",
+          title: "6. สิทธิ์ของคุณ",
+          body: "ขึ้นอยู่กับเขตอำนาจของคุณ คุณอาจมีสิทธิ์เข้าถึง แก้ไข หรือลบข้อมูลส่วนบุคคลของคุณ และคัดค้านการประมวลผลบางอย่าง คุณสามารถใช้สิทธิ์เหล่านี้ได้โดยติดต่อเรา",
+        },
+        {
+          id: "changes",
+          title: "7. การเปลี่ยนแปลงและการติดต่อ",
+          body: "เราอาจอัปเดตนโยบายนี้และแสดงการเปลี่ยนแปลงที่นี่ คำถามเกี่ยวกับนโยบายนี้หรือข้อมูลส่วนบุคคลของคุณสามารถส่งผ่านช่องทางสนับสนุนในบัญชีของคุณ",
+        },
+      ],
+    },
+    policy: {
+      hero: {
+        kicker: "นโยบายของ ScoutAI",
+        title: "ข้อกำหนดการใช้งาน ความเป็นส่วนตัว และนโยบาย",
+        description:
+          "แหล่งอ้างอิงที่ชัดเจนเกี่ยวกับวิธีที่ ScoutAI ทำงาน วิธีจัดการข้อมูลของคุณ และข้อกำหนดที่ทำให้แพลตฟอร์มเป็นธรรมและปลอดภัย",
+      },
+      nav: {
+        termsOfUse: "ข้อกำหนดการใช้งาน",
+        privacyPolicy: "นโยบายความเป็นส่วนตัว",
+        otherPolicies: "นโยบายอื่น ๆ",
+      },
+      updated: "อัปเดตล่าสุด: มกราคม 2568",
+      note: "นโยบายเหล่านี้ครอบคลุมแพลตฟอร์มสเกาต์ฟุตบอล ScoutAI (“บริการ”) การใช้บริการถือว่าคุณยอมรับข้อกำหนดการใช้งานและรับทราบนโยบายความเป็นส่วนตัว",
+      termsOfUse: {
+        title: "ข้อกำหนดการใช้งาน",
+        sections: [
+          {
+            id: "introduction",
+            title: "1. บทนำ",
+            body: "ข้อกำหนดการใช้งานเหล่านี้ (“ข้อกำหนด”) ควบคุมการเข้าถึงและการใช้ ScoutAI แพลตฟอร์มสเกาต์ฟุตบอลด้วย AI โดยการสร้างบัญชีหรือใช้บริการ ถือว่าคุณยอมรับข้อกำหนดเหล่านี้ หากคุณไม่ยอมรับ โปรดอย่าใช้บริการ",
+          },
+          {
+            id: "scope",
+            title: "2. ขอบเขตของบริการ",
+            body: "ScoutAI ให้บริการพื้นที่ทำงานบนคลาวด์ที่ให้คุณค้นหาฐานข้อมูลนักเตะ เปรียบเทียบค่าพลังและศักยภาพ และสร้างรายงานสเกาต์ที่ช่วยด้วย AI บริการนี้มีไว้เพื่อวัตถุประสงค์ในการสรรหาและสเกาต์ที่ถูกต้องตามกฎหมายเท่านั้น",
+          },
+          {
+            id: "account",
+            title: "3. บัญชีของคุณ",
+            body: "ในการใช้บริการ คุณต้องสร้างบัญชีด้วยอีเมลที่ใช้งานได้ คุณมีหน้าที่ดูแลรักษาข้อมูลประจำตัวและรับผิดชอบกิจกรรมทั้งหมดที่เกิดขึ้นในบัญชีของคุณ คุณต้องมีอายุอย่างน้อย 16 ปี (หรืออายุตามกฎหมายที่บังคับใช้ในประเทศของคุณ) จึงจะใช้บริการได้",
+          },
+          {
+            id: "acceptable-use",
+            title: "4. การใช้งานที่เหมาะสม",
+            body: "คุณตกลงว่าจะไม่ใช้บริการในทางที่ผิด ซึ่งรวมถึง: การพยายามเข้าถึงบริการโดยไม่ได้รับอนุญาต การแทรกแซงหรือรบกวนการทำงานของบริการ การขูดข้อมูลหรือนำข้อมูลนักเตะไปใช้เกินขอบเขตของฟีเจอร์ และการนำบริการไปใช้ฝ่าฝืนกฎหมายหรือข้อบังคับใด ๆ",
+          },
+          {
+            id: "fees",
+            title: "5. ค่าธรรมเนียมและการสมัครสมาชิก",
+            body: "บริการบางส่วนใช้งานฟรีและบางส่วนต้องสมัครสมาชิกแบบชำระเงิน ค่าสมัครสมาชิกจะเรียกเก็บล่วงหน้าและไม่สามารถคืนเงินได้ เว้นแต่กฎหมายกำหนด เราอาจเปลี่ยนแปลงราคาหรือเพิ่มค่าธรรมเนียมใหม่โดยแจ้งให้ทราบล่วงหน้าอย่างเหมาะสม",
+          },
+          {
+            id: "content",
+            title: "6. เนื้อหาและความเป็นเจ้าของ",
+            body: "คุณยังคงเป็นเจ้าของเนื้อหาที่คุณส่งไปยังบริการ รวมถึงนักเตะที่บันทึก รายชื่อเป้าหมาย และรายงานสเกาต์ โดยการส่งเนื้อหา คุณอนุญาตให้ ScoutAI ใช้สิทธิ์แบบจำกัดและไม่ผูกขาดเพื่อโฮสต์ ประมวลผล และแสดงเนื้อหานั้นเพื่อให้บริการแก่คุณเท่านั้น",
+          },
+          {
+            id: "ai-output",
+            title: "7. ผลลัพธ์ที่ช่วยด้วย AI",
+            body: "บริการอาจสร้างรายงาน คำแนะนำ และสรุปที่ช่วยด้วย AI จากข้อมูลนักเตะ ผลลัพธ์เหล่านี้จัดทำเพื่อให้ข้อมูลเท่านั้น ไม่ถือเป็นคำแนะนำทางวิชาชีพ กฎหมาย หรือการเงิน คุณยังคงรับผิดชอบต่อการตัดสินใจที่คุณทำโดยใช้บริการ",
+          },
+          {
+            id: "intellectual-property",
+            title: "8. ทรัพย์สินทางปัญญา",
+            body: "ScoutAI และผู้ให้สิทธิ์เป็นเจ้าของสิทธิ์ทั้งหมดในบริการ รวมถึงซอฟต์แวร์ โครงสร้างฐานข้อมูลนักเตะ และโมเดลเบื้องหลัง คุณไม่สามารถคัดลอก แก้ไข แจกจ่าย หรือสร้างผลงานดัดแปลงจากบริการได้ ยกเว้นที่ได้รับอนุญาตอย่างชัดแจ้ง",
+          },
+          {
+            id: "feedback",
+            title: "9. ความคิดเห็นจากผู้ใช้",
+            body: "หากคุณให้ข้อเสนอแนะ ความคิดเห็น หรือแนวคิดเกี่ยวกับบริการ คุณอนุญาตให้เราใช้สิทธิ์แบบถาวรและปลอดค่าลิขสิทธิ์เพื่อปรับปรุงบริการ เราจะไม่ผูกพันต้องเก็บข้อมูลเหล่านั้นเป็นความลับ",
+          },
+          {
+            id: "third-party",
+            title: "10. บริการจากบุคคลที่สาม",
+            body: "บริการอาจพึ่งพาผู้ให้บริการภายนอกสำหรับการโฮสต์ การยืนยันตัวตน และข้อมูล เราไม่รับผิดชอบต่อเนื้อหาหรือแนวปฏิบัติของบริการบุคคลที่สาม และการใช้งานของคุณอยู่ภายใต้ข้อกำหนดของบริการเหล่านั้นเอง",
+          },
+          {
+            id: "termination",
+            title: "11. การยุติการใช้งาน",
+            body: "คุณสามารถหยุดใช้บริการได้ตลอดเวลา เราอาจระงับหรือยุติการเข้าถึงของคุณหากคุณละเมิดข้อกำหนดเหล่านี้หรือหากกฎหมายกำหนด เมื่อยุติการใช้งาน สิทธิ์ของคุณในการใช้บริการจะสิ้นสุดลง และข้อมูลของคุณอาจถูกลบตามแนวทางปฏิบัติในการเก็บรักษาข้อมูลของเรา",
+          },
+          {
+            id: "disclaimers",
+            title: "12. การปฏิเสธความรับผิด",
+            body: "บริการจัดให้ “ตามที่เป็น” และ “ตามที่มีอยู่” โดยไม่มีการรับประกันใด ๆ ทั้งโดยชัดแจ้งหรือโดยนัย เราไม่รับประกันว่าบริการจะไม่สะดุดหรือปราศจากข้อผิดพลาด หรือข้อมูลนักเตะจะครบถ้วนและถูกต้องตลอดเวลา",
+          },
+          {
+            id: "limitation",
+            title: "13. การจำกัดความรับผิด",
+            body: "ภายใต้ขอบเขตสูงสุดที่กฎหมายอนุญาต ScoutAI จะไม่รับผิดชอบต่อความเสียหายทางอ้อม อุบัติเหตุ พิเศษ หรือเป็นผลสืบเนื่อง หรือต่อการสูญเสียผลกำไร ข้อมูล หรือชื่อเสียง ที่เกิดจากหรือเกี่ยวข้องกับบริการ",
+          },
+          {
+            id: "indemnification",
+            title: "14. การชดใช้ค่าเสียหาย",
+            body: "คุณตกลงจะชดใช้และคุ้มครอง ScoutAI และบริษัทในเครือจากข้อเรียกร้อง ความเสียหาย หรือค่าใช้จ่ายใด ๆ ที่เกิดจากการใช้บริการของคุณหรือการละเมิดข้อกำหนดเหล่านี้",
+          },
+          {
+            id: "governing-law",
+            title: "15. กฎหมายที่ใช้บังคับ",
+            body: "ข้อกำหนดเหล่านี้อยู่ภายใต้กฎหมายของประเทศไทย โดยไม่คำนึงถึงหลักการขัดกันแห่งกฎหมาย ข้อพิพาทใด ๆ จะได้รับการแก้ไขในศาลที่มีเขตอำนาจของประเทศไทย",
+          },
+          {
+            id: "changes",
+            title: "16. การเปลี่ยนแปลงข้อกำหนด",
+            body: "เราอาจอัปเดตข้อกำหนดเหล่านี้เป็นครั้งคราว เมื่อมีการเปลี่ยนแปลง เราจะแสดงเวอร์ชันที่อัปเดตในหน้านี้ การใช้บริการต่อหลังการเปลี่ยนแปลงถือเป็นการยอมรับข้อกำหนดที่แก้ไขแล้ว",
+          },
+          {
+            id: "contact",
+            title: "17. ติดต่อ",
+            body: "หากคุณมีคำถามเกี่ยวกับข้อกำหนดเหล่านี้ โปรดติดต่อเราผ่านช่องทางสนับสนุน ScoutAI ในบัญชีของคุณ",
+          },
+        ],
+      },
+      privacyPolicy: {
+        title: "นโยบายความเป็นส่วนตัว",
+        sections: [
+          {
+            id: "introduction",
+            title: "1. บทนำ",
+            body: "นโยบายความเป็นส่วนตัวนี้อธิบายวิธีที่ ScoutAI เก็บรวบรวม ใช้ และปกป้องข้อมูลส่วนบุคคลของคุณเมื่อคุณใช้บริการ โดยการใช้บริการ ถือว่าคุณยินยอมต่อแนวปฏิบัติที่อธิบายในนโยบายนี้",
+          },
+          {
+            id: "collect",
+            title: "2. ข้อมูลที่เราเก็บรวบรวม",
+            body: "เราเก็บข้อมูลที่คุณให้ไว้โดยตรง เช่น ชื่อและอีเมลเมื่อคุณสร้างบัญชี เรายังเก็บข้อมูลที่เกิดจากการใช้งานบริการของคุณ รวมถึงการค้นหานักเตะ รายชื่อเป้าหมาย รายงานสเกาต์ และการวิเคราะห์การใช้งาน เช่น หน้าที่คุณเข้าชมและฟีเจอร์ที่คุณใช้",
+          },
+          {
+            id: "use",
+            title: "3. วิธีที่เราใช้ข้อมูล",
+            body: "เราใช้ข้อมูลของคุณเพื่อให้บริการและพัฒนาบริการ ปรับแต่งพื้นที่ทำงานของคุณ ยืนยันตัวตนบัญชี ตอบสนองคำขอของคุณ ดูแลความปลอดภัย และติดต่อสื่อสารกับคุณเกี่ยวกับการอัปเดตและการสนับสนุน",
+          },
+          {
+            id: "share",
+            title: "4. วิธีที่เราแบ่งปันข้อมูล",
+            body: "เราไม่ขายข้อมูลส่วนบุคคลของคุณ เราอาจแบ่งปันข้อมูลของคุณกับผู้ให้บริการที่ช่วยเราดำเนินบริการ เมื่อกฎหมายกำหนด หรือเพื่อปกป้องสิทธิ์และความปลอดภัยของ ScoutAI และผู้ใช้",
+          },
+          {
+            id: "retention",
+            title: "5. การเก็บรักษาข้อมูล",
+            body: "เราเก็บข้อมูลของคุณตราบเท่าที่บัญชีของคุณยังใช้งานอยู่หรือตามความจำเป็นเพื่อให้บริการ ปฏิบัติตามข้อผูกพันทางกฎหมาย แก้ไขข้อพิพาท และบังคับใช้ข้อตกลงของเรา คุณสามารถลบข้อมูลของคุณผ่านบัญชีของคุณหรือโดยติดต่อฝ่ายสนับสนุน",
+          },
+          {
+            id: "security",
+            title: "6. ความปลอดภัย",
+            body: "เราใช้มาตรการทางเทคนิคและองค์กรที่เหมาะสมเพื่อปกป้องข้อมูลของคุณจากการเข้าถึง การเปิดเผย การเปลี่ยนแปลง หรือการทำลายโดยไม่ได้รับอนุญาต อย่างไรก็ตาม ไม่มีวิธีการส่งหรือจัดเก็บข้อมูลใดที่ปลอดภัยอย่างสมบูรณ์",
+          },
+          {
+            id: "rights",
+            title: "7. สิทธิ์และทางเลือกของคุณ",
+            body: "ขึ้นอยู่กับเขตอำนาจของคุณ คุณอาจมีสิทธิ์เข้าถึง แก้ไข หรือลบข้อมูลส่วนบุคคลของคุณ และคัดค้านหรือจำกัดการประมวลผลบางอย่าง คุณสามารถใช้สิทธิ์เหล่านี้ได้โดยติดต่อเรา",
+          },
+          {
+            id: "cookies",
+            title: "8. คุกกี้และการติดตาม",
+            body: "เราใช้คุกกี้และเทคโนโลยีที่คล้ายกันเพื่อให้คุณเข้าสู่ระบบอยู่ตลอด จำความต้องการของคุณ (เช่น ภาษาและธีม) และเข้าใจวิธีใช้งานบริการ คุณสามารถควบคุมคุกกี้ผ่านการตั้งค่าเบราว์เซอร์ของคุณ",
+          },
+          {
+            id: "children",
+            title: "9. ความเป็นส่วนตัวของเด็ก",
+            body: "บริการนี้ไม่ได้มุ่งเป้าไปที่เด็กอายุต่ำกว่า 16 ปี เราไม่เก็บรวบรวมข้อมูลส่วนบุคคลจากเด็กโดยรู้เท่าทัน หากคุณเชื่อว่าเด็กได้ให้ข้อมูลส่วนบุคคลแก่เรา โปรดติดต่อเรา",
+          },
+          {
+            id: "international",
+            title: "10. การโอนข้อมูลระหว่างประเทศ",
+            body: "ข้อมูลของคุณอาจถูกจัดเก็บและประมวลผลในประเทศอื่นนอกเหนือจากประเทศของคุณ เมื่อเราโอนข้อมูลข้ามพรมแดน เราจะดำเนินการเพื่อปกป้องข้อมูลตามนโยบายนี้และกฎหมายที่ใช้บังคับ",
+          },
+          {
+            id: "changes",
+            title: "11. การเปลี่ยนแปลงนโยบายนี้",
+            body: "เราอาจอัปเดตนโยบายความเป็นส่วนตัวนี้เป็นครั้งคราว เราจะแสดงเวอร์ชันที่อัปเดตในหน้านี้ และแจ้งให้คุณทราบตามความเหมาะสม การใช้บริการต่อหลังการเปลี่ยนแปลงถือเป็นการยอมรับนโยบายที่แก้ไขแล้ว",
+          },
+          {
+            id: "contact",
+            title: "12. ติดต่อ",
+            body: "หากคุณมีคำถามเกี่ยวกับนโยบายความเป็นส่วนตัวนี้หรือข้อมูลส่วนบุคคลของคุณ โปรดติดต่อเราผ่านช่องทางสนับสนุน ScoutAI ในบัญชีของคุณ",
+          },
+        ],
+      },
+      otherPolicies: {
+        title: "นโยบายอื่น ๆ",
+        sections: [
+          {
+            id: "usage-policies",
+            title: "นโยบายการใช้งาน",
+            body: "ใช้ ScoutAI อย่างรับผิดชอบ คุณไม่สามารถใช้บริการเพื่อสร้างข้อมูลสเกาต์ที่ทำให้เข้าใจผิด ใช้เลือกปฏิบัติอย่างไม่เป็นธรรม ละเมิดสิทธิ์ของผู้อื่น หรือกระทำกิจกรรมที่ผิดกฎหมายหรือเป็นอันตราย ผลลัพธ์ที่ช่วยด้วย AI จัดทำเพื่อวัตถุประสงค์ในการให้ข้อมูล และควรได้รับการตรวจสอบโดยผู้เชี่ยวชาญที่มีคุณสมบัติก่อนการตัดสินใจสรรหานักเตะ",
+          },
+          {
+            id: "sharing-publication",
+            title: "นโยบายการแบ่งปันและการเผยแพร่",
+            body: "เมื่อคุณแบ่งปันรายงานสเกาต์หรือผลลัพธ์จาก AI คุณรับผิดชอบต่อข้อมูลที่คุณแบ่งปันและต้องมั่นใจว่าข้อมูลถูกต้องและใช้อย่างเหมาะสม คุณไม่ควรแบ่งปันเนื้อหาที่เป็นความลับ ทำให้เข้าใจผิด หรือละเมิดสิทธิ์ของผู้อื่น",
+          },
+          {
+            id: "data-security",
+            title: "ข้อมูลและความปลอดภัย",
+            body: "พื้นที่ทำงานของคุณได้รับการปกป้องด้วยการยืนยันตัวตนและการควบคุมการเข้าถึง รายงาน นักเตะที่บันทึก และประวัติการค้นหาเป็นส่วนตัวต่อบัญชีของคุณ เราไม่ขายข้อมูลของคุณ และจำกัดการเข้าถึงเฉพาะบุคลากรที่ได้รับอนุญาตตามความจำเป็นเพื่อดำเนินบริการ",
+          },
+          {
+            id: "copyright",
+            title: "นโยบายลิขสิทธิ์",
+            body: "ScoutAI เคารพสิทธิ์ในทรัพย์สินทางปัญญา หากคุณเชื่อว่าเนื้อหาบนบริการละเมิดลิขสิทธิ์ของคุณ คุณสามารถแจ้งเราได้ และเราจะตรวจสอบเรื่องดังกล่าว เราอาจนำเนื้อหาที่เราพิจารณาว่าละเมิดออก",
+          },
+          {
+            id: "business-terms",
+            title: "ข้อกำหนดทางธุรกิจ",
+            body: "สำหรับแผนกสรรหา สโมสร และผู้ใช้องค์กร อาจมีข้อกำหนดเพิ่มเติม โปรดติดต่อเราเพื่อเรียนรู้เกี่ยวกับพื้นที่ทำงานของทีม การควบคุมของผู้ดูแลระบบ การเริ่มใช้งาน และการสนับสนุนโดยเฉพาะ",
+          },
+        ],
+      },
+    },
+    pricing: {
+      badge: "ยอดนิยม",
+      hero: {
+        description:
+          "เลือกแพ็กเกจที่เหมาะกับทีมสเกาต์ของคุณ ทุกแพ็กเกจรวมพื้นที่จัดเก็บรายงานและรายชื่อเป้าหมายแบบส่วนตัว",
+        kicker: "ราคา",
+        title: "แพ็กเกจง่าย ๆ สำหรับทุกทีมสรรหา",
+      },
+      billing: {
+        monthly: "รายเดือน",
+        annual: "รายปี",
+        save: "ประหยัด 25%",
+      },
+      compare: {
+        title: "เปรียบเทียบแพ็กเกจ",
+        subtitle:
+          "ทุกสิ่งที่คุณต้องใช้เพื่อตัดสินใจว่าแพ็กเกจใดเหมาะกับขั้นตอนการสรรหาของคุณ",
+        header: "ฟีเจอร์",
+        rows: [
+          ["เข้าถึงฐานข้อมูลนักเตะทั้งหมด", true, true, true],
+          ["รายงานสเกาต์ต่อเดือน", "3", "ไม่จำกัด", "ไม่จำกัด"],
+          ["สรุปรายงานแมวมองด้วย AI", false, true, true],
+          ["โมเดลสเกาต์ที่ใช้งาน", "1", "5", "5"],
+          ["รายชื่อเป้าหมายส่วนตัว", true, true, true],
+          ["พื้นที่ทำงานร่วมกันของทีม", false, false, true],
+          ["สิทธิ์ผู้ดูแลและการใช้งาน", false, false, true],
+          ["การสนับสนุนที่มีลำดับความสำคัญ", false, true, true],
+          ["การสนับสนุนโดยเฉพาะ", false, false, true],
+        ],
+      },
+      faq: {
+        title: "คำถามที่พบบ่อย",
+        subtitle:
+          "คำตอบสั้น ๆ เกี่ยวกับแพ็กเกจ การเรียกเก็บเงิน และสิ่งที่รวมอยู่ในแต่ละแพ็กเกจ",
+        items: [
+          {
+            q: "ฉันสามารถเปลี่ยนหรือยกเลิกแพ็กเกจได้ตลอดเวลาหรือไม่?",
+            a: "ได้ คุณสามารถอัปเกรด ดาวน์เกรด หรือยกเลิกแพ็กเกจได้ทุกเมื่อที่ต้องการ การเรียกเก็บเงินจะสิ้นสุดเมื่อจบรอบการเรียกเก็บเงินปัจจุบัน",
+          },
+          {
+            q: "อะไรที่นับเป็นรายงานสเกาต์?",
+            a: "รายงานสเกาต์จะถูกสร้างขึ้นเมื่อคุณวิเคราะห์นักเตะและเปิดรายงานที่ช่วยด้วย AI ฉบับเต็ม การเรียกดูฐานข้อมูลหรือบันทึกเป้าหมายไม่นับรวมในโควตา",
+          },
+          {
+            q: "พื้นที่ทำงานของฉันยังเป็นส่วนตัวในทุกแพ็กเกจหรือไม่?",
+            a: "ใช่ นักเตะที่บันทึก รายชื่อเป้าหมาย รายงาน และประวัติการค้นหาของคุณยังคงเป็นส่วนตัวต่อบัญชีของคุณในทุกแพ็กเกจ",
+          },
+          {
+            q: "การเรียกเก็บเงินแบบรายปีทำงานอย่างไร?",
+            a: "การเรียกเก็บเงินแบบรายปีจะเรียกเก็บปีละครั้งและประหยัดได้ 25% เมื่อเทียบกับการจ่ายรายเดือน คุณยังได้สิทธิ์และฟีเจอร์เดียวกัน",
+          },
+          {
+            q: "ฉันสามารถขอแพ็กเกจสำหรับแผนกสรรหาทั้งหมดได้หรือไม่?",
+            a: "ได้ แพ็กเกจทีมเพิ่มพื้นที่ทำงานร่วมกัน สิทธิ์ผู้ดูแล และการสนับสนุนโดยเฉพาะสำหรับแผนกสรรหาและสโมสร",
+          },
+        ],
+      },
+      cta: {
+        kicker: "พร้อมเริ่มงานสเกาต์",
+        title: "เริ่มค้นหานักเตะที่ทีมของคุณยังขาด",
+        description: "สร้างพื้นที่ทำงานและเปลี่ยนข้อมูลนักเตะให้เป็นรายงานพร้อมตัดสินใจ",
+        action: "เริ่มต้นใช้งาน",
+      },
+      plans: {
+        free: {
+          cta: "เริ่มต้นใช้งาน",
+          description: "สำหรับแมวมองรายบุคคลที่ลองใช้ ScoutAI",
+          features: [
+            "ค้นหาฐานข้อมูลนักเตะทั้งหมด",
+            "รายงานสเกาต์ 3 ฉบับต่อเดือน",
+            "รายชื่อเป้าหมายส่วนตัว",
+            "การสนับสนุนจากชุมชน",
+          ],
+          name: "ฟรี",
+          price: "$0",
+          annual: "$0",
+        },
+        pro: {
+          cta: "เริ่มทดลองใช้ฟรี",
+          description: "สำหรับแมวมองที่ต้องการการวิเคราะห์เพิ่มเติม",
+          features: [
+            "ทุกอย่างในแพ็กเกจฟรี",
+            "รายงานสเกาต์ไม่จำกัด",
+            "สรุปบรีฟสเกาต์ด้วย AI",
+            "โมเดลสเกาต์ 5 รายการ",
+            "การสนับสนุนที่มีลำดับความสำคัญ",
+          ],
+          name: "โปร",
+          price: "$19",
+          annual: "$14",
+        },
+        team: {
+          cta: "ติดต่อเรา",
+          description: "สำหรับแผนกสรรหาและสโมสร",
+          features: [
+            "ทุกอย่างในแพ็กเกจโปร",
+            "พื้นที่ทำงานร่วมกันของทีม",
+            "สิทธิ์ผู้ดูแลและการใช้งาน",
+            "การอบรมเริ่มต้นแบบเฉพาะ",
+            "การสนับสนุนโดยเฉพาะ",
+          ],
+          name: "ทีม",
+          price: "กำหนดเอง",
+          annual: "กำหนดเอง",
+        },
       },
     },
     common: {
