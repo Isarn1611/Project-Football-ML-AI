@@ -6378,6 +6378,7 @@ html[data-color-mode="dark"] .landing-security {
   background: #246c4f;
 }
 
+
 html[data-color-mode="dark"] .site-pricing-card.is-featured .site-cta-button,
 html[data-color-mode="dark"] .site-pricing-card.is-featured .site-cta-button:hover {
   color: #ffffff;
@@ -6767,15 +6768,15 @@ html[data-color-mode="dark"] .site-pricing-card.is-featured .site-cta-button:hov
 
 .site-metrics-strip {
   display: grid;
-  width: min(100% - 48px, 1220px);
+  width: min(100% - 48px, 1160px);
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   overflow: hidden;
   margin: 0 auto;
   border: 1px solid #d7e3dd;
-  border-radius: 22px;
+  border-radius: 24px;
   background: #d7e3dd;
-  box-shadow: 0 30px 80px rgba(28, 57, 43, 0.08);
+  box-shadow: 0 24px 48px rgba(28, 57, 43, 0.08);
 }
 
 .site-metric {
@@ -7134,13 +7135,18 @@ html[data-color-mode="dark"] .site-pricing-card.is-featured .site-cta-button:hov
 }
 
 .site-policy-nav {
+  position: sticky;
+  top: 86px;
+  z-index: 20;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   border: 1px solid #dce7e1;
   border-radius: 16px;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(28, 57, 43, 0.05);
 }
 
 .site-policy-nav-link {
@@ -7207,7 +7213,7 @@ html[data-color-mode="dark"] .site-pricing-card.is-featured .site-cta-button:hov
 .site-pricing-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 24px;
   align-items: stretch;
 }
 
@@ -7217,30 +7223,50 @@ html[data-color-mode="dark"] .site-pricing-card.is-featured .site-cta-button:hov
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #dce7e1;
-  border-radius: 22px;
-  padding: 30px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 16px 45px rgba(28, 57, 43, 0.055);
+  border: 1px solid #e0ebe4;
+  border-radius: 24px;
+  padding: 34px 28px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.035);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  z-index: 1;
+}
+
+.site-pricing-card:hover {
+  transform: translateY(-4px);
+  border-color: #bcd5c7;
+  box-shadow: 0 16px 40px rgba(28, 57, 43, 0.07);
 }
 
 .site-pricing-card.is-featured {
-  border: 2px solid #67a98a;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(175, 220, 198, 0.35), transparent 46%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 249, 246, 0.9));
-  box-shadow: 0 30px 70px rgba(36, 108, 79, 0.18);
-  transform: translateY(-6px) scale(1.02);
+  border: 2px solid #549677;
+  background: #f4faf6;
+  box-shadow: 0 20px 50px rgba(36, 108, 79, 0.12);
+  z-index: 2;
+}
+
+.site-pricing-card.is-featured:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 60px rgba(36, 108, 79, 0.16);
 }
 
 .site-pricing-card.is-featured .site-pricing-badge {
   color: #ffffff;
-  background: #246c4f;
+  background: #173e2d;
+  font-weight: 800;
 }
 
 .site-pricing-card.is-featured .site-cta-button {
-  border-color: #173e2d;
-  background: #173e2d;
+  border-color: #143d2c;
+  color: #ffffff;
+  background: #143d2c;
+  box-shadow: 0 6px 20px rgba(20, 61, 44, 0.22);
+}
+
+.site-pricing-card.is-featured .site-cta-button:hover {
+  border-color: #1e523c;
+  background: #1e523c;
+  box-shadow: 0 8px 24px rgba(20, 61, 44, 0.3);
 }
 
 /* Dark mode: keep featured card emphasis and visible CTA band button */
@@ -7771,6 +7797,14 @@ html[data-color-mode="dark"] .site-pricing-badge {
   text-align: left;
   color: #1a2d23;
   font-weight: 650;
+}
+
+.site-compare-table tbody tr {
+  transition: background-color 150ms ease;
+}
+
+.site-compare-table tbody tr:hover {
+  background-color: rgba(36, 108, 79, 0.045);
 }
 
 .site-compare-table tbody tr:last-child th,

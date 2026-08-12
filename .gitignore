@@ -1,18 +1,52 @@
-# Python
+# Dependencies & Package Managers
+**/node_modules/
+.npm/
+.yarn/
+
+# Frontend Production Builds & Cache
+frontend/dist/
+frontend/build/
+.eslintcache
+.vite/
+
+# Python & Virtual Environments
 **/venv/
 **/.venv/
+env/
 __pycache__/
 .ipynb_checkpoints/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Environment
+# Machine Learning Models & Heavy Artifacts
+*.pkl
+*.joblib
+*.h5
+*.pth
+*.onnx
+*.pt
+
+# Environment Variables & Secrets
 **/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+*.pem
 
-# Node.js
-**/node_modules/
-
-# VS Code
+# Local IDE & AI Assistant Configurations
 .vscode/
+.idea/
+.agents/
+.gemini/
 
-# OS
+# System & Operating System Files
 .DS_Store
+Thumbs.db
+*.log
+command.txt
+*-dev.log

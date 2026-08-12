@@ -12,6 +12,7 @@ import {
 } from "@ant-design/icons";
 
 import scoutAiAnalysis from "../assets/scoutai-auth-hero-analysis.png";
+import scoutAi from "../assets/scoutai2.png";
 import { useAuth } from "../auth/useAuth";
 import LandingLayout from "../layouts/LandingLayout";
 
@@ -75,6 +76,17 @@ function Home() {
               <CheckCircleFilled /> {t("hero.trust.teamReady")}
             </span>
           </div>
+        </div>
+        <div className="site-showcase-visual">
+          <img
+            src={scoutAi}
+            alt={t("showcase.imageAlt")}
+            loading="lazy"
+          />
+          <span className="site-showcase-label">
+            <RadarChartOutlined />
+            {t("showcase.label")}
+          </span>
         </div>
 
       </section>

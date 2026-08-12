@@ -22,11 +22,11 @@ export const resources = {
         badge: "Transfer market data",
         cta: "Start scouting",
         description:
-          "Filter the player database, compare potential, and turn interesting targets into reports your recruitment team can use.",
+          "Filter the player database, compare potential, and turn interesting targets into reports your recruitment team can use",
         explore: "Explore the platform",
         kicker: "Scouting center",
         summary: "ScoutAI platform summary",
-        title: "Find the player your team is missing.",
+        title: "Find the player your team is missing",
         trust: {
           fast: "Faster shortlists",
           private: "Private workspace",
@@ -41,187 +41,103 @@ export const resources = {
       capabilities: {
         analysis: {
           description:
-            "Compare current ability, potential, role fit, and model recommendations in one clear report.",
+            "Compare current ability, potential, role fit, and model recommendations in one clear report",
           title: "See the full player picture",
         },
         database: {
           description:
-            "Search thousands of profiles by position, age, value, wage, ability, and recruitment fit.",
+            "Search thousands of profiles by position, age, value, wage, ability, and recruitment fit",
           title: "Find realistic targets",
         },
         decisions: {
           description:
-            "Keep target lists, search history, and scouting summaries together for the next recruitment meeting.",
+            "Keep target lists, search history, and scouting summaries together for the next recruitment meeting",
           title: "Move from data to decision",
         },
         description:
-          "A focused workspace for discovering, comparing, and presenting the players that fit your team.",
+          "A focused workspace for discovering, comparing, and presenting the players that fit your team",
         kicker: "Built for recruitment",
-        title: "Everything between the first search and the final call.",
+        title: "Everything between the first search and the final call",
       },
       showcase: {
         description:
-          "ScoutAI turns player data into a repeatable recruitment workflow, so every recommendation is easier to review and explain.",
+          "ScoutAI turns player data into a repeatable recruitment workflow, so every recommendation is easier to review and explain",
         imageAlt: "ScoutAI player analysis workspace",
         kicker: "A clearer workflow",
         label: "AI-assisted analysis",
         steps: {
           compare: {
-            description: "Review attributes, potential, value, and model fit.",
+            description: "Review attributes, potential, value, and model fit",
             title: "Compare the evidence",
           },
           decide: {
-            description: "Save targets and share a concise scouting summary.",
+            description: "Save targets and share a concise scouting summary",
             title: "Build the case",
           },
           search: {
             description:
-              "Start with the role, budget, and profile your team needs.",
+              "Start with the role, budget, and profile your team needs",
             title: "Define the search",
           },
         },
-        title: "From a broad market to a confident shortlist.",
+        title: "From a broad market to a confident shortlist",
       },
       security: {
         cta: "Create your workspace",
         description:
-          "Your saved players, reports, and search activity stay inside your authenticated scouting workspace.",
+          "Your saved players, reports, and search activity stay inside your authenticated scouting workspace",
         kicker: "Secure by design",
-        title: "Your recruitment work stays private.",
+        title: "Your recruitment work stays private",
       },
       footer: {
-        copy: "AI-assisted football scouting for clearer recruitment decisions.",
+        copy: "AI-assisted football scouting for clearer recruitment decisions",
         legal: "Legal",
         legalLabel: "Legal links",
         note: "ScoutAI · Football intelligence workspace",
         product: "Product",
         productLabel: "Product links",
-        tagline: "Football scouting with AI for clearer recruitment decisions.",
+        tagline: "Football scouting with AI for clearer recruitment decisions",
       },
     },
     about: {
-      hero: {
-        kicker: "Why ScoutAI",
-        title: "Built to make player decisions clearer.",
-        description:
-          "ScoutAI is an AI-assisted football scouting workspace. We combine a large player database with five scouting models so recruitment teams can search, compare, and explain the players that fit their club.",
+      title: "About ScoutAI",
+      lead: "ScoutAI is an AI-powered football player discovery and recommendation platform designed to help users find players who match their needs through data, machine learning, and intelligent analysis",
+      body1:
+        "We built ScoutAI to make football scouting more accessible and data-driven. Instead of searching through thousands of players manually, users can explore player profiles, discover similar players, and identify potential alternatives based on statistical attributes and market value.",
+      body2:
+        "ScoutAI combines machine learning with AI-powered recommendations to turn football data into useful insights. Whether you're looking for a similar player, exploring new talent, or simply trying to understand player statistics better, ScoutAI helps make the process faster and easier.",
+      accomplishments: {
+        title: "Accomplishments",
+        item1: "Built a football player recommendation system using machine learning",
+        item2: "Developed a player similarity engine based on statistical attributes",
+        item3: "Integrated AI-powered analysis to provide personalized player recommendations",
+        item4: "Created a platform that combines football data, ML, and AI in one scouting experience",
       },
-      statement: {
-        kicker: "Our mission",
-        title: "Turn the whole market into a confident shortlist.",
-        body: {
-          "1": "Recruitment teams face a huge amount of player data. We built ScoutAI to turn that data into a repeatable workflow, so every recommendation is easier to review, explain, and act on.",
-          "2": "From the first filter to the final call, we keep the evidence together: player profiles, model recommendations, and scouting reports in one private workspace.",
-        },
+      credits: {
+        title: "Credits",
+        thanks1:
+          "We would like to thank the open-source community, developers, data providers, and football communities whose tools, resources, and knowledge helped make ScoutAI possible.",
+        thanks2:
+          "We are also grateful to everyone who tested the platform, provided feedback, and helped us improve the project.",
+        thanks3:
+          "Special thanks to the football data and scouting communities that inspired the idea behind ScoutAI.",
       },
-      pillars: {
-        kicker: "How we work",
-        title: "Three things guide every decision we make.",
-        description:
-          "Everything we build for ScoutAI can be traced back to the following principles.",
-        data: {
-          title: "Data you can trust",
-          body: "Every comparison starts from a structured player database with hundreds of attributes, so a recommendation is always grounded in the evidence behind it.",
-        },
-        people: {
-          title: "People stay in the loop",
-          body: "Models recommend, but scouts and analysts decide. Every suggestion comes with the supporting reasons so a team can review and explain its choices.",
-        },
-        privacy: {
-          title: "Private by design",
-          body: "Saved players, reports, and search activity stay inside your authenticated workspace. Your recruitment work is yours.",
-        },
+      disclaimer: {
+        title: "Disclaimer",
+        text1:
+          "ScoutAI is an independent project created for football analysis, player discovery, and educational purposes. Player ratings, similarity scores, recommendations, market values, and other information provided by ScoutAI are generated from available data and computational models and should be considered informational rather than definitive scouting advice.",
+        text2:
+          "ScoutAI is not affiliated with or endorsed by Football Manager, Sports Interactive, or any football club, league, or governing organization unless explicitly stated.",
+        text3:
+          "Data accuracy may vary depending on the source and availability of the underlying data.",
       },
-      timeline: {
-        kicker: "A look back",
-        title: "How ScoutAI came together.",
-        description:
-          "A short history of the project, from a data experiment to a web platform for recruitment teams.",
-        items: [
-          {
-            year: "2024",
-            title: "The idea",
-            body: "A data exploration project set out to see whether Football Manager data could support real scouting decisions.",
-          },
-          {
-            year: "2025",
-            title: "The ML engine",
-            body: "Five scouting models — K-NN, cosine, radius neighbours, K-Means, and DBSCAN — were trained on thousands of player profiles.",
-          },
-          {
-            year: "2025",
-            title: "Web integration",
-            body: "The engine became a live scouting center: search, compare, and shortlist players from the browser.",
-          },
-          {
-            year: "2025",
-            title: "Built for teams",
-            body: "Shared workspaces, admin controls, and reporting made ScoutAI usable by whole recruitment departments.",
-          },
-        ],
-      },
-      metrics: {
-        attributes: "Player attributes",
-        models: "Scouting models",
-        players: "Player profiles",
-        workflow: "From search to decision",
-      },
-      building: {
-        kicker: "What we're building",
-        title: "Five models that look at each player differently.",
-        description:
-          "No single algorithm does the whole job. Each model approaches the target from a different angle so the strongest targets surface together.",
-        models: {
-          clone: {
-            badge: "Closest overall profile",
-            title: "K-NN · The Clone",
-            description:
-              "Finds the players whose overall attribute profile sits closest to the target player.",
-          },
-          style: {
-            badge: "Closest role & style",
-            title: "Cosine · Style Match",
-            description:
-              "Ranks targets by how closely their playing behaviour matches the target's.",
-          },
-          strict: {
-            badge: "Strict match",
-            title: "Radius NN · Strict Filter",
-            description:
-              "Keeps only players that stay inside a tight distance from the target's profile.",
-          },
-          group: {
-            badge: "Similar statistical group",
-            title: "K-Means · Tactical Group",
-            description:
-              "Groups players by shared statistics and pulls the closest members of the same cluster.",
-          },
-          outlier: {
-            badge: "Outside-the-box check",
-            title: "DBSCAN · Outlier Detector",
-            description:
-              "Flags players with a genuinely different profile — a hidden alternative others might miss.",
-          },
-        },
-      },
-      cta: {
-        kicker: "Ready to scout",
-        title: "Start finding players your team is missing.",
-        description:
-          "Create a workspace and turn player data into decision-ready reports.",
-        action: "Start scouting",
-        openWorkspace: "Open workspace",
-        pricing: "See pricing",
-        contact:
-          "Working at a club or recruitment department? Explore the Team plan or reach out through the platform.",
-      },
-},
+    },
     terms: {
       hero: {
         kicker: "Terms of Use",
-        title: "Terms of Use.",
+        title: "Terms of Use",
         description:
-          "The rules that govern your access to and use of the ScoutAI football scouting platform.",
+          "The rules that govern your access to and use of the ScoutAI football scouting platform",
       },
       updated: "Last updated: January 2025",
       note: "These Terms of Use (“Terms”) apply to the ScoutAI football scouting platform (“Services”). By accessing or using the Services you agree to these Terms. If you do not agree, please do not use the Services.",
@@ -271,9 +187,9 @@ export const resources = {
     privacy: {
       hero: {
         kicker: "Privacy Policy",
-        title: "Privacy Policy.",
+        title: "Privacy Policy",
         description:
-          "How ScoutAI collects, uses, and protects your personal information when you use the platform.",
+          "How ScoutAI collects, uses, and protects your personal information when you use the platform",
       },
       updated: "Last updated: January 2025",
       note: "This Privacy Policy explains how ScoutAI (“we”) collects, uses, and protects your personal information. By using the Services you consent to the practices described here.",
@@ -318,9 +234,9 @@ export const resources = {
     policy: {
       hero: {
         kicker: "ScoutAI Policies",
-        title: "Terms of Use, Privacy, and Policies.",
+        title: "Terms of Use, Privacy, and Policies",
         description:
-          "A clear reference for how ScoutAI works, how your data is handled, and the rules that keep the platform fair and safe.",
+          "A clear reference for how ScoutAI works, how your data is handled, and the rules that keep the platform fair and safe",
       },
       nav: {
         termsOfUse: "Terms of Use",
@@ -521,7 +437,7 @@ export const resources = {
         description:
           "Choose the plan that fits your scouting team. Every plan includes private storage for your reports and target lists.",
         kicker: "Pricing",
-        title: "Simple plans for every recruitment team.",
+        title: "Simple plans for every recruitment team",
       },
       billing: {
         monthly: "Monthly",
@@ -531,7 +447,7 @@ export const resources = {
       compare: {
         title: "Compare plans",
         subtitle:
-          "Everything you need to decide which plan fits your recruitment workflow.",
+          "Everything you need to decide which plan fits your recruitment workflow",
         header: "Feature",
         rows: [
           ["Player database access", true, true, true],
@@ -548,7 +464,7 @@ export const resources = {
       faq: {
         title: "Frequently asked questions",
         subtitle:
-          "Quick answers about plans, billing, and what's included.",
+          "Quick answers about plans, billing, and what's included",
         items: [
           {
             q: "Can I switch or cancel my plan at any time?",
@@ -574,7 +490,7 @@ export const resources = {
       },
       cta: {
         kicker: "Ready to scout",
-        title: "Start finding players your team is missing.",
+        title: "Start finding players your team is missing",
         description:
           "Create a workspace and turn player data into decision-ready reports.",
         action: "Get started",
@@ -583,7 +499,7 @@ export const resources = {
         free: {
           cta: "Get started",
           description:
-            "For individual scouts trying ScoutAI.",
+            "For individual scouts trying ScoutAI",
           features: [
             "Search the full player database",
             "3 scouting reports per month",
@@ -597,7 +513,7 @@ export const resources = {
         pro: {
           cta: "Start free trial",
           description:
-            "For active scouts who need more analysis.",
+            "For active scouts who need more analysis",
           features: [
             "Everything in Free",
             "Unlimited scouting reports",
@@ -612,7 +528,7 @@ export const resources = {
         team: {
           cta: "Contact us",
           description:
-            "For recruitment departments and clubs.",
+            "For recruitment departments and clubs",
           features: [
             "Everything in Pro",
             "Shared team workspace",
@@ -1337,119 +1253,36 @@ export const resources = {
       },
     },
     about: {
-      hero: {
-        kicker: "ทำไมต้อง ScoutAI",
-        title: "สร้างมาเพื่อช่วยตัดสินใจเรื่องนักเตะให้ชัดเจนขึ้น",
-        description:
-          "ScoutAI คือพื้นที่ทำงานสเกาต์ฟุตบอลด้วย AI เรานำฐานข้อมูลนักเตะขนาดใหญ่มาผนวกกับห้าโมเดลแมวมอง เพื่อให้ทีมสรรหาค้นหา เปรียบเทียบ และอธิบายนักเตะที่เหมาะกับสโมสร",
+      title: "เกี่ยวกับ ScoutAI",
+      lead: "ScoutAI คือแพลตฟอร์มค้นหาและแนะนำนักฟุตบอลด้วยพลังของ AI ที่ออกแบบมาเพื่อช่วยให้ผู้ใช้ค้นหานักเตะที่ตรงตามความต้องการผ่านข้อมูล การเรียนรู้ของระบบ (Machine Learning) และการวิเคราะห์อัจฉริยะ",
+      body1:
+        "พวกเราสร้าง ScoutAI ขึ้นมาเพื่อให้การสเกาต์ฟุตบอลเข้าถึงได้ง่ายและขับเคลื่อนด้วยข้อมูลมากขึ้น แทนที่จะต้องค้นหานักเตะนับพันคนด้วยตัวเอง ผู้ใช้สามารถสำรวจโปรไฟล์นักเตะ ค้นพบนวัตกรรมนักเตะที่มีสไตล์ใกล้เคียงกัน และระบุทางเลือกที่น่าสนใจโดยอ้างอิงจากค่าพลังสถิติและมูลค่าการตลาด",
+      body2:
+        "ScoutAI ผสานการทำงานของ Machine Learning เข้ากับการแนะนำโดย AI เพื่อเปลี่ยนข้อมูลฟุตบอลให้เป็นข้อมูลเชิงลึกที่มีประโยชน์ ไม่ว่าคุณกำลังมองหานักเตะที่มีสไตล์คล้ายกัน สำรวจดาวรุ่งดวงใหม่ หรือเพียงต้องการเข้าใจสถิตินักเตะให้ดียิ่งขึ้น ScoutAI ช่วยให้กระบวนการทั้งหมดเร็วและง่ายยิ่งขึ้น",
+      accomplishments: {
+        title: "ผลงานและความสำเร็จ",
+        item1: "สร้างระบบแนะนำนักฟุตบอลด้วย Machine Learning",
+        item2: "พัฒนาระบบเปรียบเทียบสไตล์การเล่นนักเตะจากสถิติและค่าพลัง",
+        item3: "เชื่อมต่อการวิเคราะห์จาก AI เพื่อให้คำแนะนำนักเตะแบบเฉพาะเจาะจง",
+        item4: "สร้างแพลตฟอร์มที่รวมข้อมูลฟุตบอล, ML และ AI ไว้ในประสบการณ์สเกาต์เดียว",
       },
-      statement: {
-        kicker: "เป้าหมายของเรา",
-        title: "เปลี่ยนตลาดนักเตะทั้งหมดให้เป็นรายชื่อที่ตัดสินใจได้อย่างมั่นใจ",
-        body: {
-          "1": "ทีมสรรหาต้องเผชิญกับข้อมูลนักเตะจำนวนมหาศาล เราสร้าง ScoutAI ขึ้นเพื่อเปลี่ยนข้อมูลเหล่านี้ให้เป็นขั้นตอนการทำงานที่ทำซ้ำได้ ทำให้ทุกคำแนะนำตรวจสอบ อธิบาย และนำไปปฏิบัติได้ง่ายขึ้น",
-          "2": "ตั้งแต่การกรองครั้งแรกจนถึงการตัดสินใจ เรารวบรวมหลักฐานทั้งหมดไว้ด้วยกัน ทั้งโปรไฟล์นักเตะ คำแนะนำจากโมเดล และรายงานสเกาต์ในพื้นที่ทำงานส่วนตัวเดียว",
-        },
+      credits: {
+        title: "กิตติกรรมประกาศ (Credits)",
+        thanks1:
+          "พวกเราขอขอบคุณโอเพ่นซอร์สคอมมูนิตี้ นักพัฒนา ผู้ให้บริการข้อมูล และคอมมูนิตี้ฟุตบอลทุกท่าน ที่เครื่องมือ ทรัพยากร และความรู้ของพวกเขาช่วยให้ ScoutAI เกิดขึ้นได้จริง",
+        thanks2:
+          "พวกเราขอขอบคุณทุกคนที่ร่วมทดลองใช้งานแพลตฟอร์ม ให้ข้อเสนอแนะ และช่วยพวกเราปรับปรุงโปรเจกต์นี้ให้ดียิ่งขึ้น",
+        thanks3:
+          "ขอขอบคุณเป็นพิเศษสำหรับคอมมูนิตี้ข้อมูลฟุตบอลและการสเกาต์ที่เป็นแรงบันดาลใจเบื้องหลังแนวคิดของ ScoutAI",
       },
-      pillars: {
-        kicker: "วิธีที่เราทำงาน",
-        title: "สามหลักการที่คอยชี้นำทุกการตัดสินใจของเรา",
-        description:
-          "ทุกสิ่งที่เราสร้างให้ ScoutAI ย้อนกลับไปได้ถึงหลักการต่อไปนี้",
-        data: {
-          title: "ข้อมูลที่เชื่อถือได้",
-          body: "ทุกการเปรียบเทียบเริ่มจากฐานข้อมูลนักเตะแบบมีโครงสร้างที่มีค่าพลังนับร้อยรายการ คำแนะนำจึงมีหลักฐานรองรับเสมอ",
-        },
-        people: {
-          title: "มนุษย์ยังคงเป็นผู้ตัดสินใจ",
-          body: "โมเดลให้คำแนะนำ แต่แมวมองและนักวิเคราะห์เป็นผู้ตัดสินใจ ทุกข้อเสนอมาพร้อมเหตุผลประกอบ เพื่อให้ทีมตรวจสอบและอธิบายทางเลือกของตนได้",
-        },
-        privacy: {
-          title: "เป็นส่วนตัวตั้งแต่การออกแบบ",
-          body: "นักเตะที่บันทึก รายงาน และกิจกรรมการค้นหาจะอยู่ภายในพื้นที่ทำงานที่ยืนยันตัวตนแล้ว งานสรรหาของคุณเป็นของคุณ",
-        },
-      },
-      timeline: {
-        kicker: "ย้อนกลับไปดูจุดเริ่มต้น",
-        title: "ScoutAI ก่อตัวขึ้นมาได้อย่างไร",
-        description:
-          "ประวัติโดยย่อของโปรเจกต์ จากการทดลองข้อมูลสู่แพลตฟอร์มเว็บสำหรับทีมสรรหา",
-        items: [
-          {
-            year: "2024",
-            title: "จุดเริ่มต้นของแนวคิด",
-            body: "โปรเจกต์สำรวจข้อมูลเริ่มตั้งคำถามว่าข้อมูล Football Manager จะช่วยสนับสนุนการตัดสินใจสเกาต์จริงได้หรือไม่",
-          },
-          {
-            year: "2025",
-            title: "ระบบแมวมอง ML",
-            body: "ห้าโมเดลแมวมอง ได้แก่ K-NN, Cosine, Radius Neighbours, K-Means และ DBSCAN ถูกฝึกบนโปรไฟล์นักเตะหลายพันคน",
-          },
-          {
-            year: "2025",
-            title: "เชื่อมต่อสู่เว็บ",
-            body: "ระบบกลายเป็นศูนย์สเกาต์แบบสด ค้นหา เปรียบเทียบ และบันทึกรายชื่อนักเตะได้จากเบราว์เซอร์",
-          },
-          {
-            year: "2025",
-            title: "สร้างมาเพื่อทีม",
-            body: "พื้นที่ทำงานร่วมกัน สิทธิ์ผู้ดูแล และระบบรายงาน ทำให้ ScoutAI ใช้ได้จริงสำหรับแผนกสรรหาทั้งทีม",
-          },
-        ],
-      },
-      metrics: {
-        attributes: "ค่าพลังนักเตะ",
-        models: "โมเดลแมวมอง",
-        players: "โปรไฟล์นักเตะ",
-        workflow: "ค้นหาสู่การตัดสินใจ",
-      },
-      building: {
-        kicker: "สิ่งที่เรากำลังสร้าง",
-        title: "ห้าโมเดลที่มองนักเตะแต่ละคนไม่เหมือนกัน",
-        description:
-          "ไม่มีอัลกอริทึมเดียวที่ทำงานครบทุกอย่าง แต่ละโมเดลมองเป้าหมายจากมุมต่างกัน ทำให้เป้าหมายที่แข็งแกร่งที่สุดโผล่ขึ้นมาพร้อมกัน",
-        models: {
-          clone: {
-            badge: "โปรไฟล์โดยรวมใกล้เคียงที่สุด",
-            title: "K-NN · เดอะโคลน",
-            description:
-              "ค้นหานักเตะที่มีโปรไฟล์ค่าพลังโดยรวมใกล้เคียงกับนักเตะเป้าหมายมากที่สุด",
-          },
-          style: {
-            badge: "บทบาทและสไตล์ใกล้เคียง",
-            title: "Cosine · สไตล์แมทช์",
-            description:
-              "จัดอันดับเป้าหมายตามความใกล้เคียงของพฤติกรรมการเล่นกับนักเตะเป้าหมาย",
-          },
-          strict: {
-            badge: "จับคู่แบบเข้มงวด",
-            title: "Radius NN · ตัวกรองเข้มข้น",
-            description:
-              "คัดเฉพาะนักเตะที่ยังอยู่ในระยะใกล้จากโปรไฟล์ของนักเตะเป้าหมายเท่านั้น",
-          },
-          group: {
-            badge: "กลุ่มสถิติใกล้เคียงกัน",
-            title: "K-Means · กลุ่มแท็กติก",
-            description:
-              "จัดกลุ่มนักเตะด้วยสถิติร่วมกัน แล้วดึงสมาชิกที่ใกล้ที่สุดภายในกลุ่มเดียวกัน",
-          },
-          outlier: {
-            badge: "เช็กตัวเลือกนอกกรอบ",
-            title: "DBSCAN · เครื่องตรวจจับนอกรูปแบบ",
-            description:
-              "ระบุนักเตะที่มีโปรไฟล์แตกต่างจริง ๆ ทางเลือกซ่อนเร้นที่คนอื่นอาจมองข้าม",
-          },
-        },
-      },
-      cta: {
-        kicker: "พร้อมเริ่มงานสเกาต์",
-        title: "เริ่มค้นหานักเตะที่ทีมของคุณยังขาด",
-        description: "สร้างพื้นที่ทำงานและเปลี่ยนข้อมูลนักเตะให้เป็นรายงานพร้อมตัดสินใจ",
-        action: "เริ่มค้นหานักเตะ",
-        openWorkspace: "เปิดพื้นที่ทำงาน",
-        pricing: "ดูราคา",
-        contact:
-          "ทำงานอยู่ที่สโมสรหรือแผนกสรรหา? ลองดูแพ็กเกจทีมหรือติดต่อผ่านแพลตฟอร์มได้เลย",
+      disclaimer: {
+        title: "ข้อจำกัดความรับผิดชอบ (Disclaimer)",
+        text1:
+          "ScoutAI เป็นโปรเจกต์อิสระที่สร้างขึ้นเพื่อการวิเคราะห์ฟุตบอล การค้นหานักเตะ และวัตถุประสงค์ทางการศึกษา การประเมินนักเตะ คะแนนความคล้ายคลึง คำแนะนำ มูลค่าการตลาด และข้อมูลอื่นๆ ที่ ScoutAI แสดงผล สร้างขึ้นจากข้อมูลและโมเดลการคำนวณที่มีอยู่ ซึ่งควรถือเป็นข้อมูลประกอบมากกว่าคำแนะนำสเกาต์ขั้นเด็ดขาด",
+        text2:
+          "ScoutAI ไม่มีส่วนเกี่ยวข้องหรือได้รับการรับรองจาก Football Manager, Sports Interactive หรือสโมสรฟุตบอล ลีก หรือองค์กรปกครองฟุตบอลใดๆ เว้นแต่ระบุไว้ชัดเจน",
+        text3:
+          "ความถูกต้องของข้อมูลอาจแตกต่างกันไปขึ้นอยู่กับแหล่งที่มาและความพร้อมของข้อมูลพื้นฐาน",
       },
     },
     terms: {

@@ -1,6 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { FileTextOutlined } from "@ant-design/icons";
-
 import LandingLayout from "../layouts/LandingLayout";
 
 function Terms() {
@@ -10,31 +8,82 @@ function Terms() {
 
   return (
     <LandingLayout>
-      <section className="site-hero site-hero-compact">
-        <div className="site-hero-glow" aria-hidden="true" />
-        <div className="site-hero-inner">
-          <span className="site-kicker site-kicker-light">
-            <FileTextOutlined /> {t("hero.kicker")}
-          </span>
-          <h1>{t("hero.title")}</h1>
-          <p className="site-hero-sub">{t("hero.description")}</p>
-        </div>
-      </section>
+      <section className="site-section">
+        <div
+          className="site-policy-block"
+          style={{
+            maxWidth: "860px",
+            margin: "0 auto",
+            padding: "clamp(24px, 5vw, 48px)",
+            background: "rgba(255, 255, 255, 0.8)",
+            border: "1px solid #dce7e1",
+            borderRadius: "20px",
+            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.03)",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "clamp(1.8rem, 4vw, 2.3rem)",
+              fontWeight: "800",
+              marginBottom: "8px",
+              letterSpacing: "-0.02em",
+              lineHeight: "1.2",
+            }}
+          >
+            {t("hero.title")}
+          </h1>
+          <p
+            style={{
+              fontSize: "0.88rem",
+              color: "#6b7c73",
+              marginBottom: "20px",
+              fontWeight: "600",
+            }}
+          >
+            {t("updated")}
+          </p>
 
-      <section className="site-section site-policy">
-        <div className="site-policy-intro">
-          <p className="site-policy-note">{t("note")}</p>
-          <p className="site-policy-updated">{t("updated")}</p>
-        </div>
+          <p
+            style={{
+              fontSize: "clamp(1rem, 2.5vw, 1.05rem)",
+              lineHeight: "1.7",
+              marginBottom: "28px",
+              paddingBottom: "20px",
+              borderBottom: "1px solid #e4ebe7",
+              color: "var(--site-text-main, #14241c)",
+              fontWeight: "500",
+            }}
+          >
+            {t("note")}
+          </p>
 
-        <article className="site-policy-document">
-          {sections.map((section) => (
-            <div className="site-policy-block" key={section.id}>
-              <h3>{section.title}</h3>
-              <p>{section.body}</p>
-            </div>
-          ))}
-        </article>
+          <article className="site-policy-document">
+            {sections.map((section) => (
+              <div key={section.id} style={{ marginBottom: "26px" }}>
+                <h2
+                  style={{
+                    fontSize: "clamp(1.15rem, 3vw, 1.3rem)",
+                    fontWeight: "750",
+                    marginBottom: "8px",
+                    color: "var(--site-text-main, #14241c)",
+                  }}
+                >
+                  {section.title}
+                </h2>
+                <p
+                  style={{
+                    fontSize: "0.96rem",
+                    lineHeight: "1.75",
+                    color: "var(--site-text-muted, #5f7267)",
+                    margin: 0,
+                  }}
+                >
+                  {section.body}
+                </p>
+              </div>
+            ))}
+          </article>
+        </div>
       </section>
     </LandingLayout>
   );
