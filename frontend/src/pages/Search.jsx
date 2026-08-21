@@ -3,14 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
+  AutoComplete,
   Button,
   Card,
+  Drawer,
   Dropdown,
   Empty,
   Form,
   Input,
   InputNumber,
-  Modal,
   Segmented,
   Select,
   Spin,
@@ -26,6 +27,7 @@ import {
   SortAscendingOutlined,
   StarFilled,
   StarOutlined,
+  TeamOutlined,
   UserOutlined,
   WalletOutlined,
 } from "@ant-design/icons";
@@ -102,6 +104,79 @@ const nationalityFlags = {
 
 function getNationalityFlag(value) {
   return nationalityFlags[String(value || "").trim().toLocaleLowerCase()] || "🌐";
+}
+
+function flagFromCountryCode(code) {
+  const normalizedCode = String(code || "").trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalizedCode)) return "";
+
+  return [...normalizedCode]
+    .map((letter) => String.fromCodePoint(127397 + letter.charCodeAt(0)))
+    .join("");
+}
+
+function normalizeNationalityValues(value) {
+  return String(value || "")
+    .split(/[,;/|]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const codeMatch = part.match(/^([A-Z]{2})(?=[A-Z][a-z])/);
+      const code = codeMatch?.[1] || "";
+      const label = code ? part.slice(2).trim() : part;
+
+      return {
+        code,
+        label,
+        value: label,
+      };
+    })
+    .filter((item) => item.label);
+}
+
+function getSuggestionImageUrl(player, field) {
+  const raw = player?.raw || {};
+  const candidates =
+    field === "club"
+      ? [
+          player?.clubLogoUrl,
+          player?.club_logo_url,
+          raw.ClubLogoUrl,
+          raw.club_logo_url,
+        ]
+      : [
+          player?.nationalityImageUrl,
+          player?.flagUrl,
+          raw.NationalityImageUrl,
+          raw.flag_url,
+        ];
+
+  return candidates.find((candidate) => String(candidate || "").trim()) || "";
+}
+
+function FilterSuggestionOption({ description, fallback, imageUrl, title }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = Boolean(imageUrl) && !imageFailed;
+
+  return (
+    <span className="filter-suggestion-option">
+      <span className={`filter-suggestion-media${showImage ? " has-image" : ""}`}>
+        {showImage ? (
+          <img
+            alt=""
+            onError={() => setImageFailed(true)}
+            src={imageUrl}
+          />
+        ) : (
+          fallback
+        )}
+      </span>
+      <span className="filter-suggestion-copy">
+        <strong>{title}</strong>
+        <small>{description}</small>
+      </span>
+    </span>
+  );
 }
 
 function pickPlayerValue(player, keys, fallback = null) {
@@ -427,6 +502,8 @@ function PlayerDatabasePanel({
   const [savedFilterForm] = Form.useForm();
   const browserRequestController = useRef(null);
   const browserRequestId = useRef(0);
+  const suggestionControllers = useRef({ club: null, nationality: null });
+  const suggestionTimers = useRef({ club: null, nationality: null });
   const [nameSearch, setNameSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSavedFilterOpen, setIsSavedFilterOpen] = useState(false);
@@ -443,6 +520,14 @@ function PlayerDatabasePanel({
   const [filterFeedback, setFilterFeedback] = useState({
     status: "",
     text: "",
+  });
+  const [filterSuggestions, setFilterSuggestions] = useState({
+    club: [],
+    nationality: [],
+  });
+  const [suggestionLoading, setSuggestionLoading] = useState({
+    club: false,
+    nationality: false,
   });
   const [browserState, setBrowserState] = useState({
     loading: false,
@@ -526,6 +611,105 @@ function PlayerDatabasePanel({
   const savedSourceOptions = buildSavedOptions("source", (source) =>
     formatSavedSource(source, t)
   );
+
+  function buildFilterSuggestionOptions(field, players = []) {
+    const values = new Map();
+
+    players.forEach((player) => {
+      const rawValue = String(player?.[field] || "").trim();
+      const entries =
+        field === "nationality"
+          ? normalizeNationalityValues(rawValue)
+          : [{ code: "", label: rawValue, value: rawValue }];
+
+      entries.forEach((entry) => {
+        const key = entry.value.toLocaleLowerCase();
+        if (!entry.value || values.has(key)) return;
+
+        values.set(key, {
+          ...entry,
+          imageUrl: getSuggestionImageUrl(player, field),
+        });
+      });
+    });
+
+    return [...values.values()]
+      .sort((left, right) => left.label.localeCompare(right.label))
+      .slice(0, 12)
+      .map((entry) => ({
+        label: (
+          <FilterSuggestionOption
+            description={t(
+              field === "nationality" ? "filters.nationality" : "filters.club"
+            )}
+            fallback={
+              field === "nationality" ? (
+                <span aria-hidden="true">
+                  {flagFromCountryCode(entry.code) ||
+                    getNationalityFlag(entry.label)}
+                </span>
+              ) : (
+                <TeamOutlined />
+              )
+            }
+            imageUrl={entry.imageUrl}
+            title={entry.label}
+          />
+        ),
+        value: entry.value,
+      }));
+  }
+
+  function requestFilterSuggestions(field, input = "") {
+    const query = String(input || "").trim();
+    const localPlayers = browserState.players.filter((player) => {
+      const value = String(player?.[field] || "").toLocaleLowerCase();
+      return !query || value.includes(query.toLocaleLowerCase());
+    });
+
+    setFilterSuggestions((current) => ({
+      ...current,
+      [field]: buildFilterSuggestionOptions(field, localPlayers),
+    }));
+
+    clearTimeout(suggestionTimers.current[field]);
+    suggestionControllers.current[field]?.abort();
+
+    if (!query) {
+      setSuggestionLoading((current) => ({ ...current, [field]: false }));
+      return;
+    }
+
+    suggestionTimers.current[field] = setTimeout(async () => {
+      const controller = new AbortController();
+      suggestionControllers.current[field] = controller;
+      setSuggestionLoading((current) => ({ ...current, [field]: true }));
+
+      try {
+        const result = await searchPlayers(
+          { [field]: query, limit: 50, sort: "name_asc" },
+          { signal: controller.signal }
+        );
+        if (controller.signal.aborted) return;
+
+        setFilterSuggestions((current) => ({
+          ...current,
+          [field]: buildFilterSuggestionOptions(field, result.players),
+        }));
+      } catch {
+        if (!controller.signal.aborted) {
+          setFilterSuggestions((current) => ({
+            ...current,
+            [field]: buildFilterSuggestionOptions(field, localPlayers),
+          }));
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setSuggestionLoading((current) => ({ ...current, [field]: false }));
+        }
+      }
+    }, 250);
+  }
   const filteredSavedItems = normalizedSavedItems
     .filter((item) => {
       const searchableText = [
@@ -640,6 +824,18 @@ function PlayerDatabasePanel({
       browserRequestId.current += 1;
     };
   }, [t]);
+
+  useEffect(() => {
+    const controllers = suggestionControllers.current;
+    const timers = suggestionTimers.current;
+
+    return () => {
+      clearTimeout(timers.club);
+      clearTimeout(timers.nationality);
+      controllers.club?.abort();
+      controllers.nationality?.abort();
+    };
+  }, []);
 
   async function applyFilters(
     values,
@@ -914,15 +1110,16 @@ function PlayerDatabasePanel({
         className="player-database-grid"
         hidden={activeView !== "database"}
       >
-        <Modal
-          centered
-          className="player-filter-modal"
+        <Drawer
+          className="player-filter-drawer"
+          destroyOnHidden
           footer={null}
-          onCancel={() => setIsFilterOpen(false)}
+          onClose={() => setIsFilterOpen(false)}
           open={isFilterOpen}
-          rootClassName="player-filter-modal-root"
+          placement="right"
+          rootClassName="player-filter-drawer-root"
           title={
-            <div className="player-filter-modal-heading">
+            <div className="player-filter-drawer-heading">
               <span>
                 <FilterOutlined />
                 {t("filters.title")}
@@ -930,9 +1127,9 @@ function PlayerDatabasePanel({
               <small>{t("filters.count")}</small>
             </div>
           }
-          width={720}
+          width="min(480px, 100vw)"
         >
-          <div className="player-filter-modal-intro">
+          <div className="player-filter-drawer-intro">
             <Text type="secondary">
               {t("filters.description")}
             </Text>
@@ -958,15 +1155,41 @@ function PlayerDatabasePanel({
             <div className="player-filter-scroll">
               <div className="player-filter-grid">
                 <Form.Item label={t("filters.club")} name="club">
-                  <Input
+                  <AutoComplete
                     allowClear
+                    classNames={{ popup: { root: "player-filter-suggestions" } }}
+                    notFoundContent={
+                      suggestionLoading.club ? <Spin size="small" /> : null
+                    }
+                    onFocus={() =>
+                      requestFilterSuggestions(
+                        "club",
+                        browserForm.getFieldValue("club")
+                      )
+                    }
+                    onSearch={(value) => requestFilterSuggestions("club", value)}
+                    options={filterSuggestions.club}
                     placeholder={t("filters.clubPlaceholder")}
                   />
                 </Form.Item>
 
                 <Form.Item label={t("filters.nationality")} name="nationality">
-                  <Input
+                  <AutoComplete
                     allowClear
+                    classNames={{ popup: { root: "player-filter-suggestions" } }}
+                    notFoundContent={
+                      suggestionLoading.nationality ? <Spin size="small" /> : null
+                    }
+                    onFocus={() =>
+                      requestFilterSuggestions(
+                        "nationality",
+                        browserForm.getFieldValue("nationality")
+                      )
+                    }
+                    onSearch={(value) =>
+                      requestFilterSuggestions("nationality", value)
+                    }
+                    options={filterSuggestions.nationality}
                     placeholder={t("filters.nationalityPlaceholder")}
                   />
                 </Form.Item>
@@ -1062,7 +1285,7 @@ function PlayerDatabasePanel({
               </span>
             </div>
           </Form>
-        </Modal>
+        </Drawer>
 
         <div className="player-results-area">
           <div className="player-results-toolbar">
@@ -1130,15 +1353,16 @@ function PlayerDatabasePanel({
         </div>
       </div>
       <div className="saved-player-view" hidden={activeView !== "saved"}>
-        <Modal
-          centered
-          className="player-filter-modal saved-filter-modal"
+        <Drawer
+          className="player-filter-drawer saved-filter-drawer"
+          destroyOnHidden
           footer={null}
-          onCancel={() => setIsSavedFilterOpen(false)}
+          onClose={() => setIsSavedFilterOpen(false)}
           open={isSavedFilterOpen}
-          rootClassName="player-filter-modal-root"
+          placement="right"
+          rootClassName="player-filter-drawer-root"
           title={
-            <div className="player-filter-modal-heading">
+            <div className="player-filter-drawer-heading">
               <span>
                 <FilterOutlined />
                 {t("shortlist.filtersTitle")}
@@ -1146,9 +1370,9 @@ function PlayerDatabasePanel({
               <small>{t("shortlist.filterCount")}</small>
             </div>
           }
-          width={640}
+          width="min(440px, 100vw)"
         >
-          <div className="player-filter-modal-intro">
+          <div className="player-filter-drawer-intro">
             <Text type="secondary">
               {t("shortlist.filtersDescription")}
             </Text>
@@ -1198,7 +1422,7 @@ function PlayerDatabasePanel({
               </Button>
             </div>
           </Form>
-        </Modal>
+        </Drawer>
         {savedLoading ? (
           <div className="saved-player-loading">
             <Spin />
