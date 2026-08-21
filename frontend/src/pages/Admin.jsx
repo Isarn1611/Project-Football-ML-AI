@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Alert, Button, Card, Spin, Statistic, Tag, Typography } from "antd";
 import {
-  ArrowLeftOutlined,
   ArrowRightOutlined,
   CheckCircleFilled,
   DatabaseOutlined,
@@ -82,12 +81,16 @@ function Admin() {
       value: dashboard?.counts?.players,
     },
     {
+      actionLabel: t("actions.viewShortlist"),
+      actionRoute: "/admin/shortlist",
       key: "shortlistItems",
       icon: <StarOutlined />,
       label: t("metrics.shortlist"),
       value: dashboard?.counts?.shortlistItems,
     },
     {
+      actionLabel: t("actions.viewSearchHistory"),
+      actionRoute: "/admin/search-history",
       key: "searchHistoryItems",
       icon: <HistoryOutlined />,
       label: t("metrics.searchHistory"),
@@ -121,12 +124,6 @@ function Admin() {
           </div>
 
           <div className="admin-hero-actions">
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate("/app")}
-            >
-              {t("actions.back")}
-            </Button>
             <Button
               icon={<ReloadOutlined />}
               loading={loading}

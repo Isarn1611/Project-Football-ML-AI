@@ -405,6 +405,60 @@ async function countTableRows(client, table) {
   return count || 0;
 }
 
+async function sumTableColumn(client, table, column) {
+  let total = 0;
+
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await client
+      .from(table)
+      .select(column)
+      .order("id", { ascending: true })
+      .range(from, from + 999);
+
+    if (error) {
+      const dashboardError = new Error(`Could not sum ${column} in ${table}`);
+      dashboardError.status = 503;
+      dashboardError.code = "ADMIN_DASHBOARD_UNAVAILABLE";
+      dashboardError.details = {
+        table,
+        column,
+        errorCode: error.code,
+        message: error.message,
+      };
+      throw dashboardError;
+    }
+
+    total += (data || []).reduce(
+      (sum, row) => sum + (Number(row[column]) || 0),
+      0
+    );
+    if (!data || data.length < 1000) break;
+  }
+
+  return total;
+}
+
+function isMissingSearchAnalyticsSchema(error) {
+  const code = error?.details?.errorCode || error?.code;
+  const message = String(error?.details?.message || error?.message || "");
+
+  return (
+    code === "PGRST204" ||
+    code === "42703" ||
+    (/search_count/i.test(message) &&
+      /column|schema cache|does not exist|could not find/i.test(message))
+  );
+}
+
+async function countRecordedSearches(client) {
+  try {
+    return await sumTableColumn(client, "player_search_history", "search_count");
+  } catch (error) {
+    if (!isMissingSearchAnalyticsSchema(error)) throw error;
+    return countTableRows(client, "player_search_history");
+  }
+}
+
 async function getAdminDashboard() {
   const client = getSupabaseAdminClient();
   const [users, players, shortlistItems, searchHistoryItems] =
@@ -412,7 +466,7 @@ async function getAdminDashboard() {
       countTableRows(client, "user_roles"),
       countTableRows(client, PLAYER_TABLE),
       countTableRows(client, "player_shortlist"),
-      countTableRows(client, "player_search_history"),
+      countRecordedSearches(client),
     ]);
 
   return {
@@ -428,11 +482,13 @@ async function getAdminDashboard() {
 
 module.exports = {
   countTableRows,
+  countRecordedSearches,
   formatAdminUser,
   getAdminUserUsage,
   getAdminDashboard,
   listAdminUsers,
   normalizeUserListOptions,
+  sumTableColumn,
   updateAdminUserRole,
   updateAdminUserSuspension,
 };

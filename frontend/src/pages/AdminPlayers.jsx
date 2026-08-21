@@ -339,8 +339,9 @@ function AdminPlayers() {
           onCancel={closeEditor}
           onOk={savePlayer}
           open={Boolean(editingPlayer)}
+          rootClassName="admin-player-modal-root"
           title={t("players.editor.title")}
-          width={720}
+          width="min(720px, calc(100vw - 24px))"
         >
           {editingPlayer && (
             <div className="admin-player-editor">

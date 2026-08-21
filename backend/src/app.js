@@ -16,6 +16,10 @@ const {
     updateAdminPlayer,
 } = require("./services/adminPlayerService");
 const {
+    listAdminSearchHistory,
+    listAdminShortlistEntries,
+} = require("./services/adminActivityService");
+const {
     lookupPlayersByNames,
     searchPlayers,
 } = require("./services/playerService");
@@ -156,6 +160,31 @@ app.get("/api/admin/users/:userId/usage", ...protectedApi, requireAdmin, async (
         );
 
         res.json({ usage });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get("/api/admin/shortlist", ...protectedApi, requireAdmin, async (req, res, next) => {
+    try {
+        const loadShortlist =
+            req.app.locals.listAdminShortlistEntries ||
+            listAdminShortlistEntries;
+        const result = await loadShortlist(req.query);
+
+        res.json(result);
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get("/api/admin/search-history", ...protectedApi, requireAdmin, async (req, res, next) => {
+    try {
+        const loadHistory =
+            req.app.locals.listAdminSearchHistory || listAdminSearchHistory;
+        const result = await loadHistory(req.query);
+
+        res.json(result);
     } catch (error) {
         next(error);
     }

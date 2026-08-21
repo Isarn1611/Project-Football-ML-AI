@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Avatar,
   Button,
@@ -8,7 +8,6 @@ import {
   Typography,
 } from "antd";
 import {
-  DashboardOutlined,
   HistoryOutlined,
   LogoutOutlined,
   MoonOutlined,
@@ -33,16 +32,14 @@ const LAST_PLAYER_RESULT_STORAGE_KEY = "scoutai.lastPlayerResult";
 const PLAYER_SESSION_CHANGE_EVENT = "scoutai-player-session-change";
 function AuthMenu() {
   const { t } = useTranslation("common");
-  const { isAdmin, signOut, user } = useAuth();
+  const { signOut, user } = useAuth();
   const { darkMode, language, setLanguage, toggleDarkMode } =
     useInterfaceSettings();
-  const location = useLocation();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const avatarUrl = getUserAvatarUrl(user, getActiveAuthProvider());
-  const isAdminPage = location.pathname.startsWith("/admin");
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -136,16 +133,6 @@ function AuthMenu() {
             </Typography.Text>
           </span>
         </div>
-        {isAdmin && (
-          <Button
-            className={`auth-admin-button${isAdminPage ? " is-search-link" : ""}`}
-            icon={isAdminPage ? undefined : <DashboardOutlined />}
-            onClick={() => navigate(isAdminPage ? "/app" : "/admin")}
-            size="middle"
-          >
-            {isAdminPage ? t("shell.search") : t("shell.admin")}
-          </Button>
-        )}
         <Popover
           arrow={false}
           content={settingsContent}

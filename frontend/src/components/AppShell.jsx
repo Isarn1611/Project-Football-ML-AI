@@ -4,6 +4,8 @@ import { Layout } from "antd";
 import { useTranslation } from "react-i18next";
 
 import scoutAiWordmark from "../assets/scoutai-wordmark.png";
+import { useAuth } from "../auth/useAuth";
+import { getRoleHomePath } from "../routes/rolePaths";
 import AuthMenu from "./AuthMenu";
 
 const LAST_PLAYER_RESULT_STORAGE_KEY = "scoutai.lastPlayerResult";
@@ -24,6 +26,7 @@ function writeLastPlayerResult(playerName) {
 
 function AppShell({ children, extra }) {
   const { t } = useTranslation("common");
+  const { role } = useAuth();
   const location = useLocation();
   const currentReportPlayer = location.pathname.startsWith("/result")
     ? new URLSearchParams(location.search).get("player")?.trim() || ""
@@ -50,7 +53,7 @@ function AppShell({ children, extra }) {
       <Layout.Header className="app-header">
         <div className="app-header-inner">
           <div className="app-header-left">
-            <Link className="brand-link" to="/app">
+            <Link className="brand-link" to={getRoleHomePath(role)}>
               <img className="brand-logo" src={scoutAiWordmark} alt="ScoutAI" />
               <span className="brand-product">
                 {t("shell.product")}

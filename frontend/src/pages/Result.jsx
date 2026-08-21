@@ -1009,6 +1009,8 @@ function ModelTable({
       title: t("attributes.playerProfile"),
       render: (name, player) => {
         const isOutlier = String(name).includes("OUTLIER");
+        const playerKey = getPlayerKey(player);
+        const isSaved = shortlistKeys.has(playerKey);
         return (
           <div className="model-player-cell">
             <div className="model-player-identity">
@@ -1025,6 +1027,23 @@ function ModelTable({
                   {getPlayerSummary(player) || t("models.clubUnavailable")}
                 </Text>
               </span>
+              {!isOutlier && (
+                <span className="model-player-mobile-save">
+                  <ShortlistButton
+                    disabled={shortlistActionKey === playerKey}
+                    isSaved={isSaved}
+                    onClick={() =>
+                      onToggleShortlist(
+                        player,
+                        t("sources.modelCandidate", {
+                          model: modelBadge || modelName,
+                        })
+                      )
+                    }
+                    size="small"
+                  />
+                </span>
+              )}
             </div>
           </div>
         );
@@ -1033,6 +1052,7 @@ function ModelTable({
     {
       dataIndex: "Score",
       key: "score",
+      responsive: ["sm"],
       title: t("models.similarity"),
       width: 220,
       render: (score) => {
@@ -1079,6 +1099,7 @@ function ModelTable({
     {
       align: "right",
       key: "actions",
+      responsive: ["sm"],
       title: "",
       width: 120,
       render: (_, player) => {
@@ -1151,7 +1172,7 @@ function ModelTable({
         }}
         pagination={players.length > 8 ? { pageSize: 8 } : false}
         rowKey={(player, index) => `${modelName}-${player.Name}-${index}`}
-        scroll={{ x: 860 }}
+        scroll={{ x: "max-content" }}
       />
     </div>
   );
@@ -1614,6 +1635,18 @@ function Result() {
                   ),
                 };
               })}
+              onTabClick={(_, event) => {
+                const tab = event.currentTarget?.closest(".ant-tabs-tab");
+                const scrollArea = tab?.closest(".ant-tabs-nav-wrap");
+                if (!tab || !scrollArea) return;
+
+                const centeredLeft =
+                  tab.offsetLeft - (scrollArea.clientWidth - tab.offsetWidth) / 2;
+                scrollArea.scrollTo({
+                  behavior: "smooth",
+                  left: Math.max(0, centeredLeft),
+                });
+              }}
             />
           </Card>
         </div>

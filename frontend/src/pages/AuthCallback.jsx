@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/useAuth";
 import { supabase } from "../lib/supabase";
+import { getPostAuthPath } from "../routes/rolePaths";
 import {
   activateAuthProvider,
   clearPendingAuthProvider,
@@ -123,7 +124,7 @@ function AuthCallback() {
       if (!isActive) return;
 
       if (nextState.user) {
-        navigate(next, { replace: true });
+        navigate(getPostAuthPath(nextState.role, next), { replace: true });
       } else {
         setError(t("callback.errors.noSession"));
       }

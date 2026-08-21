@@ -14,12 +14,13 @@ import {
 import scoutAiAnalysis from "../assets/scoutai-auth-hero-analysis.png";
 import scoutAi from "../assets/scoutai2.png";
 import { useAuth } from "../auth/useAuth";
+import { getRoleHomePath } from "../routes/rolePaths";
 import LandingLayout from "../layouts/LandingLayout";
 
 function Home() {
   const { t } = useTranslation("landing");
-  const { isAuthenticated, loading } = useAuth();
-  const workspacePath = isAuthenticated ? "/app" : "/login";
+  const { isAuthenticated, role } = useAuth();
+  const workspacePath = isAuthenticated ? getRoleHomePath(role) : "/login";
 
   const metrics = [
     { icon: <TeamOutlined />, value: "8,452", label: t("metrics.players") },

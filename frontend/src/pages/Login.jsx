@@ -18,6 +18,7 @@ import authHeroAnalysis from "../assets/scoutai-auth-hero-analysis.png";
 import authHeroPath from "../assets/scoutai-auth-hero-path.png";
 import scoutAiWordmark from "../assets/scoutai-wordmark.png";
 import { getEnabledOAuthProviders, supabase } from "../lib/supabase";
+import { getPostAuthPath, getRoleHomePath } from "../routes/rolePaths";
 import {
   activateAuthProvider,
   clearPendingAuthProvider,
@@ -124,7 +125,9 @@ function readAuthError(error, t, operation = "auth") {
 
 function getAuthCallbackUrl(returnPath) {
   const url = new URL("/auth/callback", window.location.origin);
-  url.searchParams.set("next", returnPath);
+  if (returnPath) {
+    url.searchParams.set("next", returnPath);
+  }
   return url.toString();
 }
 
@@ -134,7 +137,7 @@ function getPasswordResetUrl() {
 
 function Login() {
   const { t } = useTranslation("auth");
-  const { isAuthenticated, isConfigured, loading, refresh } = useAuth();
+  const { isAuthenticated, isConfigured, loading, refresh, role } = useAuth();
   const navigate = useNavigate();
   const returnPath = POST_LOGIN_PATH;
   const [mode, setMode] = useState("signIn");
@@ -234,7 +237,7 @@ function Login() {
   }
 
   if (!loading && isAuthenticated) {
-    return <Navigate to={returnPath} replace />;
+    return <Navigate to={getRoleHomePath(role)} replace />;
   }
 
   async function handleSubmit(values) {
@@ -301,8 +304,8 @@ function Login() {
     await supabase.auth.updateUser({
       data: { last_sign_in_provider: "email" },
     });
-    await refresh();
-    navigate(returnPath, { replace: true });
+    const nextState = await refresh();
+    navigate(getPostAuthPath(nextState.role, returnPath), { replace: true });
   }
 
   async function signInWithProvider(provider) {
@@ -321,7 +324,7 @@ function Login() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: getAuthCallbackUrl(returnPath),
+        redirectTo: getAuthCallbackUrl(),
       },
     });
 

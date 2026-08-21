@@ -5,12 +5,13 @@ import { ArrowRightOutlined, GlobalOutlined } from "@ant-design/icons";
 import scoutAiWordmark from "../assets/scoutai-wordmark.png";
 import { useAuth } from "../auth/useAuth";
 import { useInterfaceSettings } from "../interface/useInterfaceSettings";
+import { getRoleHomePath } from "../routes/rolePaths";
 
 function LandingLayout({ children }) {
   const { t } = useTranslation("landing");
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, role } = useAuth();
   const { language, setLanguage } = useInterfaceSettings();
-  const workspacePath = isAuthenticated ? "/app" : "/login";
+  const workspacePath = isAuthenticated ? getRoleHomePath(role) : "/login";
 
   const navLinkClass = ({ isActive }) =>
     `site-nav-link${isActive ? " is-active" : ""}`;

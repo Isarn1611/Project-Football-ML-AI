@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Alert, Button, Card, Empty, Modal, Space, Spin, Table, Typography } from "antd";
+import { Alert, Button, Card, Drawer, Empty, Space, Spin, Table, Typography } from "antd";
 import {
   ClearOutlined,
   DeleteOutlined,
@@ -233,14 +233,16 @@ function SearchHistoryOverlay({ onClose, open }) {
   ];
 
   return (
-    <Modal
-      className="search-history-modal"
+    <Drawer
+      className="search-history-modal search-history-drawer"
       destroyOnHidden
       footer={null}
-      onCancel={onClose}
+      onClose={onClose}
       open={open}
+      placement="right"
+      rootClassName="search-history-drawer-root"
       title={t("history.title")}
-      width={900}
+      width="min(760px, 100vw)"
     >
       <div className="search-workspace search-history-overlay">
         <div className="search-history-overlay-heading">
@@ -290,7 +292,7 @@ function SearchHistoryOverlay({ onClose, open }) {
           </Card>
         )}
       </div>
-    </Modal>
+    </Drawer>
   );
 }
 
