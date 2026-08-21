@@ -119,6 +119,8 @@ export const resources = {
         refresh: "Refresh data",
         refreshing: "Refreshing",
         retry: "Try again",
+        viewSearchHistory: "View search popularity",
+        viewShortlist: "View shortlist popularity",
       },
       badge: "Admin access",
       errors: {
@@ -131,6 +133,53 @@ export const resources = {
         searchHistory: "Recorded searches",
         shortlist: "Shortlist entries",
         users: "Registered users",
+      },
+      activity: {
+        actions: {
+          back: "Back to dashboard",
+        },
+        columns: {
+          latest: "Latest activity",
+          player: "Player",
+          position: "Position",
+          rank: "Rank",
+          savedCount: "Accounts currently saving",
+          searchCount: "Total searches",
+          sources: "Save sources",
+          uniqueAccounts: "Accounts that searched",
+        },
+        errors: {
+          load: "Refresh the page and check the backend connection.",
+          title: "Could not load player popularity",
+        },
+        privacy: {
+          description:
+            "Only combined player statistics are returned. Names, emails, and user IDs are not included.",
+          title: "User information is private",
+        },
+        search: {
+          action: "Search",
+          label: "Search player popularity",
+        },
+        searches: {
+          empty: "No searched players match this name.",
+          kicker: "Player demand",
+          searchPlaceholder: "Enter a player name",
+          subtitle:
+            "Find any player to see total searches and compare the most searched names—without revealing user information.",
+          tableTitle: "Most searched players",
+          title: "Player search popularity",
+        },
+        shortlist: {
+          empty: "No shortlisted players match this name.",
+          kicker: "Player demand",
+          searchPlaceholder: "Enter a player name or club",
+          subtitle:
+            "See which players appear on the most current shortlists and how they were discovered—without revealing user information.",
+          tableTitle: "Most shortlisted players",
+          title: "Shortlist popularity",
+        },
+        total: "{{count}} players",
       },
       players: {
         actions: {
@@ -834,6 +883,8 @@ export const resources = {
         refresh: "รีเฟรชข้อมูล",
         refreshing: "กำลังรีเฟรช",
         retry: "ลองอีกครั้ง",
+        viewSearchHistory: "ดูความนิยมจากการค้นหา",
+        viewShortlist: "ดูความนิยมใน Shortlist",
       },
       badge: "สิทธิ์ผู้ดูแลระบบ",
       errors: {
@@ -846,6 +897,53 @@ export const resources = {
         searchHistory: "ประวัติการค้นหา",
         shortlist: "รายการนักเตะที่บันทึก",
         users: "ผู้ใช้ที่ลงทะเบียน",
+      },
+      activity: {
+        actions: {
+          back: "กลับหน้า Dashboard",
+        },
+        columns: {
+          latest: "กิจกรรมล่าสุด",
+          player: "นักเตะ",
+          position: "ตำแหน่ง",
+          rank: "อันดับ",
+          savedCount: "จำนวนบัญชีที่บันทึกอยู่",
+          searchCount: "จำนวนครั้งที่ค้นหา",
+          sources: "แหล่งที่บันทึก",
+          uniqueAccounts: "จำนวนบัญชีที่เคยค้นหา",
+        },
+        errors: {
+          load: "ลองรีเฟรชหน้าและตรวจสอบการเชื่อมต่อ Backend",
+          title: "ไม่สามารถโหลดความนิยมของนักเตะได้",
+        },
+        privacy: {
+          description:
+            "ระบบส่งกลับเฉพาะสถิติรวมของนักเตะ โดยไม่มีชื่อ อีเมล หรือรหัสผู้ใช้",
+          title: "ข้อมูลผู้ใช้ถูกเก็บเป็นส่วนตัว",
+        },
+        search: {
+          action: "ค้นหา",
+          label: "ค้นหาความนิยมของนักเตะ",
+        },
+        searches: {
+          empty: "ไม่พบนักเตะที่ถูกค้นหาตรงกับชื่อนี้",
+          kicker: "ความต้องการนักเตะ",
+          searchPlaceholder: "พิมพ์ชื่อนักเตะ",
+          subtitle:
+            "ค้นหานักเตะเพื่อดูจำนวนครั้งทั้งหมดและเปรียบเทียบนักเตะที่ถูกค้นหามากที่สุด โดยไม่เปิดเผยข้อมูลผู้ใช้",
+          tableTitle: "นักเตะที่ถูกค้นหามากที่สุด",
+          title: "ความนิยมจากการค้นหา",
+        },
+        shortlist: {
+          empty: "ไม่พบนักเตะใน Shortlist ตรงกับชื่อนี้",
+          kicker: "ความต้องการนักเตะ",
+          searchPlaceholder: "พิมพ์ชื่อนักเตะหรือสโมสร",
+          subtitle:
+            "ดูว่านักเตะคนใดอยู่ใน Shortlist ปัจจุบันมากที่สุดและถูกพบจากช่องทางใด โดยไม่เปิดเผยข้อมูลผู้ใช้",
+          tableTitle: "นักเตะที่ถูกบันทึกมากที่สุด",
+          title: "ความนิยมใน Shortlist",
+        },
+        total: "นักเตะทั้งหมด {{count}} คน",
       },
       players: {
         actions: {

@@ -11,6 +11,20 @@ function requireSupabase() {
   return supabase;
 }
 
+function isMissingSearchAnalyticsSchema(error) {
+  const code = error?.code;
+  const message = String(error?.message || error?.details || "");
+
+  return (
+    code === "PGRST202" ||
+    code === "PGRST204" ||
+    code === "42703" ||
+    code === "42883" ||
+    (/record_player_search|last_searched_at|search_count/i.test(message) &&
+      /function|column|schema cache|does not exist|could not find/i.test(message))
+  );
+}
+
 async function getAuthenticatedUserId(client) {
   const {
     data: { user },
@@ -170,13 +184,21 @@ export async function removeShortlistPlayer(userId, playerKey) {
 
 export async function loadSearchHistory(userId, limit = 25) {
   const client = requireSupabase();
-
-  const { data, error } = await client
+  let { data, error } = await client
     .from(SEARCH_HISTORY_TABLE)
     .select("*")
     .eq("user_id", userId)
-    .order("created_at", { ascending: false })
+    .order("last_searched_at", { ascending: false })
     .limit(limit);
+
+  if (error && isMissingSearchAnalyticsSchema(error)) {
+    ({ data, error } = await client
+      .from(SEARCH_HISTORY_TABLE)
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit));
+  }
 
   if (error) throw error;
   return dedupeSearchHistoryRows(data || []);
@@ -191,30 +213,41 @@ export async function recordSearch(userId, query, metadata = {}) {
     return null;
   }
 
-  const now = new Date().toISOString();
-  const payload = {
-    user_id: authenticatedUserId,
-    query: cleanedQuery,
-    status: metadata.status || "searched",
-    result_count: metadata.resultCount ?? null,
-    error_message: metadata.errorMessage || null,
-    metadata,
-    created_at: now,
-  };
+  if (authenticatedUserId !== userId) {
+    throw new Error("Authenticated user does not match the search owner.");
+  }
 
-  const { error: deleteExistingError } = await client
-    .from(SEARCH_HISTORY_TABLE)
-    .delete()
-    .eq("user_id", authenticatedUserId)
-    .eq("query", cleanedQuery);
+  let { data, error } = await client.rpc("record_player_search", {
+    p_query: cleanedQuery,
+    p_status: metadata.status || "searched",
+    p_result_count: metadata.resultCount ?? null,
+    p_error_message: metadata.errorMessage || null,
+    p_metadata: metadata,
+  });
 
-  if (deleteExistingError) throw deleteExistingError;
+  if (error && isMissingSearchAnalyticsSchema(error)) {
+    const payload = {
+      user_id: authenticatedUserId,
+      query: cleanedQuery,
+      status: metadata.status || "searched",
+      result_count: metadata.resultCount ?? null,
+      error_message: metadata.errorMessage || null,
+      metadata,
+      created_at: new Date().toISOString(),
+    };
+    const { error: deleteError } = await client
+      .from(SEARCH_HISTORY_TABLE)
+      .delete()
+      .eq("user_id", authenticatedUserId)
+      .eq("query", cleanedQuery);
 
-  const { data, error } = await client
-    .from(SEARCH_HISTORY_TABLE)
-    .insert(payload)
-    .select()
-    .single();
+    if (deleteError) throw deleteError;
+    ({ data, error } = await client
+      .from(SEARCH_HISTORY_TABLE)
+      .insert(payload)
+      .select()
+      .single());
+  }
 
   if (error) throw error;
   return data;

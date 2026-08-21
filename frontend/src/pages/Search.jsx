@@ -13,27 +13,30 @@ import {
   Modal,
   Segmented,
   Select,
-  Space,
   Spin,
-  Table,
   Typography,
 } from "antd";
 import {
-  DeleteOutlined,
+  BarChartOutlined,
   FilterOutlined,
   LoadingOutlined,
-  RadarChartOutlined,
   ReloadOutlined,
+  RiseOutlined,
   SearchOutlined,
   SortAscendingOutlined,
+  StarFilled,
   StarOutlined,
+  UserOutlined,
+  WalletOutlined,
 } from "@ant-design/icons";
 
 import { useAuth } from "../auth/useAuth";
 import AppShell from "../components/AppShell";
 import {
+  getPlayerKey,
   loadShortlist,
   removeShortlistItem,
+  upsertShortlistPlayer,
 } from "../services/scoutingData";
 import { searchPlayers } from "../services/api";
 import PlayerAvatar from "../services/playerImages.jsx";
@@ -42,7 +45,7 @@ const { Text } = Typography;
 
 const LAST_PLAYER_RESULT_STORAGE_KEY = "scoutai.lastPlayerResult";
 const PLAYER_SESSION_CHANGE_EVENT = "scoutai-player-session-change";
-const PLAYER_PAGE_SIZE = 13;
+const PLAYER_PAGE_SIZE = 24;
 const PLAYER_MAX_RESULTS = 50;
 
 const playerBrowserDefaults = {
@@ -67,15 +70,6 @@ const wageValues = [
   ["GBP 500k", 500000],
 ];
 
-function formatDateTime(value, t, language) {
-  if (!value) return t("players.unknownTime");
-
-  return new Intl.DateTimeFormat(language === "th" ? "th-TH" : "en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
 function formatMoney(value, t) {
   if (!value || value < 0) return t("players.unknown");
 
@@ -85,6 +79,186 @@ function formatMoney(value, t) {
     notation: "compact",
     style: "currency",
   }).format(value);
+}
+
+const nationalityFlags = {
+  argentina: "🇦🇷",
+  belgium: "🇧🇪",
+  brazil: "🇧🇷",
+  croatia: "🇭🇷",
+  denmark: "🇩🇰",
+  egypt: "🇪🇬",
+  england: "🇬🇧",
+  france: "🇫🇷",
+  germany: "🇩🇪",
+  italy: "🇮🇹",
+  netherlands: "🇳🇱",
+  norway: "🇳🇴",
+  poland: "🇵🇱",
+  portugal: "🇵🇹",
+  spain: "🇪🇸",
+  uruguay: "🇺🇾",
+};
+
+function getNationalityFlag(value) {
+  return nationalityFlags[String(value || "").trim().toLocaleLowerCase()] || "🌐";
+}
+
+function pickPlayerValue(player, keys, fallback = null) {
+  for (const key of keys) {
+    const value = player?.[key];
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return fallback;
+}
+
+function normalizeSavedPlayer(item) {
+  const snapshot =
+    item?.snapshot && typeof item.snapshot === "object" ? item.snapshot : {};
+
+  return {
+    ...snapshot,
+    age: pickPlayerValue(snapshot, ["age", "Age"], item?.age),
+    club: pickPlayerValue(snapshot, ["club", "Club"], item?.club),
+    currentAbility: pickPlayerValue(snapshot, [
+      "currentAbility",
+      "CurrentAbility",
+      "ca",
+      "CA",
+    ]),
+    marketValue: pickPlayerValue(
+      snapshot,
+      ["marketValue", "MarketValue", "Values", "market_value"],
+      item?.market_value
+    ),
+    name: pickPlayerValue(
+      snapshot,
+      ["name", "Name", "playerName", "player_name"],
+      item?.player_name
+    ),
+    nationality: pickPlayerValue(
+      snapshot,
+      ["nationality", "Nationality"],
+      item?.nationality
+    ),
+    position: pickPlayerValue(
+      snapshot,
+      ["position", "Position", "FullPosition"],
+      item?.position
+    ),
+    potentialAbility: pickPlayerValue(snapshot, [
+      "potentialAbility",
+      "PotentialAbility",
+      "pa",
+      "PA",
+    ]),
+    salary: pickPlayerValue(snapshot, ["salary", "Salary"]),
+    uid: pickPlayerValue(
+      snapshot,
+      ["uid", "UID", "id", "player_uid"],
+      item?.player_uid
+    ),
+  };
+}
+
+function PlayerProfileCard({
+  isSaved,
+  isSaving,
+  onAnalyze,
+  onToggleSaved,
+  player,
+}) {
+  const { t } = useTranslation(["search", "result"]);
+  const saveLabel = isSaved
+    ? t("shortlist.removeAria", { name: player.name, ns: "search" })
+    : `${t("actions.save", { ns: "result" })}: ${player.name}`;
+
+  return (
+    <article className="player-profile-card">
+      <PlayerAvatar
+        alt={player.name}
+        className="player-profile-card-image"
+        name={player.name}
+        uid={player.uid}
+      />
+      <span className="player-profile-card-overlay" aria-hidden="true" />
+      <button
+        aria-label={`${t("actions.analyze", { ns: "search" })} ${player.name}`}
+        className="player-profile-card-open"
+        onClick={() => onAnalyze(player.name)}
+        type="button"
+      />
+      <button
+        aria-label={saveLabel}
+        className={`player-profile-card-save${isSaved ? " is-saved" : ""}`}
+        disabled={isSaving}
+        onClick={onToggleSaved}
+        title={saveLabel}
+        type="button"
+      >
+        {isSaving ? (
+          <LoadingOutlined spin />
+        ) : isSaved ? (
+          <StarFilled />
+        ) : (
+          <StarOutlined />
+        )}
+      </button>
+      <strong className="player-profile-card-position">
+        {player.position || "-"}
+      </strong>
+      <div className="player-profile-card-identity">
+        <h3>{player.name}</h3>
+        <i className="player-profile-card-accent" aria-hidden="true" />
+        <div className="player-profile-card-details">
+          <span>
+            <b aria-hidden="true">{getNationalityFlag(player.nationality)}</b>
+            {player.nationality || t("players.unknown", { ns: "search" })}
+          </span>
+          <span>
+            <b className="player-profile-card-club-mark" aria-hidden="true">⚽</b>
+            {player.club || t("players.unknown", { ns: "search" })}
+          </span>
+        </div>
+      </div>
+      <div className="player-profile-card-metrics">
+        <span>
+          <RiseOutlined aria-hidden="true" />
+          <span>
+            <small>CA / PA</small>
+            <strong>
+              {player.currentAbility ?? "-"} / {player.potentialAbility ?? "-"}
+            </strong>
+          </span>
+        </span>
+        <span>
+          <BarChartOutlined aria-hidden="true" />
+          <span>
+            <small>{t("players.value", { ns: "search" })}</small>
+            <strong>{formatMoney(player.marketValue, t)}</strong>
+          </span>
+        </span>
+        <span>
+          <WalletOutlined aria-hidden="true" />
+          <span>
+            <small>{t("players.wage", { ns: "search" })}</small>
+            <strong>
+              {player.salary
+                ? formatMoney(player.salary, t)
+                : t("players.unknown", { ns: "search" })}
+            </strong>
+          </span>
+        </span>
+        <span>
+          <UserOutlined aria-hidden="true" />
+          <span>
+            <small>{t("players.age", { ns: "search" })}</small>
+            <strong>{player.age ?? "-"}</strong>
+          </span>
+        </span>
+      </div>
+    </article>
+  );
 }
 
 function buildBrowserParams(values, limit = PLAYER_PAGE_SIZE) {
@@ -200,132 +374,42 @@ function formatSavedSource(source, t) {
 }
 
 function ShortlistPanel({
-  embedded = false,
   emptyDescription,
   items,
   onAnalyze,
-  onRemove,
+  onToggleSaved,
+  savingPlayerKeys,
 }) {
-  const { i18n, t } = useTranslation("search");
-  const columns = [
-    {
-      dataIndex: "player_name",
-      key: "player",
-      title: t("players.player"),
-      width: "42%",
-      render: (_, item) => (
-        <div className="workspace-player">
-          <PlayerAvatar
-            className="workspace-row-avatar"
-            name={item.player_name}
-            uid={item.player_uid}
-          />
-          <span className="workspace-player-copy">
-            <Text strong>{item.player_name}</Text>
-            <Text type="secondary">
-              {[item.club, item.position].filter(Boolean).join(" / ") ||
-                t("players.positionUnavailable")}
-            </Text>
-          </span>
-        </div>
-      ),
-    },
-    {
-      dataIndex: "source",
-      key: "source",
-      responsive: ["md"],
-      title: t("players.source"),
-      width: "24%",
-      render: (source) => (
-        <span className="workspace-source-pill">
-          {formatSavedSource(source, t)}
-        </span>
-      ),
-    },
-    {
-      dataIndex: "updated_at",
-      key: "updated_at",
-      responsive: ["lg"],
-      title: t("shortlist.saved"),
-      width: "20%",
-      render: (value) => (
-        <span className="workspace-date">
-          {formatDateTime(value, t, i18n.language)}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      title: "",
-      width: 148,
-      render: (_, item) => (
-        <Space>
-          <Button
-            className="workspace-open-button"
-            icon={<SearchOutlined />}
-            onClick={() => onAnalyze(item.player_name)}
-          >
-            {t("actions.open")}
-          </Button>
-          <Button
-            aria-label={t("shortlist.removeAria", {
-              name: item.player_name,
-            })}
-            className="workspace-remove-button"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => onRemove(item.id)}
-            title={t("shortlist.removeAria", {
-              name: item.player_name,
-            })}
-            type="text"
-          />
-        </Space>
-      ),
-    },
-  ];
+  const { t } = useTranslation("search");
 
-  const table = (
-    <Table
-      columns={columns}
-      dataSource={items}
-      locale={{
-        emptyText: (
-          <Empty
-            description={emptyDescription || t("shortlist.empty")}
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
-        ),
-      }}
-      pagination={items.length > 5 ? { pageSize: 5 } : false}
-      rowKey="id"
-      scroll={{ x: 560 }}
-      size="middle"
-    />
-  );
-
-  if (embedded) {
-    return <div className="embedded-shortlist">{table}</div>;
+  if (!items.length) {
+    return (
+      <Empty
+        className="player-card-empty"
+        description={emptyDescription || t("shortlist.empty")}
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+      />
+    );
   }
 
   return (
-    <Card
-      className="workspace-card shortlist-card"
-      title={
-        <div className="workspace-card-heading">
-          <span className="workspace-card-icon">
-            <StarOutlined />
-          </span>
-          <span className="workspace-card-title">
-            <strong>{t("shortlist.title")}</strong>
-            <small>{t("shortlist.subtitle")}</small>
-          </span>
-          <span className="workspace-card-count">{items.length}</span>
-        </div>
-      }
-    >
-      {table}
-    </Card>
+    <div className="player-card-grid saved-player-card-grid">
+      {items.map((item) => {
+        const player = normalizeSavedPlayer(item);
+        const playerKey = getPlayerKey(player);
+
+        return (
+          <PlayerProfileCard
+            isSaved
+            isSaving={savingPlayerKeys.has(playerKey)}
+            key={item.id || playerKey}
+            onAnalyze={onAnalyze}
+            onToggleSaved={() => onToggleSaved(player, item)}
+            player={player}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -333,6 +417,7 @@ function PlayerDatabasePanel({
   activeView,
   onAnalyze,
   onRemoveSaved,
+  onSavePlayer,
   onViewChange,
   savedItems,
   savedLoading,
@@ -354,6 +439,7 @@ function PlayerDatabasePanel({
     source: "",
   });
   const [isApplyingFilters, setIsApplyingFilters] = useState(false);
+  const [savingPlayerKeys, setSavingPlayerKeys] = useState(() => new Set());
   const [filterFeedback, setFilterFeedback] = useState({
     status: "",
     text: "",
@@ -419,6 +505,12 @@ function PlayerDatabasePanel({
     label: option.label,
   }));
   const normalizedSavedItems = savedItems || [];
+  const savedItemByKey = new Map(
+    normalizedSavedItems.map((item) => [
+      item.player_key || getPlayerKey(item),
+      item,
+    ])
+  );
 
   function buildSavedOptions(key, labelFormatter = (value) => value) {
     return [...new Set(normalizedSavedItems.map((item) => item[key]).filter(Boolean))]
@@ -474,6 +566,27 @@ function PlayerDatabasePanel({
       }
       return (Date.parse(right.updated_at) || 0) - (Date.parse(left.updated_at) || 0);
     });
+
+  async function toggleSavedPlayer(player, savedItem = null) {
+    const playerKey = getPlayerKey(player);
+    if (!playerKey || savingPlayerKeys.has(playerKey)) return;
+
+    setSavingPlayerKeys((keys) => new Set(keys).add(playerKey));
+
+    try {
+      if (savedItem) {
+        await onRemoveSaved(savedItem.id);
+      } else {
+        await onSavePlayer(player);
+      }
+    } finally {
+      setSavingPlayerKeys((keys) => {
+        const nextKeys = new Set(keys);
+        nextKeys.delete(playerKey);
+        return nextKeys;
+      });
+    }
+  }
 
   useEffect(() => {
     let isActive = true;
@@ -982,73 +1095,21 @@ function PlayerDatabasePanel({
             </div>
           ) : browserState.players.length ? (
             <div className="player-card-grid">
-              {browserState.players.map((player) => (
-                <article
-                  aria-label={`${t("actions.analyze")} ${player.name}`}
-                  className="player-profile-card"
-                  key={player.uid || player.id || player.name}
-                  onClick={() => onAnalyze(player.name)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      onAnalyze(player.name);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <PlayerAvatar
-                    alt={player.name}
-                    className="player-profile-card-image"
-                    name={player.name}
-                    uid={player.uid}
+              {browserState.players.map((player) => {
+                const playerKey = getPlayerKey(player);
+                const savedItem = savedItemByKey.get(playerKey);
+
+                return (
+                  <PlayerProfileCard
+                    isSaved={Boolean(savedItem)}
+                    isSaving={savingPlayerKeys.has(playerKey)}
+                    key={player.uid || player.id || player.name}
+                    onAnalyze={onAnalyze}
+                    onToggleSaved={() => toggleSavedPlayer(player, savedItem)}
+                    player={player}
                   />
-                  <span className="player-profile-card-overlay" aria-hidden="true" />
-                  <div className="player-profile-card-top">
-                    <div className="player-profile-card-name">
-                      <h3>{player.name}</h3>
-                      <div className="player-profile-card-meta">
-                        <span>{player.nationality || t("players.unknown")}</span>
-                        <i aria-hidden="true" />
-                        <span>{player.club || t("players.unknown")}</span>
-                      </div>
-                    </div>
-                    <div className="player-profile-card-team">
-                      <strong>{player.position || "-"}</strong>
-                    </div>
-                  </div>
-                  <div className="player-profile-card-bottom">
-                    <div className="player-profile-card-metrics">
-                      <span>
-                        <small>CA / PA</small>
-                        <strong>
-                          {player.currentAbility ?? "-"} / {player.potentialAbility ?? "-"}
-                        </strong>
-                      </span>
-                      <span>
-                        <small>{t("players.value")}</small>
-                        <strong>{formatMoney(player.marketValue, t)}</strong>
-                      </span>
-                      <span>
-                        <small>{t("players.wage")}</small>
-                        <strong>
-                          {player.salary
-                            ? formatMoney(player.salary, t)
-                            : t("players.unknown")}
-                        </strong>
-                      </span>
-                      <span>
-                        <small>{t("players.age")}</small>
-                        <strong>{player.age ?? "-"}</strong>
-                      </span>
-                    </div>
-                    <span className="player-profile-card-action">
-                      <RadarChartOutlined />
-                      {t("actions.analyze")}
-                    </span>
-                  </div>
-                </article>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <Empty
@@ -1145,7 +1206,6 @@ function PlayerDatabasePanel({
           </div>
         ) : (
           <ShortlistPanel
-            embedded
             emptyDescription={
               normalizedSavedItems.length
                 ? t("shortlist.noMatches")
@@ -1153,7 +1213,8 @@ function PlayerDatabasePanel({
             }
             items={filteredSavedItems}
             onAnalyze={onAnalyze}
-            onRemove={onRemoveSaved}
+            onToggleSaved={toggleSavedPlayer}
+            savingPlayerKeys={savingPlayerKeys}
           />
         )}
       </div>
@@ -1230,6 +1291,27 @@ function Search() {
     navigate(`/result?${new URLSearchParams({ player: cleanedName })}`);
   }
 
+  async function saveShortlist(player) {
+    if (!user?.id) {
+      setWorkspaceState((state) => ({
+        ...state,
+        error: t("errors.authentication"),
+      }));
+      return;
+    }
+
+    try {
+      await upsertShortlistPlayer(user.id, player, "manual");
+      const shortlist = await loadShortlist(user.id);
+      setWorkspaceState((state) => ({ ...state, error: "", shortlist }));
+    } catch (saveError) {
+      setWorkspaceState((state) => ({
+        ...state,
+        error: readDataError(saveError, t),
+      }));
+    }
+  }
+
   async function removeShortlist(id) {
     if (!user?.id) return;
 
@@ -1262,6 +1344,7 @@ function Search() {
             activeView={activePlayerView}
             onAnalyze={startAnalysis}
             onRemoveSaved={removeShortlist}
+            onSavePlayer={saveShortlist}
             onViewChange={setActivePlayerView}
             savedItems={workspaceState.shortlist}
             savedLoading={workspaceState.loading}

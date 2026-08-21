@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/useAuth";
 import { supabase } from "../lib/supabase";
+import { getRoleHomePath } from "../routes/rolePaths";
 
 const { Paragraph, Title } = Typography;
 
@@ -38,8 +39,8 @@ function ResetPassword() {
       return;
     }
 
-    await refresh();
-    navigate("/app", { replace: true });
+    const nextState = await refresh();
+    navigate(getRoleHomePath(nextState.role), { replace: true });
   }
 
   return (

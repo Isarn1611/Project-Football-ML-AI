@@ -78,6 +78,18 @@ export function getAdminDashboard() {
   return api.get("/api/admin/dashboard").then((response) => response.data);
 }
 
+export function getAdminShortlistEntries(params = {}) {
+  return api
+    .get("/api/admin/shortlist", { params })
+    .then((response) => response.data);
+}
+
+export function getAdminSearchHistory(params = {}) {
+  return api
+    .get("/api/admin/search-history", { params })
+    .then((response) => response.data);
+}
+
 export function getAdminUsers(params = {}) {
   return api
     .get("/api/admin/users", { params })

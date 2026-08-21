@@ -26,6 +26,8 @@ let lastGeminiRequest;
 let lastAdminUserQuery;
 let lastRoleUpdate;
 let lastAdminPlayerQuery;
+let lastAdminSearchHistoryQuery;
+let lastAdminShortlistQuery;
 let lastPlayerUpdate;
 let lastPlayerLookupNames;
 let lastSuspensionUpdate;
@@ -181,6 +183,37 @@ before(async () => {
         total: 1,
         totalPages: 1,
       },
+      query: String(query.q || ""),
+    };
+  };
+  app.locals.listAdminShortlistEntries = async (query) => {
+    lastAdminShortlistQuery = query;
+    return {
+      items: [
+        {
+          key: "18004457",
+          playerName: "Kevin De Bruyne",
+          savedCount: 8,
+          latestAt: "2026-08-20T08:00:00.000Z",
+        },
+      ],
+      pagination: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+      query: String(query.q || ""),
+    };
+  };
+  app.locals.listAdminSearchHistory = async (query) => {
+    lastAdminSearchHistoryQuery = query;
+    return {
+      items: [
+        {
+          key: "erling haaland",
+          playerName: "Erling Haaland",
+          searchCount: 12,
+          uniqueAccounts: 5,
+          latestAt: "2026-08-20T09:00:00.000Z",
+        },
+      ],
+      pagination: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
       query: String(query.q || ""),
     };
   };
@@ -726,6 +759,52 @@ test("GET /api/admin/players returns a filtered player page to administrators", 
     page: "1",
     pageSize: "20",
   });
+});
+
+test("GET /api/admin/shortlist returns account activity to administrators", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/shortlist?q=Kevin&page=1&pageSize=20`,
+    { headers: ADMIN_AUTH_HEADER }
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.items[0].playerName, "Kevin De Bruyne");
+  assert.equal(payload.items[0].savedCount, 8);
+  assert.equal(Object.hasOwn(payload.items[0], "user"), false);
+  assert.deepEqual({ ...lastAdminShortlistQuery }, {
+    q: "Kevin",
+    page: "1",
+    pageSize: "20",
+  });
+});
+
+test("GET /api/admin/search-history returns account activity to administrators", async () => {
+  const response = await fetch(
+    `${backendUrl}/api/admin/search-history?q=Haaland&page=1&pageSize=20`,
+    { headers: ADMIN_AUTH_HEADER }
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.items[0].playerName, "Erling Haaland");
+  assert.equal(payload.items[0].searchCount, 12);
+  assert.equal(Object.hasOwn(payload.items[0], "user"), false);
+  assert.deepEqual({ ...lastAdminSearchHistoryQuery }, {
+    q: "Haaland",
+    page: "1",
+    pageSize: "20",
+  });
+});
+
+test("GET /api/admin/activity lists reject non-admin users", async () => {
+  const [shortlistResponse, historyResponse] = await Promise.all([
+    fetch(`${backendUrl}/api/admin/shortlist`, { headers: AUTH_HEADER }),
+    fetch(`${backendUrl}/api/admin/search-history`, { headers: AUTH_HEADER }),
+  ]);
+
+  assert.equal(shortlistResponse.status, 403);
+  assert.equal(historyResponse.status, 403);
 });
 
 test("GET /api/admin/players rejects non-admin users", async () => {
