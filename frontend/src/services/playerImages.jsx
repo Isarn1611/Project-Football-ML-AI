@@ -1,90 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { supabase } from "../lib/supabase";
-
-const PLAYER_IMAGE_BUCKET = "player-images";
-const PLAYER_IMAGE_FOLDER = "players";
-const SIGNED_URL_EXPIRY_SECONDS = 3600; // 1 hour
-const signedUrlCache = new Map();
-
-function normalizeUid(uid) {
-  return String(uid ?? "").trim();
-}
-
-/**
- * Build a public Supabase Storage URL for a player image.
- *
- * Images are uploaded by the image-import script to the `player-images`
- * bucket at `players/{UID}.webp`. Returns null when Supabase is not
- * configured or the uid is missing so callers can fall back to initials.
- */
-export function getPlayerImageUrl(uid) {
-  const normalizedUid = normalizeUid(uid);
-
-  if (!supabase || !normalizedUid) {
-    return null;
-  }
-
-  const { data } = supabase.storage
-    .from(PLAYER_IMAGE_BUCKET)
-    .getPublicUrl(`${PLAYER_IMAGE_FOLDER}/${normalizedUid}.webp`);
-
-  return data?.publicUrl || null;
-}
-
-/**
- * Create (and cache) a temporarily signed URL for a player image.
- *
- * Signed URLs also work for private buckets as long as the signed-in user
- * has SELECT access on the bucket. The URL token is embedded in the query
- * string, so it can be used directly in an <img> tag.
- */
-export async function getPlayerImageSignedUrl(
-  uid,
-  expiresIn = SIGNED_URL_EXPIRY_SECONDS,
-) {
-  const normalizedUid = normalizeUid(uid);
-
-  if (!supabase || !normalizedUid) {
-    return null;
-  }
-
-  const seconds = Math.min(
-    Math.max(Number(expiresIn) || SIGNED_URL_EXPIRY_SECONDS, 60),
-    86400,
-  );
-  const cacheKey = `${normalizedUid}:${seconds}`;
-  const cached = signedUrlCache.get(cacheKey);
-
-  if (cached && cached.expiresAt > Date.now() + 60_000) {
-    return cached.url;
-  }
-
-  const { data, error } = await supabase.storage
-    .from(PLAYER_IMAGE_BUCKET)
-    .createSignedUrl(`${PLAYER_IMAGE_FOLDER}/${normalizedUid}.webp`, seconds);
-
-  if (error || !data?.signedUrl) {
-    return null;
-  }
-
-  signedUrlCache.set(cacheKey, {
-    url: data.signedUrl,
-    expiresAt: Date.now() + seconds * 1000,
-  });
-
-  return data.signedUrl;
-}
-
-export function getPlayerInitials(name) {
-  return String(name || "")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
+import {
+  getPlayerImageSignedUrl,
+  getPlayerImageUrl,
+  getPlayerInitials,
+} from "./playerImageUrls";
 
 /**
  * Avatar that shows the player image from Supabase Storage when available.
@@ -103,16 +23,16 @@ export function getPlayerInitials(name) {
  * @param {boolean} [showStatus] Render an online/active status dot.
  * @param {string|number} [uid] Player UID used to build the storage path.
  */
-export default function PlayerAvatar({
+function PlayerAvatarImage({
   alt,
   className = "",
+  initialUrl,
   name,
   overlay,
   showStatus = false,
   uid,
 }) {
-  const publicUrl = useMemo(() => getPlayerImageUrl(uid), [uid]);
-  const [currentUrl, setCurrentUrl] = useState(publicUrl);
+  const [currentUrl, setCurrentUrl] = useState(initialUrl);
   const [hasError, setHasError] = useState(false);
   const [triedSigned, setTriedSigned] = useState(false);
   const isMounted = useRef(true);
@@ -124,12 +44,6 @@ export default function PlayerAvatar({
       isMounted.current = false;
     };
   }, []);
-
-  useEffect(() => {
-    setCurrentUrl(publicUrl);
-    setHasError(false);
-    setTriedSigned(false);
-  }, [publicUrl]);
 
   async function handleImageError() {
     if (!triedSigned) {
@@ -174,6 +88,18 @@ export default function PlayerAvatar({
       )}
       {overlay}
     </span>
+  );
+}
+
+export default function PlayerAvatar(props) {
+  const publicUrl = useMemo(() => getPlayerImageUrl(props.uid), [props.uid]);
+
+  return (
+    <PlayerAvatarImage
+      {...props}
+      initialUrl={publicUrl}
+      key={`${props.uid ?? ""}:${publicUrl ?? "fallback"}`}
+    />
   );
 }
 

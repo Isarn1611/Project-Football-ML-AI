@@ -2,8 +2,42 @@ import axios from "axios";
 
 import { supabase } from "../lib/supabase";
 
+function isLocalNetworkHost(hostname) {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname.startsWith("10.") ||
+    hostname.startsWith("192.168.") ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+  );
+}
+
+function resolveApiBaseUrl() {
+  const configuredUrl =
+    import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  if (typeof window === "undefined") return configuredUrl;
+
+  try {
+    const url = new URL(configuredUrl, window.location.origin);
+    const pageHostname = window.location.hostname;
+
+    if (
+      isLocalNetworkHost(url.hostname) &&
+      isLocalNetworkHost(pageHostname) &&
+      url.hostname !== pageHostname
+    ) {
+      url.hostname = pageHostname;
+    }
+
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return configuredUrl;
+  }
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+  baseURL: resolveApiBaseUrl(),
   timeout: 130000,
 });
 

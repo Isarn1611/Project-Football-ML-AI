@@ -125,7 +125,9 @@ function readAuthError(error, t, operation = "auth") {
 
 function getAuthCallbackUrl(returnPath) {
   const url = new URL("/auth/callback", window.location.origin);
-  url.searchParams.set("next", returnPath);
+  if (returnPath) {
+    url.searchParams.set("next", returnPath);
+  }
   return url.toString();
 }
 
@@ -322,7 +324,7 @@ function Login() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: getAuthCallbackUrl(returnPath),
+        redirectTo: getAuthCallbackUrl(),
       },
     });
 

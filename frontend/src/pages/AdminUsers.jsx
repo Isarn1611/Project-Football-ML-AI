@@ -469,6 +469,7 @@ function AdminUsers() {
         </Card>
 
         <Drawer
+          className="admin-usage-drawer-panel"
           extra={
             <Select
               onChange={(days) => {
@@ -488,10 +489,11 @@ function AdminUsers() {
             setUsage(null);
           }}
           open={Boolean(selectedUser)}
+          rootClassName="admin-usage-drawer-root"
           title={t("users.usage.title", {
             email: selectedUser?.email || t("users.unknownEmail"),
           })}
-          width={760}
+          width="min(760px, 100vw)"
         >
           <div className="admin-usage-drawer">
             <div className="admin-usage-profile">
@@ -587,6 +589,7 @@ function AdminUsers() {
           onCancel={closeSuspension}
           onOk={saveSuspension}
           open={Boolean(suspensionUser)}
+          rootClassName="admin-action-modal-root"
           title={t(
             suspensionUser?.suspendedAt
               ? "users.suspension.reactivateTitle"
