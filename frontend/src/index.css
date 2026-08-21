@@ -8491,3 +8491,566 @@ html[data-color-mode="dark"] .filter-suggestion-copy small {
     flex-direction: column;
   }
 }
+
+/* Mobile workspace layout. Keep the scouting browser dense and touch friendly. */
+@media (max-width: 680px) {
+  html,
+  body,
+  #root,
+  .app-shell {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .app-header-inner {
+    width: 100%;
+    min-height: 62px;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .app-header-left {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .brand-link {
+    gap: 0;
+  }
+
+  .brand-logo {
+    width: 88px;
+  }
+
+  .app-header-actions {
+    width: auto;
+    min-width: 0;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .auth-menu {
+    min-width: 0;
+    gap: 4px;
+    border-radius: 12px;
+    padding: 4px;
+  }
+
+  .auth-identity {
+    padding: 0;
+  }
+
+  .auth-avatar.ant-avatar {
+    width: 30px;
+    height: 30px;
+    line-height: 28px;
+  }
+
+  .auth-settings-button.ant-btn,
+  .auth-signout-button.ant-btn {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0;
+  }
+
+  .auth-signout-button.ant-btn > span:not(.ant-btn-icon) {
+    display: none;
+  }
+
+  .app-content {
+    padding: 12px 0 30px;
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: none;
+    padding-inline: 10px;
+  }
+
+  .search-workspace,
+  .player-browser-toolbar,
+  .search-workspace .player-browser-surface.ant-card,
+  .search-workspace .player-database-grid,
+  .search-workspace .player-results-area {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .player-browser-toolbar {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .player-view-switch,
+  .player-view-tabs.ant-segmented,
+  .player-view-tabs .ant-segmented-group {
+    width: 100%;
+  }
+
+  .player-view-tabs .ant-segmented-item-label {
+    min-height: 36px;
+    justify-content: center;
+    padding-inline: 8px;
+  }
+
+  .database-header-controls,
+  .saved-header-controls {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .database-header-controls .database-name-search,
+  .saved-header-controls .database-name-search {
+    width: 100%;
+    min-width: 0;
+    grid-column: 1 / -1;
+  }
+
+  .database-header-controls .player-sort-trigger.ant-btn,
+  .database-header-controls .player-filter-trigger.ant-btn {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 8px;
+  }
+
+  .database-header-controls .player-sort-trigger.ant-btn > span:not(.ant-btn-icon),
+  .database-header-controls .player-filter-trigger.ant-btn > span:not(.ant-btn-icon) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .search-workspace .player-browser-surface.ant-card {
+    border-radius: 16px;
+  }
+
+  .search-workspace .player-browser-card .ant-card-body {
+    padding: 6px;
+  }
+
+  .search-workspace .player-database-grid,
+  .search-workspace .player-results-area {
+    height: auto;
+    min-height: 0;
+  }
+
+  .player-results-toolbar {
+    min-height: 50px;
+    align-items: flex-start;
+    padding: 9px 10px;
+  }
+
+  .player-card-grid,
+  .saved-player-card-grid {
+    max-height: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-items: stretch;
+    gap: 8px;
+    overflow: visible;
+    padding: 8px;
+  }
+
+  .player-profile-card {
+    width: 100%;
+    max-width: none;
+    border-radius: 13px;
+  }
+
+  .player-profile-card-identity {
+    right: 8px;
+    left: 9px;
+  }
+
+  .player-profile-card-identity h3 {
+    font-size: clamp(13px, 4vw, 17px);
+  }
+
+  .player-profile-card-position {
+    top: 8px;
+    left: 8px;
+    font-size: 10px;
+  }
+
+  .player-profile-card-save {
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .player-profile-card-metrics {
+    right: 3px;
+    bottom: 3px;
+    left: 3px;
+    gap: 3px;
+  }
+
+  .player-profile-card-metrics > span {
+    min-height: 34px;
+    border-radius: 8px;
+    padding: 4px;
+  }
+
+  .player-load-more .ant-btn,
+  .search-workspace .player-load-more .ant-btn {
+    width: 100%;
+  }
+
+  .saved-player-view,
+  .saved-player-loading {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 350px) {
+  .player-card-grid,
+  .saved-player-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .player-profile-card {
+    width: min(100%, 320px);
+    justify-self: center;
+  }
+}
+
+.model-player-mobile-save {
+  display: none;
+}
+
+@media (max-width: 575px) {
+  .result-workspace .model-card > .ant-card-body {
+    padding: 14px 12px;
+  }
+
+  .result-workspace .model-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 14px;
+  }
+
+  .result-workspace .model-summary-grid > div {
+    min-height: 68px;
+    align-content: center;
+    padding: 10px 8px;
+  }
+
+  .result-workspace .model-summary-grid .ant-typography:first-child {
+    font-size: 7px;
+    line-height: 1.25;
+  }
+
+  .result-workspace .model-summary-grid .ant-typography:last-child {
+    font-size: 17px;
+  }
+
+  .result-workspace .model-tabs .ant-tabs-nav {
+    margin-bottom: 14px;
+  }
+
+  .result-workspace .model-tabs .ant-tabs-nav-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scroll-padding-inline: 18px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .result-workspace .model-tabs .ant-tabs-nav-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  .result-workspace .model-tabs .ant-tabs-nav-list {
+    min-width: max-content;
+    transform: none !important;
+  }
+
+  .result-workspace .model-tabs .ant-tabs-nav-operations {
+    display: none !important;
+  }
+
+  .result-workspace .model-tabs .ant-tabs-tab {
+    flex: 0 0 auto;
+    margin: 0 18px 0 0;
+    padding-block: 9px;
+  }
+
+  .result-workspace .model-tab-label {
+    gap: 5px;
+  }
+
+  .result-workspace .model-table-intro {
+    gap: 9px;
+    padding: 10px 11px;
+  }
+
+  .result-workspace .model-table .ant-table-thead > tr > th,
+  .result-workspace .model-table .ant-table-tbody > tr > td {
+    padding-inline: 7px;
+  }
+
+  .result-workspace .model-table .ant-table-row-expand-icon-cell {
+    width: 42px;
+    min-width: 42px;
+  }
+
+  .result-workspace .model-rank-column {
+    width: 42px;
+    min-width: 42px;
+  }
+
+  .result-workspace .model-player-identity {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .result-workspace .model-row-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+
+  .result-workspace .model-player-copy {
+    flex: 1 1 auto;
+  }
+
+  .model-player-mobile-save {
+    display: inline-flex;
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .model-player-mobile-save .shortlist-button.ant-btn {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    padding: 0;
+  }
+
+  .model-player-mobile-save .shortlist-button.ant-btn > span:not(.ant-btn-icon) {
+    display: none;
+  }
+}
+
+/* Authentication dark mode and mobile layout. */
+html[data-color-mode="dark"] .auth-heading h2 {
+  color: var(--dark-text);
+}
+
+html[data-color-mode="dark"] .auth-heading p,
+html[data-color-mode="dark"] .auth-privacy-note,
+html[data-color-mode="dark"] .auth-panel .ant-divider {
+  color: var(--dark-muted);
+}
+
+html[data-color-mode="dark"] .auth-eyebrow,
+html[data-color-mode="dark"] .auth-mode-link,
+html[data-color-mode="dark"] .auth-forgot-link {
+  color: var(--dark-accent-soft);
+}
+
+html[data-color-mode="dark"] .auth-panel .ant-divider::before,
+html[data-color-mode="dark"] .auth-panel .ant-divider::after {
+  border-block-start-color: var(--dark-border);
+}
+
+html[data-color-mode="dark"] .auth-form .ant-form-item-label > label {
+  color: var(--dark-text-secondary);
+}
+
+html[data-color-mode="dark"] .auth-social-button.ant-btn {
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+  background: var(--dark-surface-raised);
+  box-shadow: none;
+}
+
+html[data-color-mode="dark"] .auth-social-button.ant-btn:hover {
+  border-color: var(--dark-accent);
+  color: #fff;
+  background: var(--dark-hover);
+}
+
+html[data-color-mode="dark"] .auth-input.ant-input-affix-wrapper,
+html[data-color-mode="dark"] .auth-input.ant-input-affix-wrapper:hover,
+html[data-color-mode="dark"] .auth-input.ant-input-affix-wrapper-focused {
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+  background: var(--dark-surface-raised);
+}
+
+html[data-color-mode="dark"] .auth-input.ant-input-affix-wrapper-focused {
+  border-color: var(--dark-accent);
+  box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.16);
+}
+
+html[data-color-mode="dark"] .auth-input .ant-input,
+html[data-color-mode="dark"] .auth-input .ant-input-password-icon {
+  color: var(--dark-text);
+}
+
+html[data-color-mode="dark"] .auth-input .ant-input-prefix,
+html[data-color-mode="dark"] .auth-input .ant-input-password-icon:hover {
+  color: var(--dark-muted);
+}
+
+html[data-color-mode="dark"] .auth-input input:-webkit-autofill,
+html[data-color-mode="dark"] .auth-input input:-webkit-autofill:hover,
+html[data-color-mode="dark"] .auth-input input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--dark-text);
+  caret-color: var(--dark-text);
+  box-shadow: 0 0 0 1000px var(--dark-surface-raised) inset;
+  transition: background-color 9999s ease-out;
+}
+
+html[data-color-mode="dark"] .auth-submit-button.ant-btn {
+  border-color: var(--dark-accent);
+  color: #fff;
+  background: var(--dark-accent);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+}
+
+html[data-color-mode="dark"] .auth-submit-button.ant-btn-primary:hover {
+  border-color: var(--dark-accent-hover);
+  background: var(--dark-accent-hover);
+}
+
+html[data-color-mode="dark"] .login-mobile-brand img {
+  filter: grayscale(1) brightness(0) invert(1);
+  opacity: 0.9;
+}
+
+html[data-color-mode="dark"] .login-mobile-brand span {
+  color: var(--dark-muted);
+}
+
+@media (max-width: 640px) {
+  .login-shell {
+    min-height: 100svh;
+    place-items: start stretch;
+  }
+
+  .login-container {
+    min-height: 100svh;
+  }
+
+  .login-visual {
+    min-height: clamp(220px, 64vw, 270px);
+    margin: 10px 10px 0;
+    border-radius: 20px;
+  }
+
+  .login-visual-copy {
+    right: 14px;
+    bottom: 16px;
+    left: 14px;
+    border-radius: 17px;
+    padding: 16px 17px;
+  }
+
+  .login-visual-kicker {
+    font-size: 8px;
+  }
+
+  .login-visual-copy h1 {
+    margin-top: 7px;
+    font-size: clamp(28px, 8.8vw, 36px);
+    line-height: 0.98;
+  }
+
+  .auth-panel {
+    justify-content: flex-start;
+    padding: 24px 20px max(30px, env(safe-area-inset-bottom));
+  }
+
+  .login-mobile-brand {
+    gap: 9px;
+    margin-bottom: 24px;
+  }
+
+  .login-mobile-brand img {
+    width: 100px;
+  }
+
+  .auth-heading {
+    margin-bottom: 21px;
+  }
+
+  .auth-eyebrow {
+    margin-bottom: 12px;
+    font-size: 8px;
+  }
+
+  .auth-heading h2 {
+    font-size: clamp(30px, 9vw, 36px);
+  }
+
+  .auth-heading p {
+    margin-top: 9px;
+    font-size: 12px;
+  }
+
+  .auth-social-grid {
+    gap: 7px;
+  }
+
+  .auth-social-button.ant-btn {
+    min-height: 44px;
+    border-radius: 11px;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+
+  .auth-panel .ant-divider {
+    margin: 20px 0 17px;
+  }
+
+  .auth-form .ant-form-item {
+    margin-bottom: 14px;
+  }
+
+  .auth-form .ant-form-item-label {
+    padding-bottom: 5px;
+  }
+
+  .auth-input.ant-input-affix-wrapper {
+    min-height: 48px;
+    border-radius: 11px;
+  }
+
+  .auth-forgot-link {
+    margin-top: -3px;
+    margin-bottom: 13px;
+  }
+
+  .auth-submit-button.ant-btn {
+    min-height: 48px;
+    border-radius: 11px;
+  }
+
+  .auth-privacy-note {
+    margin-top: 16px;
+  }
+}
+
+@media (max-width: 370px) {
+  .auth-panel {
+    padding-inline: 16px;
+  }
+
+  .auth-social-grid {
+    gap: 5px;
+  }
+
+  .auth-social-button.ant-btn {
+    font-size: 11px;
+  }
+}
