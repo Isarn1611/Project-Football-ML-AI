@@ -11093,67 +11093,106 @@ html[data-color-mode="dark"] .admin-player-modal-root .admin-player-editor-summa
 
 /* ==========================================================================
    FOOTBALL MANAGER (FM) ATTRIBUTES BOARD & 7-AXIS RADAR CHART
+   Theme-adaptive: Light Mode (default) & Dark Mode
    ========================================================================== */
 
 .fm-attributes-board {
-  background: #131822;
-  border: 1px solid #222c3d;
-  border-radius: 10px;
+  --fm-bg: #ffffff;
+  --fm-card-border: #dfe7e3;
+  --fm-col-border: #edf2ef;
+  --fm-header-bg: #f5f8f6;
+  --fm-header-border: #dfe7e3;
+  --fm-header-text: #41564b;
+  --fm-row-text: #1d2a23;
+  --fm-row-hover: #eef5f1;
+  --fm-row-even: rgba(0, 0, 0, 0.015);
+  --fm-row-border: #f0f4f1;
+  --fm-radar-bg: #f9fbf9;
+  --fm-chip-bg: #f0f5f2;
+  --fm-chip-border: #d7e4dc;
+  --fm-chip-text: #2f4337;
+  --fm-shadow: 0 4px 20px rgba(18, 38, 28, 0.05);
+
+  /* Values Colors (Light Mode - high contrast) */
+  --fm-val-elite: #15803d;      /* 16-20: Dark Forest Green */
+  --fm-val-good: #b45309;       /* 11-15: Amber / Gold */
+  --fm-val-ordinary: #64748b;   /* 1-10: Slate Gray */
+  --fm-val-default: #94a3b8;
+
+  /* Radar Colors (Light Mode) */
+  --fm-radar-ring-1: #d8efe0;   /* Outer circle */
+  --fm-radar-ring-1-stroke: #b2dfc1;
+  --fm-radar-ring-2: #c2e7cd;   /* 75% */
+  --fm-radar-ring-2-stroke: #97d1aa;
+  --fm-radar-ring-3: #a9dec6;   /* 50% */
+  --fm-radar-ring-3-stroke: #7ec295;
+  --fm-radar-bullseye: #fcdcdc; /* 25% Red Bullseye */
+  --fm-radar-bullseye-stroke: #f8a8a8;
+  --fm-radar-dot: #dc2626;      /* Center dot */
+  --fm-radar-axis: rgba(43, 85, 60, 0.18);
+  --fm-radar-poly-fill: rgba(22, 163, 74, 0.22);
+  --fm-radar-poly-stroke: #16a34a;
+  --fm-radar-vertex: #16a34a;
+  --fm-radar-vertex-border: #ffffff;
+  --fm-radar-label: #37473f;
+  --fm-radar-label-hover: #0f1713;
+
+  background: var(--fm-bg);
+  border: 1px solid var(--fm-card-border);
+  border-radius: 14px;
   overflow: hidden;
   margin-top: 14px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
-  color: #e2e8f0;
+  box-shadow: var(--fm-shadow);
+  color: var(--fm-row-text);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Dark Mode Theme */
+html[data-color-mode="dark"] .fm-attributes-board {
+  --fm-bg: #131b17;
+  --fm-card-border: #24332a;
+  --fm-col-border: #1c2721;
+  --fm-header-bg: #0f1612;
+  --fm-header-border: #24332a;
+  --fm-header-text: #8fa599;
+  --fm-row-text: #e2ede7;
+  --fm-row-hover: rgba(255, 255, 255, 0.05);
+  --fm-row-even: rgba(255, 255, 255, 0.018);
+  --fm-row-border: rgba(255, 255, 255, 0.035);
+  --fm-radar-bg: #0f1613;
+  --fm-chip-bg: #1c2721;
+  --fm-chip-border: #2b3d32;
+  --fm-chip-text: #c8d8cf;
+  --fm-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+
+  /* Values Colors (Dark Mode - authentic FM glow) */
+  --fm-val-elite: #4ade80;      /* 16-20: Radiant FM Neon Green */
+  --fm-val-good: #facc15;       /* 11-15: Vibrant Lime / Yellow */
+  --fm-val-ordinary: #64748b;   /* 1-10: Muted Slate Gray */
+  --fm-val-default: #475569;
+
+  /* Radar Colors (Dark Mode) */
+  --fm-radar-ring-1: #133821;
+  --fm-radar-ring-1-stroke: #1c4e2f;
+  --fm-radar-ring-2: #184529;
+  --fm-radar-ring-2-stroke: #235f3a;
+  --fm-radar-ring-3: #1e5433;
+  --fm-radar-ring-3-stroke: #2b7346;
+  --fm-radar-bullseye: #7f1d1d;
+  --fm-radar-bullseye-stroke: #991b1b;
+  --fm-radar-dot: #b91c1c;
+  --fm-radar-axis: rgba(255, 255, 255, 0.2);
+  --fm-radar-poly-fill: rgba(255, 255, 255, 0.28);
+  --fm-radar-poly-stroke: #ffffff;
+  --fm-radar-vertex: #ffffff;
+  --fm-radar-vertex-border: #131b17;
+  --fm-radar-label: #8fa599;
+  --fm-radar-label-hover: #ffffff;
 }
 
 .fm-board-candidate {
   margin-top: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.fm-board-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  background: #0d121b;
-  border-bottom: 1px solid #222c3d;
-}
-
-.fm-tab-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.fm-tab {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #f8fafc;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 4px 14px;
-  border-radius: 6px;
-  cursor: default;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.fm-radar-card-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: #8fa0b5;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.fm-radar-card-title::after {
-  content: "▾";
-  font-size: 10px;
-  opacity: 0.8;
-  color: #64748b;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .fm-board-content {
@@ -11168,11 +11207,11 @@ html[data-color-mode="dark"] .admin-player-modal-root .admin-player-editor-summa
   grid-template-columns: repeat(3, minmax(0, 1fr));
   flex: 1 1 66%;
   min-width: 0;
-  border-right: 1px solid #222c3d;
+  border-right: 1px solid var(--fm-col-border);
 }
 
 .fm-attr-col {
-  border-right: 1px solid #1c2433;
+  border-right: 1px solid var(--fm-col-border);
   display: flex;
   flex-direction: column;
 }
@@ -11182,14 +11221,19 @@ html[data-color-mode="dark"] .admin-player-modal-root .admin-player-editor-summa
 }
 
 .fm-attr-col-header {
-  padding: 7px 12px;
-  background: #10151f;
-  border-bottom: 1px solid #222c3d;
+  padding: 8px 12px;
+  background: var(--fm-header-bg);
+  border-bottom: 1px solid var(--fm-header-border);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.07em;
-  color: #8fa0b5;
+  color: var(--fm-header-text);
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  box-sizing: border-box;
 }
 
 .fm-attr-list {
@@ -11205,24 +11249,24 @@ html[data-color-mode="dark"] .admin-player-modal-root .admin-player-editor-summa
   padding: 4px 12px;
   font-size: 12px;
   line-height: 1.5;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--fm-row-border);
   transition: background 0.15s ease;
 }
 
 .fm-attr-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--fm-row-hover);
 }
 
 .fm-attr-row:nth-child(even) {
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--fm-row-even);
 }
 
 .fm-attr-row:nth-child(even):hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--fm-row-hover);
 }
 
 .fm-attr-name {
-  color: #cbd5e1;
+  color: var(--fm-row-text);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -11238,38 +11282,84 @@ html[data-color-mode="dark"] .admin-player-modal-root .admin-player-editor-summa
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
-/* Authentic Football Manager Value Colors */
+/* Values Colors */
 .fm-val-elite {
-  color: #4ade80; /* 16-20: Vibrant Green */
+  color: var(--fm-val-elite);
   font-weight: 800;
+}
+
+html[data-color-mode="dark"] .fm-val-elite {
   text-shadow: 0 0 10px rgba(74, 222, 128, 0.35);
 }
 
 .fm-val-good {
-  color: #facc15; /* 11-15: Lime / Yellow */
+  color: var(--fm-val-good);
   font-weight: 700;
 }
 
 .fm-val-ordinary {
-  color: #64748b; /* 1-10: Muted Slate Gray */
+  color: var(--fm-val-ordinary);
   font-weight: 600;
 }
 
 .fm-val-default {
-  color: #475569;
+  color: var(--fm-val-default);
   font-weight: 500;
 }
 
-/* Right Side: Attribute Analysis Radar */
-.fm-radar-container {
+/* Physical Details Footer under PHYSICAL column */
+.fm-attr-col-footer {
+  margin-top: auto;
+  padding: 12px 10px 10px;
+  border-top: 1px dashed var(--fm-col-border);
+}
+
+.fm-physical-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fm-physical-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  background: var(--fm-chip-bg);
+  border: 1px solid var(--fm-chip-border);
+  border-radius: 9999px;
+  color: var(--fm-chip-text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* Right Side: Attribute Analysis Radar Column (Level with Technical, Mental, Physical) */
+.fm-radar-column {
   flex: 0 0 350px;
   max-width: 370px;
   display: flex;
   flex-direction: column;
+  background: var(--fm-radar-bg);
+}
+
+.fm-radar-column .fm-attr-col-header {
+  border-bottom: 1px solid var(--fm-header-border);
+}
+
+.fm-radar-dropdown-arrow {
+  font-size: 10px;
+  opacity: 0.7;
+  color: var(--fm-header-text);
+}
+
+.fm-radar-body {
+  flex: 1 1 auto;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px 12px;
-  background: #0f141e;
 }
 
 .fm-radar-shell {
@@ -11288,16 +11378,16 @@ html[data-color-mode="dark"] .admin-player-modal-root .admin-player-editor-summa
 }
 
 .fm-radar-label {
-  fill: #94a3b8;
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.03em;
   font-family: inherit;
   transition: fill 0.2s ease;
+  cursor: default;
 }
 
 .fm-radar-label:hover {
-  fill: #f8fafc;
+  fill: var(--fm-radar-label-hover);
 }
 
 /* Responsive Breakpoints */
@@ -11307,11 +11397,13 @@ html[data-color-mode="dark"] .admin-player-modal-root .admin-player-editor-summa
   }
   .fm-columns-container {
     border-right: none;
-    border-bottom: 1px solid #222c3d;
+    border-bottom: 1px solid var(--fm-col-border);
   }
-  .fm-radar-container {
+  .fm-radar-column {
     flex: 1 1 auto;
     max-width: none;
+  }
+  .fm-radar-body {
     padding: 24px 16px;
   }
 }
@@ -11322,10 +11414,11 @@ html[data-color-mode="dark"] .admin-player-modal-root .admin-player-editor-summa
   }
   .fm-attr-col {
     border-right: none;
-    border-bottom: 1px solid #1c2433;
+    border-bottom: 1px solid var(--fm-col-border);
   }
   .fm-attr-col:last-child {
     border-bottom: none;
   }
 }
+
 

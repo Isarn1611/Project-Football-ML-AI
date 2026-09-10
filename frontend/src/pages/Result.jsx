@@ -343,11 +343,41 @@ function getFmValueClass(val) {
   return "fm-val-ordinary";                  // 1-10 (FM Gray)
 }
 
-function FmAttributeColumn({ title, attributes }) {
+function FmPhysicalDetails({ info }) {
+  const { t } = useTranslation("result");
+  const chips = [];
+
+  if (info?.height) {
+    chips.push(`${info.height} cm`);
+  }
+  if (info?.weight) {
+    chips.push(`${info.weight} kg`);
+  }
+  if (info?.leftFoot !== undefined && info?.leftFoot !== null && info?.leftFoot !== "") {
+    chips.push(t("attributes.leftFoot", { value: info.leftFoot }));
+  }
+  if (info?.rightFoot !== undefined && info?.rightFoot !== null && info?.rightFoot !== "") {
+    chips.push(t("attributes.rightFoot", { value: info.rightFoot }));
+  }
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="fm-physical-chips">
+      {chips.map((chip, idx) => (
+        <span className="fm-physical-chip" key={idx}>
+          {chip}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function FmAttributeColumn({ title, attributes, footer }) {
   const entries = Object.entries(attributes || {}).sort((a, b) =>
     a[0].localeCompare(b[0])
   );
-  if (entries.length === 0) return null;
+  if (entries.length === 0 && !footer) return null;
 
   return (
     <div className="fm-attr-col">
@@ -362,6 +392,7 @@ function FmAttributeColumn({ title, attributes }) {
           </div>
         ))}
       </div>
+      {footer && <div className="fm-attr-col-footer">{footer}</div>}
     </div>
   );
 }
@@ -484,11 +515,11 @@ function FmAttributeAnalysisRadar({ metrics }) {
         viewBox="0 0 340 300"
       >
         {/* Concentric Colored FM Rings */}
-        <circle cx={center} cy={centerY} r={maxRadius} fill="#133821" stroke="#1c4e2f" strokeWidth="1" />
-        <circle cx={center} cy={centerY} r={maxRadius * 0.75} fill="#184529" stroke="#235f3a" strokeWidth="1" />
-        <circle cx={center} cy={centerY} r={maxRadius * 0.5} fill="#1e5433" stroke="#2b7346" strokeWidth="1" />
-        <circle cx={center} cy={centerY} r={maxRadius * 0.25} fill="#7f1d1d" stroke="#991b1b" strokeWidth="1" />
-        <circle cx={center} cy={centerY} r={5} fill="#b91c1c" />
+        <circle cx={center} cy={centerY} r={maxRadius} fill="var(--fm-radar-ring-1)" stroke="var(--fm-radar-ring-1-stroke)" strokeWidth="1" />
+        <circle cx={center} cy={centerY} r={maxRadius * 0.75} fill="var(--fm-radar-ring-2)" stroke="var(--fm-radar-ring-2-stroke)" strokeWidth="1" />
+        <circle cx={center} cy={centerY} r={maxRadius * 0.5} fill="var(--fm-radar-ring-3)" stroke="var(--fm-radar-ring-3-stroke)" strokeWidth="1" />
+        <circle cx={center} cy={centerY} r={maxRadius * 0.25} fill="var(--fm-radar-bullseye)" stroke="var(--fm-radar-bullseye-stroke)" strokeWidth="1" />
+        <circle cx={center} cy={centerY} r={5} fill="var(--fm-radar-dot)" />
 
         {/* Radial Axis Lines */}
         {metrics.map((_, i) => {
@@ -500,7 +531,7 @@ function FmAttributeAnalysisRadar({ metrics }) {
               y1={centerY}
               x2={pt.x}
               y2={pt.y}
-              stroke="rgba(255, 255, 255, 0.2)"
+              stroke="var(--fm-radar-axis)"
               strokeWidth="1"
             />
           );
@@ -509,8 +540,8 @@ function FmAttributeAnalysisRadar({ metrics }) {
         {/* Player Shape Polygon */}
         <polygon
           points={polygonPoints}
-          fill="rgba(255, 255, 255, 0.28)"
-          stroke="#ffffff"
+          fill="var(--fm-radar-poly-fill)"
+          stroke="var(--fm-radar-poly-stroke)"
           strokeWidth="1.8"
         />
 
@@ -525,8 +556,8 @@ function FmAttributeAnalysisRadar({ metrics }) {
               cx={pt.x}
               cy={pt.y}
               r="3"
-              fill="#ffffff"
-              stroke="#151b26"
+              fill="var(--fm-radar-vertex)"
+              stroke="var(--fm-radar-vertex-border)"
               strokeWidth="1"
             />
           );
@@ -544,6 +575,7 @@ function FmAttributeAnalysisRadar({ metrics }) {
             <text
               className="fm-radar-label"
               dominantBaseline="middle"
+              fill="var(--fm-radar-label)"
               key={item.key}
               textAnchor={textAnchor}
               x={pt.x}
@@ -558,7 +590,12 @@ function FmAttributeAnalysisRadar({ metrics }) {
   );
 }
 
-function FmAttributesBoard({ attributes, position, isCandidate = false }) {
+function FmAttributesBoard({
+  attributes,
+  position,
+  physicalInfo,
+  isCandidate = false,
+}) {
   const isGoalkeeper = String(position || "")
     .toUpperCase()
     .startsWith("GK");
@@ -578,26 +615,27 @@ function FmAttributesBoard({ attributes, position, isCandidate = false }) {
 
   return (
     <div className={`fm-attributes-board ${isCandidate ? "fm-board-candidate" : ""}`}>
-      <div className="fm-board-topbar">
-        <div className="fm-tab-group">
-          <button type="button" className="fm-tab active">
-            Attributes
-          </button>
-        </div>
-        <div className="fm-radar-card-title">
-          Attribute Analysis
-        </div>
-      </div>
-
       <div className="fm-board-content">
+        {/* 3 Columns Section: TECHNICAL / GOALKEEPING, MENTAL, PHYSICAL */}
         <div className="fm-columns-container">
           <FmAttributeColumn title={col1Title} attributes={col1Attrs} />
           <FmAttributeColumn title="MENTAL" attributes={col2Attrs} />
-          <FmAttributeColumn title="PHYSICAL" attributes={col3Attrs} />
+          <FmAttributeColumn
+            title="PHYSICAL"
+            attributes={col3Attrs}
+            footer={physicalInfo ? <FmPhysicalDetails info={physicalInfo} /> : null}
+          />
         </div>
 
-        <div className="fm-radar-container">
-          <FmAttributeAnalysisRadar metrics={radarMetrics} />
+        {/* Right Side: Attribute Analysis Radar */}
+        <div className="fm-radar-column">
+          <div className="fm-attr-col-header fm-radar-header">
+            <span>ATTRIBUTE ANALYSIS</span>
+            <span className="fm-radar-dropdown-arrow">▾</span>
+          </div>
+          <div className="fm-radar-body">
+            <FmAttributeAnalysisRadar metrics={radarMetrics} />
+          </div>
         </div>
       </div>
     </div>
@@ -610,6 +648,13 @@ function TargetAttributes({ target }) {
   const hasAttrs = Object.keys(attributes).length > 0;
 
   if (!hasAttrs) return null;
+
+  const physicalInfo = {
+    height: target.Height,
+    weight: target.Weight,
+    leftFoot: target.LeftFoot,
+    rightFoot: target.RightFoot,
+  };
 
   return (
     <section className="attribute-section">
@@ -624,24 +669,13 @@ function TargetAttributes({ target }) {
         </div>
         <div className="attribute-tags">
           <Tag>{formatValue(target.Nationality)}</Tag>
-          <Tag>{formatValue(target.Height)} cm</Tag>
-          <Tag>{formatValue(target.Weight)} kg</Tag>
-          <Tag>
-            {t("attributes.leftFoot", {
-              value: formatValue(target.LeftFoot),
-            })}
-          </Tag>
-          <Tag>
-            {t("attributes.rightFoot", {
-              value: formatValue(target.RightFoot),
-            })}
-          </Tag>
         </div>
       </div>
 
       <FmAttributesBoard
         attributes={target.Attributes}
         position={target.FullPosition || target.Position}
+        physicalInfo={physicalInfo}
       />
     </section>
   );
@@ -661,6 +695,13 @@ function CandidateAttributeDetails({ player }) {
     );
   }
 
+  const physicalInfo = {
+    height: player.Height,
+    weight: player.Weight,
+    leftFoot: player.LeftFoot,
+    rightFoot: player.RightFoot,
+  };
+
   return (
     <div className="candidate-attribute-overview">
       <div className="candidate-attribute-heading">
@@ -679,6 +720,7 @@ function CandidateAttributeDetails({ player }) {
       <FmAttributesBoard
         attributes={player.Attributes}
         position={player.Position}
+        physicalInfo={physicalInfo}
         isCandidate
       />
     </div>
