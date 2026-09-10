@@ -612,31 +612,31 @@ function TargetAttributes({ target }) {
   return (
     <section className="attribute-section">
       <div className="attribute-heading">
-        <div>
-          <span className="section-kicker">
-            {t("attributes.playerProfile")}
-          </span>
-          <Title level={3} style={{ margin: "4px 0 0" }}>
+        <span className="section-kicker">
+          {t("attributes.playerProfile")}
+        </span>
+        <div className="attribute-title-row">
+          <Title level={3} style={{ margin: 0 }}>
             {t("attributes.overview")}
           </Title>
-        </div>
-        <div className="attribute-tags">
-          {target.Height && <Tag>{formatValue(target.Height)} cm</Tag>}
-          {target.Weight && <Tag>{formatValue(target.Weight)} kg</Tag>}
-          {target.LeftFoot !== undefined && target.LeftFoot !== null && target.LeftFoot !== "" && (
-            <Tag>
-              {t("attributes.leftFoot", {
-                value: formatValue(target.LeftFoot),
-              })}
-            </Tag>
-          )}
-          {target.RightFoot !== undefined && target.RightFoot !== null && target.RightFoot !== "" && (
-            <Tag>
-              {t("attributes.rightFoot", {
-                value: formatValue(target.RightFoot),
-              })}
-            </Tag>
-          )}
+          <div className="attribute-tags">
+            {target.Height && <Tag>{formatValue(target.Height)} cm</Tag>}
+            {target.Weight && <Tag>{formatValue(target.Weight)} kg</Tag>}
+            {target.LeftFoot !== undefined && target.LeftFoot !== null && target.LeftFoot !== "" && (
+              <Tag>
+                {t("attributes.leftFoot", {
+                  value: formatValue(target.LeftFoot),
+                })}
+              </Tag>
+            )}
+            {target.RightFoot !== undefined && target.RightFoot !== null && target.RightFoot !== "" && (
+              <Tag>
+                {t("attributes.rightFoot", {
+                  value: formatValue(target.RightFoot),
+                })}
+              </Tag>
+            )}
+          </div>
         </div>
       </div>
 
