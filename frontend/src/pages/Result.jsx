@@ -667,9 +667,6 @@ function TargetAttributes({ target }) {
             {t("attributes.overview")}
           </Title>
         </div>
-        <div className="attribute-tags">
-          <Tag>{formatValue(target.Nationality)}</Tag>
-        </div>
       </div>
 
       <FmAttributesBoard

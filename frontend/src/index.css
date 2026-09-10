@@ -11204,7 +11204,7 @@ html[data-color-mode="dark"] .fm-attributes-board {
 /* 3 Columns Section: TECHNICAL / GOALKEEPING, MENTAL, PHYSICAL */
 .fm-columns-container {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.22fr);
   flex: 1 1 66%;
   min-width: 0;
   border-right: 1px solid var(--fm-col-border);
@@ -11310,35 +11310,41 @@ html[data-color-mode="dark"] .fm-val-elite {
 /* Physical Details Footer under PHYSICAL column */
 .fm-attr-col-footer {
   margin-top: auto;
-  padding: 12px 10px 10px;
+  padding: 10px 8px 8px;
   border-top: 1px dashed var(--fm-col-border);
 }
 
 .fm-physical-chips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
 }
 
 .fm-physical-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 10px;
+  padding: 3px 6px;
   background: var(--fm-chip-bg);
   border: 1px solid var(--fm-chip-border);
   border-radius: 9999px;
   color: var(--fm-chip-text);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex: 0 1 auto;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 /* Right Side: Attribute Analysis Radar Column (Level with Technical, Mental, Physical) */
 .fm-radar-column {
-  flex: 0 0 350px;
-  max-width: 370px;
+  flex: 0 0 320px;
+  max-width: 340px;
   display: flex;
   flex-direction: column;
   background: var(--fm-radar-bg);
