@@ -42,6 +42,8 @@ import {
 } from "../services/scoutingData";
 import { searchPlayers } from "../services/api";
 import PlayerAvatar from "../services/playerImages.jsx";
+import clubMap from "../services/clubMap.json";
+import { getClubLogoUrl as getRemoteClubLogoUrl } from "../services/playerImageUrls";
 
 const { Text } = Typography;
 
@@ -134,43 +136,49 @@ function normalizeNationalityValues(value) {
     .filter((item) => item.label);
 }
 
-function getSuggestionImageUrl(player, field) {
+function getClubLogoUrl(player) {
+  if (!player) return "";
+  if (player.clubLogoUrl) return player.clubLogoUrl;
+  if (player.club_logo_url) return player.club_logo_url;
   const raw = player?.raw || {};
-  const candidates =
-    field === "club"
-      ? [
-          player?.clubLogoUrl,
-          player?.club_logo_url,
-          raw.ClubLogoUrl,
-          raw.club_logo_url,
-        ]
-      : [
-          player?.nationalityImageUrl,
-          player?.flagUrl,
-          raw.NationalityImageUrl,
-          raw.flag_url,
-        ];
+  if (raw.ClubLogoUrl) return raw.ClubLogoUrl;
+  if (raw.club_logo_url) return raw.club_logo_url;
+  const clubName = player.club || raw.Club;
+  const clubId =
+    player.clubId ||
+    player.club_id ||
+    raw.club_id ||
+    (clubName ? clubMap[clubName] : null);
+  return clubId ? getRemoteClubLogoUrl(clubId) : "";
+}
 
-  return candidates.find((candidate) => String(candidate || "").trim()) || "";
+function getSuggestionImageUrl(player, field) {
+  if (field === "club") {
+    return getClubLogoUrl(player);
+  }
+  return "";
 }
 
 function FilterSuggestionOption({ description, fallback, imageUrl, title }) {
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(imageUrl) && !imageFailed;
+  const showMedia = showImage || Boolean(fallback);
 
   return (
     <span className="filter-suggestion-option">
-      <span className={`filter-suggestion-media${showImage ? " has-image" : ""}`}>
-        {showImage ? (
-          <img
-            alt=""
-            onError={() => setImageFailed(true)}
-            src={imageUrl}
-          />
-        ) : (
-          fallback
-        )}
-      </span>
+      {showMedia ? (
+        <span className={`filter-suggestion-media${showImage ? " has-image" : ""}`}>
+          {showImage ? (
+            <img
+              alt=""
+              onError={() => setImageFailed(true)}
+              src={imageUrl}
+            />
+          ) : (
+            fallback
+          )}
+        </span>
+      ) : null}
       <span className="filter-suggestion-copy">
         <strong>{title}</strong>
         <small>{description}</small>
@@ -195,6 +203,8 @@ function normalizeSavedPlayer(item) {
     ...snapshot,
     age: pickPlayerValue(snapshot, ["age", "Age"], item?.age),
     club: pickPlayerValue(snapshot, ["club", "Club"], item?.club),
+    clubId: pickPlayerValue(snapshot, ["clubId", "club_id", "ClubId"], item?.club_id),
+    clubLogoUrl: pickPlayerValue(snapshot, ["clubLogoUrl", "club_logo_url"]),
     currentAbility: pickPlayerValue(snapshot, [
       "currentAbility",
       "CurrentAbility",
@@ -287,11 +297,24 @@ function PlayerProfileCard({
         <i className="player-profile-card-accent" aria-hidden="true" />
         <div className="player-profile-card-details">
           <span>
-            <b aria-hidden="true">{getNationalityFlag(player.nationality)}</b>
             {player.nationality || t("players.unknown", { ns: "search" })}
           </span>
           <span>
-            <b className="player-profile-card-club-mark" aria-hidden="true">⚽</b>
+            {(() => {
+              const logoUrl = getClubLogoUrl(player);
+              return logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt=""
+                  className="player-profile-card-club-logo"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <b className="player-profile-card-club-mark" aria-hidden="true">⚽</b>
+              );
+            })()}
             {player.club || t("players.unknown", { ns: "search" })}
           </span>
         </div>
@@ -643,16 +666,11 @@ function PlayerDatabasePanel({
               field === "nationality" ? "filters.nationality" : "filters.club"
             )}
             fallback={
-              field === "nationality" ? (
-                <span aria-hidden="true">
-                  {flagFromCountryCode(entry.code) ||
-                    getNationalityFlag(entry.label)}
-                </span>
-              ) : (
+              field === "nationality" ? null : (
                 <TeamOutlined />
               )
             }
-            imageUrl={entry.imageUrl}
+            imageUrl={field === "nationality" ? "" : entry.imageUrl}
             title={entry.label}
           />
         ),

@@ -1,4 +1,10 @@
 const { supabaseRequest } = require("../config/supabase");
+const clubMap = require("../config/clubMap.json");
+
+const SUPABASE_BASE_URL = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
+const CLUB_LOGOS_BUCKET_URL = SUPABASE_BASE_URL
+  ? `${SUPABASE_BASE_URL}/storage/v1/object/public/club-logos`
+  : null;
 
 const PLAYER_TABLE = process.env.SUPABASE_PLAYERS_TABLE || "fm_players";
 const NAME_COLUMNS = [
@@ -212,6 +218,12 @@ function normalizeFilters(input = {}) {
 }
 
 function formatPlayer(player) {
+  const club = pick(player, ["Club", "club"]);
+  const clubId = pick(player, ["club_id", "clubId"]) || (club ? clubMap[club] : null) || null;
+  const clubLogoUrl = clubId
+    ? (CLUB_LOGOS_BUCKET_URL ? `${CLUB_LOGOS_BUCKET_URL}/${clubId}.png` : `/club-logos/${clubId}.png`)
+    : null;
+
   return {
     id: pick(player, ["id", "UID", "uid"]),
     uid: pick(player, ["UID", "uid"]),
@@ -219,7 +231,9 @@ function formatPlayer(player) {
     position: pick(player, ["Position", "position"]),
     age: toNumber(pick(player, ["Age", "age"])),
     nationality: pick(player, ["Nationality", "nationality"]),
-    club: pick(player, ["Club", "club"]),
+    club,
+    clubId,
+    clubLogoUrl,
     currentAbility: toNumber(pick(player, ["ca", "CA", "current_ability"])),
     potentialAbility: toNumber(pick(player, ["pa", "PA", "potential_ability"])),
     marketValue: toNumber(pick(player, ["Values", "values", "market_value"])),

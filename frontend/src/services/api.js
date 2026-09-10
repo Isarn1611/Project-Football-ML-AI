@@ -13,13 +13,18 @@ function isLocalNetworkHost(hostname) {
 }
 
 function resolveApiBaseUrl() {
-  const configuredUrl =
-    import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const configuredUrl = import.meta.env.VITE_API_URL;
 
-  if (typeof window === "undefined") return configuredUrl;
+  if (typeof window === "undefined") return configuredUrl || "http://localhost:5000";
+
+  if (configuredUrl === "" || configuredUrl === "/") {
+    return window.location.origin;
+  }
+
+  const effectiveUrl = configuredUrl || "http://localhost:5000";
 
   try {
-    const url = new URL(configuredUrl, window.location.origin);
+    const url = new URL(effectiveUrl, window.location.origin);
     const pageHostname = window.location.hostname;
 
     if (

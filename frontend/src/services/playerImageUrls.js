@@ -2,6 +2,7 @@ import { supabase } from "../lib/supabase";
 
 const PLAYER_IMAGE_BUCKET = "player-images";
 const PLAYER_IMAGE_FOLDER = "players";
+const CLUB_LOGO_BUCKET = "club-logos";
 const SIGNED_URL_EXPIRY_SECONDS = 3600;
 const signedUrlCache = new Map();
 
@@ -19,6 +20,20 @@ export function getPlayerImageUrl(uid) {
     .getPublicUrl(`${PLAYER_IMAGE_FOLDER}/${normalizedUid}.webp`);
 
   return data?.publicUrl || null;
+}
+
+export function getClubLogoUrl(clubId) {
+  const normalizedClubId = String(clubId ?? "").trim();
+  if (!normalizedClubId) return "";
+
+  if (supabase) {
+    const { data } = supabase.storage
+      .from(CLUB_LOGO_BUCKET)
+      .getPublicUrl(`${normalizedClubId}.png`);
+    if (data?.publicUrl) return data.publicUrl;
+  }
+
+  return `/club-logos/${normalizedClubId}.png`;
 }
 
 export async function getPlayerImageSignedUrl(

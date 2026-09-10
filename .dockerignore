@@ -1,0 +1,17 @@
+.git
+.agents
+node_modules
+frontend/node_modules
+backend/node_modules
+frontend/dist
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+*.log
+**/*.log
+.vscode
+.idea
+ScoutAI/tests
+backend/test
+.env.local

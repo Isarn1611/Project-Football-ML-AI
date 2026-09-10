@@ -8395,6 +8395,14 @@ html[data-color-mode="dark"] .site-compare-table .anticon-close {
   font-size: 8px !important;
 }
 
+.player-profile-card-club-logo {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  border-radius: 2px;
+}
+
 .player-profile-card-metrics {
   position: absolute;
   z-index: 1;
