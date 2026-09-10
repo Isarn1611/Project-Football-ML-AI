@@ -335,240 +335,281 @@ function ErrorState({ error, onRetry, onSelectPlayer }) {
   );
 }
 
-function AttributeGroupCard({ groupName, attributes, split = false }) {
-  const { t } = useTranslation("result");
-  const style = attributeGroupStyles[groupName] || attributeGroupStyles.Technical;
-  const entries = Object.entries(attributes);
-  const midpoint = Math.ceil(entries.length / 2);
-  const columns = split
-    ? [entries.slice(0, midpoint), entries.slice(midpoint)]
-    : [entries];
+function getFmValueClass(val) {
+  const num = Number(val);
+  if (!Number.isFinite(num)) return "fm-val-default";
+  if (num >= 16) return "fm-val-elite";     // 16-20 (FM Green)
+  if (num >= 11) return "fm-val-good";      // 11-15 (FM Yellow/Lime)
+  return "fm-val-ordinary";                  // 1-10 (FM Gray)
+}
+
+function FmAttributeColumn({ title, attributes }) {
+  const entries = Object.entries(attributes || {}).sort((a, b) =>
+    a[0].localeCompare(b[0])
+  );
+  if (entries.length === 0) return null;
 
   return (
-    <Card
-      className={`attribute-card${split ? " is-split" : ""}`}
-      size="small"
-      title={
-        <Space>
-          <Tag color={style.tag}>{t(`groups.${groupName}`)}</Tag>
-          <Text type="secondary">1-20</Text>
-        </Space>
-      }
-    >
-      <div className="attribute-list">
-        {columns.map((column, columnIndex) => (
-          <div className="attribute-column" key={`column-${columnIndex}`}>
-            {column.map(([attributeName, value]) => {
-              const normalizedValue = normalizeAttribute(value);
-
-              return (
-                <div className="attribute-row" key={attributeName}>
-                  <div className="attribute-line">
-                    <Text ellipsis type="secondary">
-                      {attributeName}
-                    </Text>
-                    <Text strong>{formatValue(value)}</Text>
-                  </div>
-                  <Progress
-                    percent={(normalizedValue / 20) * 100}
-                    showInfo={false}
-                    size="small"
-                    strokeColor={style.color}
-                  />
-                </div>
-              );
-            })}
+    <div className="fm-attr-col">
+      <div className="fm-attr-col-header">{title}</div>
+      <div className="fm-attr-list">
+        {entries.map(([name, val]) => (
+          <div className="fm-attr-row" key={name}>
+            <span className="fm-attr-name" title={name}>{name}</span>
+            <span className={`fm-attr-val ${getFmValueClass(val)}`}>
+              {val !== null && val !== undefined ? val : "-"}
+            </span>
           </div>
         ))}
       </div>
-    </Card>
+    </div>
   );
 }
 
-function getRadarPoint(index, total, radius, center) {
-  const angle = (Math.PI * 2 * index) / total - Math.PI / 2;
+function calculateFmRadarMetrics(attributes, isGoalkeeper = false) {
+  const technical = attributes?.Technical || {};
+  const mental = attributes?.Mental || {};
+  const physical = attributes?.Physical || {};
+  const goalkeeping = attributes?.Goalkeeping || {};
 
-  return {
-    x: center + Math.cos(angle) * radius,
-    y: center + Math.sin(angle) * radius,
+  const lookup = {};
+  const ingest = (obj) => {
+    if (!obj) return;
+    for (const [k, v] of Object.entries(obj)) {
+      const normKey = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const num = Number(v);
+      if (Number.isFinite(num)) {
+        lookup[normKey] = num;
+      }
+    }
   };
+  ingest(technical);
+  ingest(mental);
+  ingest(physical);
+  ingest(goalkeeping);
+
+  const getAttr = (name) => {
+    const normKey = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (lookup[normKey] !== undefined) return lookup[normKey];
+    return 10;
+  };
+
+  const avg = (names) => {
+    const vals = names.map((n) => getAttr(n));
+    if (vals.length === 0) return 10;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  };
+
+  if (isGoalkeeper) {
+    return [
+      { key: "shotStopping", label: "Shot Stopping", value: avg(["Reflexes", "One On Ones", "Handling"]) },
+      { key: "aerial", label: "Aerial", value: avg(["Aerial Reach", "Command Of Area", "Jumping Reach"]) },
+      { key: "distribution", label: "Distribution", value: avg(["Kicking", "Throwing", "Passing"]) },
+      { key: "eccentricity", label: "Eccentricity", value: avg(["Eccentricity", "Rushing Out"]) },
+      { key: "communication", label: "Communication", value: avg(["Communication", "Command Of Area", "Leadership"]) },
+      { key: "physical", label: "Physical", value: avg(["Agility", "Strength", "Balance", "Acceleration"]) },
+      { key: "mentality", label: "Mentality", value: avg(["Decisions", "Composure", "Concentration", "Anticipation"]) },
+    ];
+  }
+
+  return [
+    {
+      key: "mentality",
+      label: "Mentality",
+      value: avg(["Decisions", "Determination", "Composure", "Anticipation", "Concentration", "Bravery", "Teamwork"]),
+    },
+    {
+      key: "finalThird",
+      label: "Final Third",
+      value: avg(["Finishing", "First Touch", "Technique", "Passing", "Composure", "Vision"]),
+    },
+    {
+      key: "attMovement",
+      label: "Att Movement",
+      value: avg(["Off The Ball", "Anticipation", "Acceleration", "Agility", "Flair"]),
+    },
+    {
+      key: "defPositioning",
+      label: "Def Positioning",
+      value: avg(["Positioning", "Marking", "Tackling", "Anticipation", "Concentration"]),
+    },
+    {
+      key: "endurance",
+      label: "Endurance",
+      value: avg(["Stamina", "Natural Fitness", "Work Rate"]),
+    },
+    {
+      key: "strength",
+      label: "Strength",
+      value: avg(["Strength", "Balance", "Jumping Reach"]),
+    },
+    {
+      key: "setPieceTaker",
+      label: "Set Piece Taker",
+      value: avg(["Free Kick Taking", "Corners", "Penalty Taking", "Technique", "Crossing"]),
+    },
+  ];
 }
 
-function getRadarPointString(items, radius, center, valueScale = () => 1) {
-  return items
-    .map((item, index) => {
-      const point = getRadarPoint(
-        index,
-        items.length,
-        radius * valueScale(item),
-        center
-      );
+function FmAttributeAnalysisRadar({ metrics }) {
+  const center = 170;
+  const centerY = 150;
+  const maxRadius = 80;
+  const labelRadius = 110;
+  const total = metrics.length;
 
-      return `${point.x.toFixed(2)},${point.y.toFixed(2)}`;
+  const getPoint = (index, r, cY = centerY) => {
+    const angle = (Math.PI * 2 * index) / total - Math.PI / 2;
+    return {
+      x: center + Math.cos(angle) * r,
+      y: cY + Math.sin(angle) * r,
+      angle,
+    };
+  };
+
+  const polygonPoints = metrics
+    .map((item, i) => {
+      const clamped = Math.max(1, Math.min(20, item.value));
+      const r = (clamped / 20) * maxRadius;
+      const pt = getPoint(i, r);
+      return `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`;
     })
     .join(" ");
-}
-
-function getRadarLabel(attributeName) {
-  const label = physicalRadarLabels[attributeName] || attributeName;
-  return label.length > 12 ? `${label.slice(0, 11)}.` : label;
-}
-
-function PhysicalRadarCard({ attributes }) {
-  const { t } = useTranslation("result");
-  const items = Object.entries(attributes || {}).map(([name, value]) => ({
-    label: getRadarLabel(name),
-    name,
-    value: normalizeAttribute(value),
-  }));
-
-  if (items.length < 3) return null;
-
-  const center = 160;
-  const radius = 102;
-  const labelRadius = 134;
-  const levels = [0.2, 0.4, 0.6, 0.8, 1];
-  const average = Math.round(
-    items.reduce((total, item) => total + item.value, 0) / items.length
-  );
-  const grade =
-    average >= 16
-      ? t("grades.elite")
-      : average >= 14
-        ? t("grades.strong")
-        : average >= 12
-          ? t("grades.balanced")
-          : t("grades.developing");
-  const dataPoints = getRadarPointString(
-    items,
-    radius,
-    center,
-    (item) => item.value / 20
-  );
 
   return (
-    <Card
-      className="physical-radar-card physical-profile-card"
-      size="small"
-      title={
-        <div className="radar-card-heading">
-          <span>
-            <strong>{t("attributes.physical")}</strong>
-            <small>
-              {t("attributes.attributes", { count: items.length })}
-            </small>
-          </span>
-          <span className="radar-grade">{grade}</span>
-        </div>
-      }
-    >
-      <div className="radar-chart-shell">
-        <svg
-          aria-label={t("attributes.chartAria")}
-          className="radar-chart"
-          role="img"
-          viewBox="0 0 320 320"
-        >
-          {levels.map((level) => (
-            <polygon
-              className="radar-grid"
-              key={level}
-              points={getRadarPointString(items, radius * level, center)}
+    <div className="fm-radar-shell">
+      <svg
+        aria-label="Attribute Analysis Radar Chart"
+        className="fm-radar-svg"
+        viewBox="0 0 340 300"
+      >
+        {/* Concentric Colored FM Rings */}
+        <circle cx={center} cy={centerY} r={maxRadius} fill="#133821" stroke="#1c4e2f" strokeWidth="1" />
+        <circle cx={center} cy={centerY} r={maxRadius * 0.75} fill="#184529" stroke="#235f3a" strokeWidth="1" />
+        <circle cx={center} cy={centerY} r={maxRadius * 0.5} fill="#1e5433" stroke="#2b7346" strokeWidth="1" />
+        <circle cx={center} cy={centerY} r={maxRadius * 0.25} fill="#7f1d1d" stroke="#991b1b" strokeWidth="1" />
+        <circle cx={center} cy={centerY} r={5} fill="#b91c1c" />
+
+        {/* Radial Axis Lines */}
+        {metrics.map((_, i) => {
+          const pt = getPoint(i, maxRadius);
+          return (
+            <line
+              key={`axis-${i}`}
+              x1={center}
+              y1={centerY}
+              x2={pt.x}
+              y2={pt.y}
+              stroke="rgba(255, 255, 255, 0.2)"
+              strokeWidth="1"
             />
-          ))}
+          );
+        })}
 
-          {items.map((item, index) => {
-            const axisPoint = getRadarPoint(index, items.length, radius, center);
-            const labelPoint = getRadarPoint(
-              index,
-              items.length,
-              labelRadius,
-              center
-            );
-            const horizontalOffset = labelPoint.x - center;
+        {/* Player Shape Polygon */}
+        <polygon
+          points={polygonPoints}
+          fill="rgba(255, 255, 255, 0.28)"
+          stroke="#ffffff"
+          strokeWidth="1.8"
+        />
 
-            return (
-              <g key={item.name}>
-                <line
-                  className="radar-axis"
-                  x1={center}
-                  x2={axisPoint.x}
-                  y1={center}
-                  y2={axisPoint.y}
-                />
-                <text
-                  className="radar-label"
-                  dominantBaseline="middle"
-                  textAnchor={
-                    horizontalOffset > 12
-                      ? "start"
-                      : horizontalOffset < -12
-                        ? "end"
-                        : "middle"
-                  }
-                  x={labelPoint.x}
-                  y={labelPoint.y}
-                >
-                  {item.label}
-                </text>
-              </g>
-            );
-          })}
+        {/* Polygon Vertices Dots */}
+        {metrics.map((item, i) => {
+          const clamped = Math.max(1, Math.min(20, item.value));
+          const r = (clamped / 20) * maxRadius;
+          const pt = getPoint(i, r);
+          return (
+            <circle
+              key={`dot-${i}`}
+              cx={pt.x}
+              cy={pt.y}
+              r="3"
+              fill="#ffffff"
+              stroke="#151b26"
+              strokeWidth="1"
+            />
+          );
+        })}
 
-          <polygon className="radar-area" points={dataPoints} />
-          {items.map((item, index) => {
-            const point = getRadarPoint(
-              index,
-              items.length,
-              radius * (item.value / 20),
-              center
-            );
+        {/* Labels around the radar */}
+        {metrics.map((item, i) => {
+          const pt = getPoint(i, labelRadius);
+          const dx = pt.x - center;
+          let textAnchor = "middle";
+          if (dx > 12) textAnchor = "start";
+          else if (dx < -12) textAnchor = "end";
 
-            return (
-              <circle
-                className="radar-point"
-                cx={point.x}
-                cy={point.y}
-                key={item.name}
-                r="4"
-              />
-            );
-          })}
+          return (
+            <text
+              className="fm-radar-label"
+              dominantBaseline="middle"
+              key={item.key}
+              textAnchor={textAnchor}
+              x={pt.x}
+              y={pt.y}
+            >
+              {item.label}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
 
-          <circle className="radar-score-backdrop" cx={center} cy={center} r="27" />
-          <text className="radar-score-value" x={center} y={center - 3}>
-            {average}
-          </text>
-          <text className="radar-score-label" x={center} y={center + 15}>
-            {t("attributes.average")}
-          </text>
-        </svg>
+function FmAttributesBoard({ attributes, position, isCandidate = false }) {
+  const isGoalkeeper = String(position || "")
+    .toUpperCase()
+    .startsWith("GK");
+
+  const col1Title =
+    isGoalkeeper && attributes?.Goalkeeping && Object.keys(attributes.Goalkeeping).length > 0
+      ? "GOALKEEPING"
+      : "TECHNICAL";
+  const col1Attrs =
+    isGoalkeeper && attributes?.Goalkeeping && Object.keys(attributes.Goalkeeping).length > 0
+      ? attributes.Goalkeeping
+      : attributes?.Technical || {};
+  const col2Attrs = attributes?.Mental || {};
+  const col3Attrs = attributes?.Physical || {};
+
+  const radarMetrics = calculateFmRadarMetrics(attributes, isGoalkeeper);
+
+  return (
+    <div className={`fm-attributes-board ${isCandidate ? "fm-board-candidate" : ""}`}>
+      <div className="fm-board-topbar">
+        <div className="fm-tab-group">
+          <button type="button" className="fm-tab active">
+            Attributes
+          </button>
+        </div>
+        <div className="fm-radar-card-title">
+          Attribute Analysis
+        </div>
       </div>
 
-      <div className="physical-attribute-grid">
-        {items.map((item) => (
-          <div className="physical-attribute-chip" key={item.name}>
-            <span>{item.label}</span>
-            <strong>{formatValue(item.value)}</strong>
-          </div>
-        ))}
+      <div className="fm-board-content">
+        <div className="fm-columns-container">
+          <FmAttributeColumn title={col1Title} attributes={col1Attrs} />
+          <FmAttributeColumn title="MENTAL" attributes={col2Attrs} />
+          <FmAttributeColumn title="PHYSICAL" attributes={col3Attrs} />
+        </div>
+
+        <div className="fm-radar-container">
+          <FmAttributeAnalysisRadar metrics={radarMetrics} />
+        </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
 function TargetAttributes({ target }) {
   const { t } = useTranslation("result");
-  const groups = getVisibleAttributeGroups(
-    target.Attributes,
-    target.FullPosition || target.Position
-  );
-  const barGroups = groups.filter(([groupName]) => groupName !== "Physical");
-  const physicalAttributes = groups.find(
-    ([groupName]) => groupName === "Physical"
-  )?.[1];
+  const attributes = target.Attributes || {};
+  const hasAttrs = Object.keys(attributes).length > 0;
 
-  if (groups.length === 0) return null;
+  if (!hasAttrs) return null;
 
   return (
     <section className="attribute-section">
@@ -598,39 +639,20 @@ function TargetAttributes({ target }) {
         </div>
       </div>
 
-      <div
-        className={`attribute-overview-layout${
-          physicalAttributes ? "" : " without-radar"
-        }`}
-      >
-        <div className="attribute-bar-stack">
-          {barGroups.map(([groupName, attributes]) => (
-            <AttributeGroupCard
-              attributes={attributes}
-              groupName={groupName}
-              key={groupName}
-              split
-            />
-          ))}
-        </div>
-
-        {physicalAttributes && (
-          <PhysicalRadarCard attributes={physicalAttributes} />
-        )}
-      </div>
+      <FmAttributesBoard
+        attributes={target.Attributes}
+        position={target.FullPosition || target.Position}
+      />
     </section>
   );
 }
 
 function CandidateAttributeDetails({ player }) {
   const { t } = useTranslation("result");
-  const groups = getVisibleAttributeGroups(player.Attributes, player.Position);
-  const barGroups = groups.filter(([groupName]) => groupName !== "Physical");
-  const physicalAttributes = groups.find(
-    ([groupName]) => groupName === "Physical"
-  )?.[1];
+  const attributes = player.Attributes || {};
+  const hasAttrs = Object.keys(attributes).length > 0;
 
-  if (groups.length === 0) {
+  if (!hasAttrs) {
     return (
       <Empty
         description={t("attributes.noSnapshot")}
@@ -654,26 +676,11 @@ function CandidateAttributeDetails({ player }) {
         </span>
       </div>
 
-      <div
-        className={`attribute-overview-layout candidate-attribute-layout${
-          physicalAttributes ? "" : " without-radar"
-        }`}
-      >
-        <div className="attribute-bar-stack">
-          {barGroups.map(([groupName, attributes]) => (
-            <AttributeGroupCard
-              attributes={attributes}
-              groupName={groupName}
-              key={groupName}
-              split
-            />
-          ))}
-        </div>
-
-        {physicalAttributes && (
-          <PhysicalRadarCard attributes={physicalAttributes} />
-        )}
-      </div>
+      <FmAttributesBoard
+        attributes={player.Attributes}
+        position={player.Position}
+        isCandidate
+      />
     </div>
   );
 }
