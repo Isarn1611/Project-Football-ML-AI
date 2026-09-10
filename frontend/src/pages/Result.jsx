@@ -1504,7 +1504,13 @@ function Result() {
               <span className="section-kicker">{t("report.kicker")}</span>
               <h1 className="page-title">{currentState.result.target.Name}</h1>
               <p className="page-subtitle">
-                {currentState.result.target.Display_Name}
+                {currentState.result.target.Nationality
+                  ? `${currentState.result.target.Nationality}${
+                      currentState.result.target.Club
+                        ? ` (${currentState.result.target.Club})`
+                        : ""
+                    }`
+                  : currentState.result.target.Display_Name}
               </p>
               <div className="report-player-context">
                 <span>{formatValue(currentState.result.target.Club)}</span>
