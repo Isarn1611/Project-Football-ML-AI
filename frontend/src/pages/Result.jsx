@@ -343,41 +343,11 @@ function getFmValueClass(val) {
   return "fm-val-ordinary";                  // 1-10 (FM Gray)
 }
 
-function FmPhysicalDetails({ info }) {
-  const { t } = useTranslation("result");
-  const chips = [];
-
-  if (info?.height) {
-    chips.push(`${info.height} cm`);
-  }
-  if (info?.weight) {
-    chips.push(`${info.weight} kg`);
-  }
-  if (info?.leftFoot !== undefined && info?.leftFoot !== null && info?.leftFoot !== "") {
-    chips.push(t("attributes.leftFoot", { value: info.leftFoot }));
-  }
-  if (info?.rightFoot !== undefined && info?.rightFoot !== null && info?.rightFoot !== "") {
-    chips.push(t("attributes.rightFoot", { value: info.rightFoot }));
-  }
-
-  if (chips.length === 0) return null;
-
-  return (
-    <div className="fm-physical-chips">
-      {chips.map((chip, idx) => (
-        <span className="fm-physical-chip" key={idx}>
-          {chip}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function FmAttributeColumn({ title, attributes, footer }) {
+function FmAttributeColumn({ title, attributes }) {
   const entries = Object.entries(attributes || {}).sort((a, b) =>
     a[0].localeCompare(b[0])
   );
-  if (entries.length === 0 && !footer) return null;
+  if (entries.length === 0) return null;
 
   return (
     <div className="fm-attr-col">
@@ -392,7 +362,6 @@ function FmAttributeColumn({ title, attributes, footer }) {
           </div>
         ))}
       </div>
-      {footer && <div className="fm-attr-col-footer">{footer}</div>}
     </div>
   );
 }
@@ -590,12 +559,7 @@ function FmAttributeAnalysisRadar({ metrics }) {
   );
 }
 
-function FmAttributesBoard({
-  attributes,
-  position,
-  physicalInfo,
-  isCandidate = false,
-}) {
+function FmAttributesBoard({ attributes, position, isCandidate = false }) {
   const isGoalkeeper = String(position || "")
     .toUpperCase()
     .startsWith("GK");
@@ -620,11 +584,7 @@ function FmAttributesBoard({
         <div className="fm-columns-container">
           <FmAttributeColumn title={col1Title} attributes={col1Attrs} />
           <FmAttributeColumn title="MENTAL" attributes={col2Attrs} />
-          <FmAttributeColumn
-            title="PHYSICAL"
-            attributes={col3Attrs}
-            footer={physicalInfo ? <FmPhysicalDetails info={physicalInfo} /> : null}
-          />
+          <FmAttributeColumn title="PHYSICAL" attributes={col3Attrs} />
         </div>
 
         {/* Right Side: Attribute Analysis Radar */}
@@ -649,13 +609,6 @@ function TargetAttributes({ target }) {
 
   if (!hasAttrs) return null;
 
-  const physicalInfo = {
-    height: target.Height,
-    weight: target.Weight,
-    leftFoot: target.LeftFoot,
-    rightFoot: target.RightFoot,
-  };
-
   return (
     <section className="attribute-section">
       <div className="attribute-heading">
@@ -667,12 +620,29 @@ function TargetAttributes({ target }) {
             {t("attributes.overview")}
           </Title>
         </div>
+        <div className="attribute-tags">
+          {target.Height && <Tag>{formatValue(target.Height)} cm</Tag>}
+          {target.Weight && <Tag>{formatValue(target.Weight)} kg</Tag>}
+          {target.LeftFoot !== undefined && target.LeftFoot !== null && target.LeftFoot !== "" && (
+            <Tag>
+              {t("attributes.leftFoot", {
+                value: formatValue(target.LeftFoot),
+              })}
+            </Tag>
+          )}
+          {target.RightFoot !== undefined && target.RightFoot !== null && target.RightFoot !== "" && (
+            <Tag>
+              {t("attributes.rightFoot", {
+                value: formatValue(target.RightFoot),
+              })}
+            </Tag>
+          )}
+        </div>
       </div>
 
       <FmAttributesBoard
         attributes={target.Attributes}
         position={target.FullPosition || target.Position}
-        physicalInfo={physicalInfo}
       />
     </section>
   );
@@ -692,13 +662,6 @@ function CandidateAttributeDetails({ player }) {
     );
   }
 
-  const physicalInfo = {
-    height: player.Height,
-    weight: player.Weight,
-    leftFoot: player.LeftFoot,
-    rightFoot: player.RightFoot,
-  };
-
   return (
     <div className="candidate-attribute-overview">
       <div className="candidate-attribute-heading">
@@ -711,13 +674,24 @@ function CandidateAttributeDetails({ player }) {
           <span>
             {t("attributes.age", { value: formatValue(player.Age) })}
           </span>
+          {player.Height && <span>{formatValue(player.Height)} cm</span>}
+          {player.Weight && <span>{formatValue(player.Weight)} kg</span>}
+          {player.LeftFoot !== undefined && player.LeftFoot !== null && player.LeftFoot !== "" && (
+            <span>
+              {t("attributes.leftFoot", { value: formatValue(player.LeftFoot) })}
+            </span>
+          )}
+          {player.RightFoot !== undefined && player.RightFoot !== null && player.RightFoot !== "" && (
+            <span>
+              {t("attributes.rightFoot", { value: formatValue(player.RightFoot) })}
+            </span>
+          )}
         </span>
       </div>
 
       <FmAttributesBoard
         attributes={player.Attributes}
         position={player.Position}
-        physicalInfo={physicalInfo}
         isCandidate
       />
     </div>
