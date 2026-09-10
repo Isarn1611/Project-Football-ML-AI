@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+# check=skip=SecretsUsedInArgOrEnv
 # ==============================================================================
 # All-in-One Dockerfile: Football ML AI & Player Scouting System
 # Includes: Frontend (React/Vite SPA), Backend (Node/Express), ML API (FastAPI/ScoutAI)

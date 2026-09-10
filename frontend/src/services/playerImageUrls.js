@@ -22,6 +22,11 @@ export function getPlayerImageUrl(uid) {
   return data?.publicUrl || null;
 }
 
+const SUPABASE_STORAGE_FALLBACK = (
+  import.meta.env.VITE_SUPABASE_URL ||
+  "https://cfvwxhfetdositsqhqss.supabase.co"
+).replace(/\/+$/, "");
+
 export function getClubLogoUrl(clubId) {
   const normalizedClubId = String(clubId ?? "").trim();
   if (!normalizedClubId) return "";
@@ -31,6 +36,10 @@ export function getClubLogoUrl(clubId) {
       .from(CLUB_LOGO_BUCKET)
       .getPublicUrl(`${normalizedClubId}.png`);
     if (data?.publicUrl) return data.publicUrl;
+  }
+
+  if (SUPABASE_STORAGE_FALLBACK) {
+    return `${SUPABASE_STORAGE_FALLBACK}/storage/v1/object/public/${CLUB_LOGO_BUCKET}/${normalizedClubId}.png`;
   }
 
   return `/club-logos/${normalizedClubId}.png`;
