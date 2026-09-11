@@ -2417,9 +2417,9 @@ export const resources = {
         strong: "แข็งแกร่ง",
       },
       groups: {
-        Goalkeeping: "ผู้รักษาประตู",
-        Mental: "จิตใจ",
-        Physical: "กายภาพ",
+        Goalkeeping: "การรักษาประตู",
+        Mental: "สภาพจิตใจ",
+        Physical: "สภาพร่างกาย",
         Technical: "เทคนิค",
       },
       report: {

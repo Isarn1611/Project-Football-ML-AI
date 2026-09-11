@@ -3,21 +3,30 @@ import { useEffect, useMemo, useState } from "react";
 import i18n from "../i18n";
 import { InterfaceSettingsContext } from "./useInterfaceSettings";
 
-const INTERFACE_SETTINGS_STORAGE_KEY = "scoutai.interfaceSettings";
+const INTERFACE_SETTINGS_STORAGE_KEY = "scoutai.interfaceSettings.v2";
+const LEGACY_STORAGE_KEY = "scoutai.interfaceSettings";
 
 function readSettings() {
   try {
-    const storedSettings = JSON.parse(
-      window.localStorage.getItem(INTERFACE_SETTINGS_STORAGE_KEY) || "{}"
+    const v2 = window.localStorage.getItem(INTERFACE_SETTINGS_STORAGE_KEY);
+    if (v2) {
+      const storedSettings = JSON.parse(v2);
+      return {
+        darkMode: storedSettings.darkMode === true,
+        language: storedSettings.language === "en" ? "en" : "th",
+      };
+    }
+    const legacy = JSON.parse(
+      window.localStorage.getItem(LEGACY_STORAGE_KEY) || "{}"
     );
     return {
-      darkMode: storedSettings.darkMode === true,
-      language: storedSettings.language === "th" ? "th" : "en",
+      darkMode: legacy.darkMode === true,
+      language: "th",
     };
   } catch {
     return {
       darkMode: false,
-      language: "en",
+      language: "th",
     };
   }
 }

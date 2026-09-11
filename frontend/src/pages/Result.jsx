@@ -343,30 +343,122 @@ function getFmValueClass(val) {
   return "fm-val-ordinary";                  // 1-10 (FM Gray)
 }
 
-function FmAttributeColumn({ title, attributes }) {
-  const entries = Object.entries(attributes || {}).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  );
+const FOOTBALL_TERMS_TH = {
+  // Headers
+  TECHNICAL: "เทคนิค",
+  GOALKEEPING: "การรักษาประตู",
+  MENTAL: "สภาพจิตใจ",
+  PHYSICAL: "สภาพร่างกาย",
+  "ATTRIBUTE ANALYSIS": "วิเคราะห์ค่าพลัง",
+
+  // Technical Attributes
+  Corners: "เตะมุม",
+  Crossing: "การเปิดบอล",
+  Dribbling: "การเลี้ยงบอล",
+  Finishing: "การจบสกอร์",
+  "First Touch": "การจับบอลแรก",
+  "Free Kick Taking": "การยิงฟรีคิก",
+  Heading: "การโหม่ง",
+  "Long Shots": "การยิงไกล",
+  "Long Throws": "การทุ่มไกล",
+  Marking: "การประกบตัว",
+  Passing: "การจ่ายบอล",
+  "Penalty Taking": "การยิงจุดโทษ",
+  Tackling: "การเข้าปะทะ",
+  Technique: "ทักษะเฉพาะตัว",
+
+  // Mental Attributes
+  Aggression: "ความดุดัน",
+  Anticipation: "การอ่านเกม",
+  Bravery: "ความกล้าหาญ",
+  Composure: "ความเยือกเย็น",
+  Concentration: "สมาธิ",
+  Decisions: "การตัดสินใจ",
+  Determination: "ความมุ่งมั่น",
+  Flair: "ไหวพริบ",
+  Leadership: "ความเป็นผู้นำ",
+  "Off The Ball": "การเคลื่อนที่หาช่อง",
+  Positioning: "การยืนตำแหน่ง",
+  Teamwork: "การเล่นเป็นทีม",
+  Vision: "การมองเกม",
+  "Work Rate": "ความขยัน",
+
+  // Physical Attributes
+  Acceleration: "สปีดต้น",
+  Agility: "ความคล่องตัว",
+  Balance: "การทรงตัว",
+  "Jumping Reach": "การเทกตัว",
+  "Natural Fitness": "ความฟิตตามธรรมชาติ",
+  Pace: "ความเร็ว",
+  Stamina: "ความอึด",
+  Strength: "ความแข็งแกร่ง",
+
+  // Goalkeeping Attributes
+  "Aerial Reach": "การตัดบอลกลางอากาศ",
+  "Command Of Area": "การคุมกรอบเขตโทษ",
+  Communication: "การสื่อสาร",
+  Eccentricity: "การเล่นนอกกรอบ",
+  Handling: "การรับบอล",
+  Kicking: "การเตะเปิดบอล",
+  "One On Ones": "การดวลตัวต่อตัว",
+  Reflexes: "ปฏิกิริยา",
+  "Rushing Out": "การออกมาตัดบอล",
+  Punching: "การชกบอล",
+  "Punching (Tendency)": "การชกบอล",
+  Throwing: "การขว้างบอล",
+
+  // Radar Metrics (Outfield)
+  Mentality: "สภาพจิตใจ",
+  "Final Third": "พื้นที่สุดท้าย",
+  "Att Movement": "การเคลื่อนที่เกมรุก",
+  "Def Positioning": "การยืนตำแหน่งเกมรับ",
+  Endurance: "ความอึด",
+  Strength: "ความแข็งแกร่ง",
+  "Set Piece Taker": "ลูกตั้งเตะ",
+
+  // Radar Metrics (Goalkeeper)
+  "Shot Stopping": "การเซฟประตู",
+  Aerial: "ลูกกลางอากาศ",
+  Distribution: "การเปิดบอล",
+  Physical: "สภาพร่างกาย",
+};
+
+function getFootballTerm(term, language = "th") {
+  if (language === "en") return term;
+  return FOOTBALL_TERMS_TH[term] || term;
+}
+
+function FmAttributeColumn({ title, attributes, language = "th" }) {
+  const getDisplayLabel = (name) => getFootballTerm(name, language);
+
+  const entries = Object.entries(attributes || {}).sort((a, b) => {
+    const labelA = getDisplayLabel(a[0]);
+    const labelB = getDisplayLabel(b[0]);
+    return labelA.localeCompare(labelB, language === "th" ? "th" : "en");
+  });
   if (entries.length === 0) return null;
 
   return (
     <div className="fm-attr-col">
-      <div className="fm-attr-col-header">{title}</div>
+      <div className="fm-attr-col-header">{getFootballTerm(title, language)}</div>
       <div className="fm-attr-list">
-        {entries.map(([name, val]) => (
-          <div className="fm-attr-row" key={name}>
-            <span className="fm-attr-name" title={name}>{name}</span>
-            <span className={`fm-attr-val ${getFmValueClass(val)}`}>
-              {val !== null && val !== undefined ? val : "-"}
-            </span>
-          </div>
-        ))}
+        {entries.map(([name, val]) => {
+          const displayLabel = getDisplayLabel(name);
+          return (
+            <div className="fm-attr-row" key={name}>
+              <span className="fm-attr-name" title={displayLabel}>{displayLabel}</span>
+              <span className={`fm-attr-val ${getFmValueClass(val)}`}>
+                {val !== null && val !== undefined ? val : "-"}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function calculateFmRadarMetrics(attributes, isGoalkeeper = false) {
+function calculateFmRadarMetrics(attributes, isGoalkeeper = false, language = "th") {
   const technical = attributes?.Technical || {};
   const mental = attributes?.Mental || {};
   const physical = attributes?.Physical || {};
@@ -402,60 +494,60 @@ function calculateFmRadarMetrics(attributes, isGoalkeeper = false) {
 
   if (isGoalkeeper) {
     return [
-      { key: "shotStopping", label: "Shot Stopping", value: avg(["Reflexes", "One On Ones", "Handling"]) },
-      { key: "aerial", label: "Aerial", value: avg(["Aerial Reach", "Command Of Area", "Jumping Reach"]) },
-      { key: "distribution", label: "Distribution", value: avg(["Kicking", "Throwing", "Passing"]) },
-      { key: "eccentricity", label: "Eccentricity", value: avg(["Eccentricity", "Rushing Out"]) },
-      { key: "communication", label: "Communication", value: avg(["Communication", "Command Of Area", "Leadership"]) },
-      { key: "physical", label: "Physical", value: avg(["Agility", "Strength", "Balance", "Acceleration"]) },
-      { key: "mentality", label: "Mentality", value: avg(["Decisions", "Composure", "Concentration", "Anticipation"]) },
+      { key: "shotStopping", label: getFootballTerm("Shot Stopping", language), value: avg(["Reflexes", "One On Ones", "Handling"]) },
+      { key: "aerial", label: getFootballTerm("Aerial", language), value: avg(["Aerial Reach", "Command Of Area", "Jumping Reach"]) },
+      { key: "distribution", label: getFootballTerm("Distribution", language), value: avg(["Kicking", "Throwing", "Passing"]) },
+      { key: "eccentricity", label: getFootballTerm("Eccentricity", language), value: avg(["Eccentricity", "Rushing Out"]) },
+      { key: "communication", label: getFootballTerm("Communication", language), value: avg(["Communication", "Command Of Area", "Leadership"]) },
+      { key: "physical", label: getFootballTerm("Physical", language), value: avg(["Agility", "Strength", "Balance", "Acceleration"]) },
+      { key: "mentality", label: getFootballTerm("Mentality", language), value: avg(["Decisions", "Composure", "Concentration", "Anticipation"]) },
     ];
   }
 
   return [
     {
       key: "mentality",
-      label: "Mentality",
+      label: getFootballTerm("Mentality", language),
       value: avg(["Decisions", "Determination", "Composure", "Anticipation", "Concentration", "Bravery", "Teamwork"]),
     },
     {
       key: "finalThird",
-      label: "Final Third",
+      label: getFootballTerm("Final Third", language),
       value: avg(["Finishing", "First Touch", "Technique", "Passing", "Composure", "Vision"]),
     },
     {
       key: "attMovement",
-      label: "Att Movement",
+      label: getFootballTerm("Att Movement", language),
       value: avg(["Off The Ball", "Anticipation", "Acceleration", "Agility", "Flair"]),
     },
     {
       key: "defPositioning",
-      label: "Def Positioning",
+      label: getFootballTerm("Def Positioning", language),
       value: avg(["Positioning", "Marking", "Tackling", "Anticipation", "Concentration"]),
     },
     {
       key: "endurance",
-      label: "Endurance",
+      label: getFootballTerm("Endurance", language),
       value: avg(["Stamina", "Natural Fitness", "Work Rate"]),
     },
     {
       key: "strength",
-      label: "Strength",
+      label: getFootballTerm("Strength", language),
       value: avg(["Strength", "Balance", "Jumping Reach"]),
     },
     {
       key: "setPieceTaker",
-      label: "Set Piece Taker",
+      label: getFootballTerm("Set Piece Taker", language),
       value: avg(["Free Kick Taking", "Corners", "Penalty Taking", "Technique", "Crossing"]),
     },
   ];
 }
 
 function FmAttributeAnalysisRadar({ metrics }) {
-  const center = 170;
+  const center = 195;
   const centerY = 150;
-  const maxRadius = 80;
-  const labelRadius = 110;
+  const maxRadius = 78;
+  const labelRadius = 106;
   const total = metrics.length;
 
   const getPoint = (index, r, cY = centerY) => {
@@ -481,7 +573,7 @@ function FmAttributeAnalysisRadar({ metrics }) {
       <svg
         aria-label="Attribute Analysis Radar Chart"
         className="fm-radar-svg"
-        viewBox="0 0 340 300"
+        viewBox="0 0 390 300"
       >
         {/* Concentric Colored FM Rings */}
         <circle cx={center} cy={centerY} r={maxRadius} fill="var(--fm-radar-ring-1)" stroke="var(--fm-radar-ring-1-stroke)" strokeWidth="1" />
@@ -537,8 +629,8 @@ function FmAttributeAnalysisRadar({ metrics }) {
           const pt = getPoint(i, labelRadius);
           const dx = pt.x - center;
           let textAnchor = "middle";
-          if (dx > 12) textAnchor = "start";
-          else if (dx < -12) textAnchor = "end";
+          if (dx > 10) textAnchor = "start";
+          else if (dx < -10) textAnchor = "end";
 
           return (
             <text
@@ -560,6 +652,8 @@ function FmAttributeAnalysisRadar({ metrics }) {
 }
 
 function FmAttributesBoard({ attributes, position, isCandidate = false }) {
+  const { i18n } = useTranslation();
+  const currentLang = i18n.language || "th";
   const isGoalkeeper = String(position || "")
     .toUpperCase()
     .startsWith("GK");
@@ -575,22 +669,22 @@ function FmAttributesBoard({ attributes, position, isCandidate = false }) {
   const col2Attrs = attributes?.Mental || {};
   const col3Attrs = attributes?.Physical || {};
 
-  const radarMetrics = calculateFmRadarMetrics(attributes, isGoalkeeper);
+  const radarMetrics = calculateFmRadarMetrics(attributes, isGoalkeeper, currentLang);
 
   return (
     <div className={`fm-attributes-board ${isCandidate ? "fm-board-candidate" : ""}`}>
       <div className="fm-board-content">
         {/* 3 Columns Section: TECHNICAL / GOALKEEPING, MENTAL, PHYSICAL */}
         <div className="fm-columns-container">
-          <FmAttributeColumn title={col1Title} attributes={col1Attrs} />
-          <FmAttributeColumn title="MENTAL" attributes={col2Attrs} />
-          <FmAttributeColumn title="PHYSICAL" attributes={col3Attrs} />
+          <FmAttributeColumn title={col1Title} attributes={col1Attrs} language={currentLang} />
+          <FmAttributeColumn title="MENTAL" attributes={col2Attrs} language={currentLang} />
+          <FmAttributeColumn title="PHYSICAL" attributes={col3Attrs} language={currentLang} />
         </div>
 
         {/* Right Side: Attribute Analysis Radar */}
         <div className="fm-radar-column">
           <div className="fm-attr-col-header fm-radar-header">
-            <span>ATTRIBUTE ANALYSIS</span>
+            <span>{getFootballTerm("ATTRIBUTE ANALYSIS", currentLang)}</span>
             <span className="fm-radar-dropdown-arrow">▾</span>
           </div>
           <div className="fm-radar-body">

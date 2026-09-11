@@ -11325,8 +11325,8 @@ html[data-color-mode="dark"] .fm-val-elite {
 
 /* Right Side: Attribute Analysis Radar Column (Level with Technical, Mental, Physical) */
 .fm-radar-column {
-  flex: 0 0 340px;
-  max-width: 360px;
+  flex: 0 0 360px;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
   background: var(--fm-radar-bg);
@@ -11352,7 +11352,7 @@ html[data-color-mode="dark"] .fm-val-elite {
 
 .fm-radar-shell {
   width: 100%;
-  max-width: 340px;
+  max-width: 380px;
   display: flex;
   align-items: center;
   justify-content: center;
